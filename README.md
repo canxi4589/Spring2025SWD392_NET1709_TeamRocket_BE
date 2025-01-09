@@ -1,4 +1,3 @@
-# Spring2025SWD392_NET1709_TeamRocket_BE
 # **Home Service Platform**
 
 ## Functional requirements
