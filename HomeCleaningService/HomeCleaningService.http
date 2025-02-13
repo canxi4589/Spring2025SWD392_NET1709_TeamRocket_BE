@@ -1,0 +1,6 @@
+@HomeCleaningService_HostAddress = http://localhost:5248
+
+GET {{HomeCleaningService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
