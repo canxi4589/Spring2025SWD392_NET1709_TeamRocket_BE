@@ -266,7 +266,7 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> Login1([FromBody] LoginDto model)
         {
             model.Email = "customer1@example.com";
-            model.Password = "123"; 
+            model.Password = "123456"; 
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return Unauthorized(new AppResponse<object>().SetErrorResponse("Credentials", "Invalid credentials."));
