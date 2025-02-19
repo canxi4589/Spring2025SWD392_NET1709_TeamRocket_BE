@@ -13,9 +13,7 @@ namespace HomeCleaningService.Extensions
         )
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
-
-
+                    options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
             return services;
         }
 

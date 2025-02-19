@@ -1,6 +1,7 @@
 ﻿using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,10 +18,11 @@ namespace HomeCleaningService.Controllers
             _customerService = customerService;
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetCustomerById(string id)
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetCustomer()
         {
-            var customer = await _customerService.GetCustomerByIdAsync(id);
+            var customer = await _customerService.GetCustomerByIdAsync(User);
 
             if (customer == null)
             {
@@ -34,10 +36,11 @@ namespace HomeCleaningService.Controllers
             return Ok(successResponse);
         }
         
-        [HttpGet("Profile/{id}")]
-        public async Task<IActionResult> GetCustomerProfileById(string id)
+        [HttpGet("Profile")]
+        [Authorize]
+        public async Task<IActionResult> GetCustomerProfile()
         {
-            var customer = await _customerService.GetCustomerProfileById(id);
+            var customer = await _customerService.GetCustomerProfileById(User);
 
             if (customer == null)
             {
@@ -51,25 +54,31 @@ namespace HomeCleaningService.Controllers
             return Ok(successResponse);
         }
 
-        [HttpPut("Profile/{id}")]
-        public async Task<IActionResult> UpdateCustomerProfile(string id, [FromBody] UpdateCusProfileDto customer)
+        [HttpPut("Profile")]
+        [Authorize] 
+        public async Task<IActionResult> UpdateCustomerProfile([FromBody] UpdateCusProfileDto customer)
         {
             var response = new AppResponse<object>();
 
             try
             {
-                await _customerService.UpdateCustomerProfile(id, customer);
-                return Ok(response.SetSuccessResponse(null!, "Update", "Profile updated successfully"));
+                var updateUser = await _customerService.UpdateCustomerProfile(customer, User);
+                return Ok(response.SetSuccessResponse(updateUser, "Update", "Profile updated successfully"));
             }
-            catch (ArgumentNullException)
+            catch (UnauthorizedAccessException)
             {
-                return BadRequest(response.SetErrorResponse("Customer", "Customer ID cannot be null"));
+                return Unauthorized(response.SetErrorResponse("Authentication", "User not authenticated"));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(response.SetErrorResponse("Customer", "User not found"));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, response.SetErrorResponse("Server", $"An error occurred: {ex.Message}"));
+                return BadRequest(response.SetErrorResponse("Update", ex.Message));
             }
         }
+
 
 
     }

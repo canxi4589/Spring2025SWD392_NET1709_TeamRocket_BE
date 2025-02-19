@@ -9,7 +9,6 @@ namespace HCP.Service.DTOs.CustomerDTO
 {
     public class CustomerProfileDTO
     {
-        public string? Id { get; set; }
         public string? FullName { get; set; }
         public DateTime? Birthday { get; set; }
         public string? Avatar { get; set; }
@@ -26,10 +25,6 @@ namespace HCP.Service.DTOs.CustomerDTO
 
         [Required]
         public bool Gender { get; set; }
-
-        [Required]
-        [EmailAddress]
-        public required string Email { get; set; }
 
         [Required]
         [Phone]
