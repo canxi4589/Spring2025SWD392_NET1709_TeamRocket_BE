@@ -7,5 +7,6 @@ namespace HCP.Service.Services.HomeCleaningService
     {
         Task<List<HomeServiceDto>> GetAllServiceWithoutCategoryAsync();
         Task<List<ServicePricingDto>> GetServicePricesForCustomer(Guid serviceId);
+        Task<ServiceDetailDto> GetServiceDetails(Guid serviceId);
     }
 }

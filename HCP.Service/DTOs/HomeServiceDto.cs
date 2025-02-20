@@ -31,4 +31,20 @@ namespace HCP.Service.DTOs
         public string OptionValue { get; set; } // "Leather", "Fabric", "2 Seats"
         public double Price { get; set; } // e.g., 200000
     }
+    public class ServiceStepDto
+    {
+        public int StepOrder { get; set; }
+        public string Description { get; set; }
+    }
+    public class ServiceDetailDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string PictureUrl { get; set; }
+        public List<ServiceStepDto> Steps { get; set; }
+        public List<ServicePricingDto> PricingOptions { get; set; }
+
+    }
+
 }
