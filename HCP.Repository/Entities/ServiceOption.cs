@@ -10,7 +10,6 @@ namespace HCP.Repository.Entities
     {
         public string Name { get; set; }
         public Guid ServiceId { get; set; }
-
         public virtual HomeService Service { get; set; }
         public virtual ICollection<ServiceOptionValue> Values { get; set; } = new List<ServiceOptionValue>();
     }
