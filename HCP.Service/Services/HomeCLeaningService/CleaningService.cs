@@ -78,5 +78,32 @@ namespace HCP.Service.Services.HomeCleaningService
             return result;
         }
 
+        public async Task<ServiceDetailDto> GetServiceDetails(Guid serviceId)
+        {
+            var service = await _unitOfWork.Repository<HomeService>()
+                .FindAsync(s => s.Id == serviceId);
+            var steps = await _unitOfWork.Repository<ServiceStep>().ListAsync();
+            if (service == null)
+            {
+                throw new KeyNotFoundException("Service not found.");
+            }
+
+            var serviceDetail = new ServiceDetailDto
+            {
+                Id = service.Id,
+                Name = service.Name,
+                Description = service.Description,
+                PictureUrl = service.PictureUrl,
+                Steps = steps.OrderBy(s => s.StepOrder).Select(s => new ServiceStepDto
+                {
+                    StepOrder = s.StepOrder,
+                    Description = s.Description
+                }).ToList(),
+                
+            };
+            serviceDetail.PricingOptions = await GetServicePricesForCustomer(serviceId);
+            return serviceDetail;
+        }
+
     }
 }
