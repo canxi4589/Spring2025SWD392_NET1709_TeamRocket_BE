@@ -39,6 +39,7 @@ namespace HCP.Repository.Entities
 
         [MaxLength(50)]
         public string? Title { get; set; }
+
     }
 
 }

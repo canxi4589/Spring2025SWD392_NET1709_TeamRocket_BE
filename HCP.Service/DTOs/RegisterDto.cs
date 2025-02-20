@@ -66,12 +66,6 @@ namespace HCP.Service.DTOs
         [Required]
         public string RefreshToken { get; set; }
     }
-    public class RefreshTokenDto1
-    {
-        [Required]
-        public string Token { get; set; }
-
-    }
     public class ForgotPasswordDto
     {
         public string Email { get; set; }

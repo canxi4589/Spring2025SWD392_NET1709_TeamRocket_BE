@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeCleaningService.Controllers
@@ -17,7 +18,7 @@ namespace HomeCleaningService.Controllers
         {
             _logger = logger;
         }
-
+        [Authorize]
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
@@ -29,5 +30,6 @@ namespace HomeCleaningService.Controllers
             })
             .ToArray();
         }
+        
     }
 }
