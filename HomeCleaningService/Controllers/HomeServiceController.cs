@@ -23,5 +23,12 @@ namespace HomeCleaningService.Controllers
             var response = new AppResponse<List<HomeServiceDto>>().SetSuccessResponse(list);
             return Ok(response);
         }
+        [HttpGet("{serviceId}/prices")]
+        public async Task<IActionResult> GetServicePrices(Guid serviceId)
+        {
+            var prices = await cleaningService.GetServicePricesForCustomer(serviceId);
+            var response = new AppResponse<List<ServicePricingDto>>().SetSuccessResponse(prices);
+            return Ok(response);
+        }
     }
 }

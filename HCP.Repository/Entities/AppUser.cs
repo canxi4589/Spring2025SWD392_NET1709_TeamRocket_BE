@@ -24,9 +24,5 @@ namespace HCP.Repository.Entities
         public bool Gender { get; set; }
         public double BalanceWallet { get; set; } = 0;
         public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
-<<<<<<< HEAD
-
-=======
->>>>>>> d0451970c1f83e3a9c3e026c11a61d9e662419e5
     }
 }
