@@ -1,4 +1,7 @@
+using HCP.Repository.GenericRepository;
+using HCP.Repository.Interfaces;
 using HCP.Service.Services;
+using HCP.Service.Services.HomeCleaningService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -93,9 +96,12 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 
 });
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITokenHelper, TokenHelper>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ICleaningService, CleaningService>();
 builder.Services.AddSingleton<BlobStorageService>();
 
 var app = builder.Build();

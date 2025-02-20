@@ -21,7 +21,9 @@ namespace HCP.Repository.Entities
 
         [DataType(DataType.Text)]
         public string? PDF { get; set; }
+        public bool Gender { get; set; }
         public double BalanceWallet { get; set; } = 0;
+        public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     }
 }
