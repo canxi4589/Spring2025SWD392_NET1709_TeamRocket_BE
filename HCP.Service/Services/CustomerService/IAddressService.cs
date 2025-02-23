@@ -4,6 +4,6 @@ namespace HCP.Service.Services.CustomerService
 {
     public interface IAddressService
     {
-        Task<List<AddressDTO>> GetAddressByUser(string id);
+        Task<List<AddressDTO>> GetAddressByUser(string mail);
     }
 }

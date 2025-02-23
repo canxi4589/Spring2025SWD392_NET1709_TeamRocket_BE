@@ -22,12 +22,12 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpGet("Customer")]
-        public async Task<IActionResult> getAddressByCustomerId(string Id)
+        public async Task<IActionResult> getAddressByCustomerId(string mail)
         {
-            var user = _userManager.FindByIdAsync(Id);
+            var user = _userManager.FindByEmailAsync(mail);
             if (user != null)
             {
-                var list = await _addressService.GetAddressByUser(Id);
+                var list = await _addressService.GetAddressByUser(mail);
                 return Ok(new AppResponse<List<AddressDTO>>().SetSuccessResponse(list));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));

@@ -21,9 +21,10 @@ namespace HCP.Service.Services.CustomerService
             this.userManager = userManager;
         }
 
-        public async Task<List<AddressDTO>> GetAddressByUser(string id)
+        public async Task<List<AddressDTO>> GetAddressByUser(string mail)
         {
-            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(id));
+            var user = await userManager.FindByEmailAsync(mail);
+            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
             return adrList.Select(c => new AddressDTO
             {
                 Address = c.AddressLine1,
