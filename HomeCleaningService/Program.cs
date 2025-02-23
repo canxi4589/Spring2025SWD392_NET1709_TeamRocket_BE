@@ -104,6 +104,7 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICleaningService1,CleaningService1>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 

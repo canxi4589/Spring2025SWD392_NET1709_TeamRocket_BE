@@ -608,7 +608,6 @@ namespace HCP.Repository.Migrations
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ProofOfPayment = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AcceptBy = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CustomerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ResolutionDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
@@ -620,12 +619,6 @@ namespace HCP.Repository.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RefundRequests_AspNetUsers_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_RefundRequests_Bookings_BookingId",
                         column: x => x.BookingId,
@@ -757,11 +750,6 @@ namespace HCP.Repository.Migrations
                 name: "IX_RefundRequests_BookingId",
                 table: "RefundRequests",
                 column: "BookingId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RefundRequests_CustomerId",
-                table: "RefundRequests",
-                column: "CustomerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ServiceImages_CleaningServiceId",

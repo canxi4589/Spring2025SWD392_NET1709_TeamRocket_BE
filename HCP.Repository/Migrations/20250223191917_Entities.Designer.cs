@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HCP.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250223101641_Entities")]
+    [Migration("20250223191917_Entities")]
     partial class Entities
     {
         /// <inheritdoc />
@@ -540,10 +540,6 @@ namespace HCP.Repository.Migrations
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CustomerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("ProofOfPayment")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -564,8 +560,6 @@ namespace HCP.Repository.Migrations
                     b.HasIndex("AcceptBy");
 
                     b.HasIndex("BookingId");
-
-                    b.HasIndex("CustomerId");
 
                     b.ToTable("RefundRequests");
                 });
@@ -1051,15 +1045,7 @@ namespace HCP.Repository.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("HCP.Repository.Entities.AppUser", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Booking");
-
-                    b.Navigation("Customer");
 
                     b.Navigation("Staff");
                 });
