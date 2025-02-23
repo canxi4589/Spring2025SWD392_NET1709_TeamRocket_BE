@@ -8,10 +8,12 @@ namespace HCP.Repository.Entities
 {
     public class ServiceCategory : BaseEntity
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string CategoryName { get; set; }
         public string PictureUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
-        public virtual ICollection<HomeService> Services { get; set; } = new List<HomeService>();
+        // Navigation properties
+        public ICollection<CleaningService> CleaningServices { get; set; }
     }
 }

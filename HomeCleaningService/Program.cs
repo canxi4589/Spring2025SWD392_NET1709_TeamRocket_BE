@@ -1,8 +1,8 @@
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
 using HCP.Service.Services;
+using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.CustomerService;
-using HCP.Service.Services.HomeCleaningService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -102,7 +102,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<ITokenHelper, TokenHelper>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<ICleaningService, CleaningService>();
+builder.Services.AddScoped<ICleaningService1,CleaningService1>();
+//builder.Services.AddScoped<ICleaningService, CleaningService>();
 
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 

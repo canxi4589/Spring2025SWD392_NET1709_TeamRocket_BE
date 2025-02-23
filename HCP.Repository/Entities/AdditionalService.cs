@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace HCP.Repository.Entities
 {
-    public class ServiceSteps : BaseEntity
+    public class AdditionalService : BaseEntity
     {
-        public int StepOrder { get; set; }
-        public string StepDescription { get; set; }
+        public string Name { get; set; }
         [ForeignKey("Service")]
-
-        public Guid ServiceId { get; set; }
+        public Guid CleaningServiceId { get; set; }
+        public double Amount { get; set; }
+        public bool IsActive { get; set; }
         public CleaningService Service { get; set; }
-
     }
-
 }
