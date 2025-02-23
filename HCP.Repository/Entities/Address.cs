@@ -14,9 +14,6 @@ namespace HCP.Repository.Entities
         [MaxLength(255)]
         public string AddressLine1 { get; set; }
 
-        [MaxLength(255)]
-        public string? AddressLine2 { get; set; }
-
         [Required]
         [MaxLength(100)]
         public string City { get; set; }

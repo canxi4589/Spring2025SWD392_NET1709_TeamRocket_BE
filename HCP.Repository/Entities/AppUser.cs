@@ -23,6 +23,14 @@ namespace HCP.Repository.Entities
         public string? PDF { get; set; }
         public bool Gender { get; set; }
         public double BalanceWallet { get; set; } = 0;
-        public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
+        public ICollection<Booking> Bookings { get; set; }
+        public ICollection<WalletTransaction> WalletTransactions { get; set; }
+        public ICollection<Address> Addresses { get; set; }
+        public ICollection<CleaningService> Services { get; set; }
+
+        //public ICollection<Notification> SentNotifications { get; set; }
+        //public ICollection<Notification> ReceivedNotifications { get; set; }
+
+
     }
 }
