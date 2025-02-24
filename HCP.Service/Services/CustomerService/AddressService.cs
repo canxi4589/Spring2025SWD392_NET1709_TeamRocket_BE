@@ -24,15 +24,19 @@ namespace HCP.Service.Services.CustomerService
         public async Task<List<AddressDTO>> GetAddressByUser(string mail)
         {
             var user = await userManager.FindByEmailAsync(mail);
-            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
-            return adrList.Select(c => new AddressDTO
+            if (user != null) 
             {
-                Address = c.AddressLine1,
-                City = c.City,
-                Province = c.Province,
-                title = c.Title,
-                ZipCode = c.Zipcode
-            }).ToList();
+                var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+                return adrList.Select(c => new AddressDTO
+                {
+                    Address = c.AddressLine1,
+                    City = c.City,
+                    Province = c.Province,
+                    Title = c.Title,
+                    ZipCode = c.Zipcode
+                }).ToList();
+            }
+            return null;
         }
     }
 }

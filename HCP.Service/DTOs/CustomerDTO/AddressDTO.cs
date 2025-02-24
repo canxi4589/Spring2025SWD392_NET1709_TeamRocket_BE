@@ -12,7 +12,7 @@ namespace HCP.Service.DTOs.CustomerDTO
         public string City { get; set; }
         public string Province { get; set; }
         public string ZipCode { get; set; }
-        public string title { get; set; }
+        public string Title { get; set; }
 
     }
 }
