@@ -21,22 +21,17 @@ namespace HCP.Service.Services.CustomerService
             this.userManager = userManager;
         }
 
-        public async Task<List<AddressDTO>> GetAddressByUser(string mail)
+        public async Task<List<AddressDTO>> GetAddressByUser(AppUser user)
         {
-            var user = await userManager.FindByEmailAsync(mail);
-            if (user != null) 
+            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+            return adrList.Select(c => new AddressDTO
             {
-                var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
-                return adrList.Select(c => new AddressDTO
-                {
-                    Address = c.AddressLine1,
-                    City = c.City,
-                    Province = c.Province,
-                    Title = c.Title,
-                    ZipCode = c.Zipcode
-                }).ToList();
-            }
-            return null;
+                Address = c.AddressLine1,
+                City = c.City,
+                Province = c.Province,
+                Title = c.Title,
+                ZipCode = c.Zipcode
+            }).ToList();
         }
     }
 }
