@@ -36,5 +36,16 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<CleaningServiceListDTO>()
             .SetSuccessResponse(list));
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetServiceById(Guid id)
+        {
+            var service = await _cleaningService.GetServiceById(id);
+
+            if (service == null)
+                return NotFound(new AppResponse<ServiceDetailDTO>().SetErrorResponse("Error", "Service not found"));
+
+            return Ok(new AppResponse<ServiceDetailDTO>().SetSuccessResponse(service));
+        }
+
     }
 }
