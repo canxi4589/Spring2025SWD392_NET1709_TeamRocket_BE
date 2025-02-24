@@ -97,5 +97,60 @@ namespace HCP.Service.Services.CleaningService1
 
             return await PaginatedList<CategoryDTO>.CreateAsync(categoryList, pageIndex, pageSize);
         }
+        public async Task<ServiceDetailDTO> GetServiceById(Guid serviceId)
+        {
+            var services = await _unitOfWork.Repository<CleaningService>().ListAsync(
+                filter: c => c.Id == serviceId,
+                includeProperties: query => query
+                    .Include(c => c.Category)
+                    .Include(c => c.ServiceRatings)
+                    .Include(c => c.ServiceImages)
+                    .Include(c => c.ServiceSteps)
+                    .Include(c => c.AdditionalServices)
+                    .Include(c => c.User)
+            );
+
+            var service = services.FirstOrDefault();
+
+            if (service == null)
+                return null;
+
+            return new ServiceDetailDTO
+            {
+                id = service.Id,
+                name = service.ServiceName,
+                numOfBooks = service.Bookings?.Count ?? 0,
+                location = $"{service.City}, {service.Province}",
+                reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
+                numOfReviews = service.ServiceRatings.Count,
+                numOfPics = service.ServiceImages.Count,
+                overview = service.Description,
+                images = service.ServiceImages.Select(i => new ImgDTO { url = i.LinkUrl }).ToList(),
+                steps = service.ServiceSteps.Select(s => s.StepDescription).ToList(),
+                additionalServices = service.AdditionalServices.Select(a => new AdditionalServicedDTO
+                {
+                    id = a.Id,
+                    name = a.Name,
+                    price = a.Amount.ToString("0.0"),
+                }).ToList(),
+                housekeeper = service.User != null
+                    ? new housekeeperDetailDTO
+                    {
+                        id = service.User.Id,
+                        name = service.User.FullName,
+                        //review = service.User.ServiceRatings.Any() ?
+                        //         service.User.ServiceRatings.Average(r => r.Rating).ToString("0.0") : "No reviews",
+                        review = "No Reviews",
+                        avatar = service.User.Avatar,
+                        memberSince = /*service.User..ToString("yyyy-MM-dd")*/"2025-03-12",
+                        address = /*$"{service.User.City}, {service.User.Province}"*/ "HCM,Phu Giao",
+                        email = service.User.Email,
+                        mobile = service.User.PhoneNumber,
+                        numOfServices =1 /*service.User.HousekeeperServices.Count*/
+                    }
+                    : null
+            };
+        }
+
     }
 }

@@ -9,5 +9,6 @@ namespace HCP.Service.Services.CleaningService1
         Task<List<CleaningServiceItemDTO>> GetAllServiceItems();
         Task<PaginatedList<CategoryDTO>> GetAllCategories(int pageIndex, int pageSize);
         Task<CleaningServiceListDTO> GetAllServiceItems(int? pageIndex, int? pageSize);
+        Task<ServiceDetailDTO> GetServiceById(Guid serviceId);
     }
 }
