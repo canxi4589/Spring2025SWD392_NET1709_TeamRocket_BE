@@ -22,7 +22,7 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> GetCustomer()
         {
-            var customer = await _customerService.GetCustomerByIdAsync(User);
+            var customer = await _customerService.GetCustomerAsync(User);
 
             if (customer == null)
             {
@@ -36,11 +36,11 @@ namespace HomeCleaningService.Controllers
             return Ok(successResponse);
         }
         
-        [HttpGet("Profile")]
+        [HttpGet("profile")]
         [Authorize]
         public async Task<IActionResult> GetCustomerProfile()
         {
-            var customer = await _customerService.GetCustomerProfileById(User);
+            var customer = await _customerService.GetCustomerProfile(User);
 
             if (customer == null)
             {
@@ -54,7 +54,7 @@ namespace HomeCleaningService.Controllers
             return Ok(successResponse);
         }
 
-        [HttpPut("Profile")]
+        [HttpPut("profile")]
         [Authorize] 
         public async Task<IActionResult> UpdateCustomerProfile([FromBody] UpdateCusProfileDto customer)
         {

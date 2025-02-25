@@ -27,6 +27,11 @@ namespace HCP.Repository.GenericRepository
             await _context.Set<T>().AddAsync(entity);
         }
 
+        public async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            await _context.Set<T>().AddRangeAsync(entities);
+        }
+
         public int Count()
         {
             return _context.Set<T>().Count();
@@ -149,6 +154,11 @@ namespace HCP.Repository.GenericRepository
                 query = orderBy(query);
             }
             return await query.ToListAsync();
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
         }
 
         public void Update(T entity)

@@ -23,10 +23,10 @@ namespace HCP.Service.Services.CustomerService
             _userManager = userManager;
         }
 
-        public async Task<AppUser?> GetCustomerByIdAsync(ClaimsPrincipal userClaims) 
+        public async Task<AppUser?> GetCustomerAsync(ClaimsPrincipal userClaims) 
             => await _userManager.FindByIdAsync(userClaims.FindFirst("id")?.Value);
 
-        public async Task<CustomerProfileDTO?> GetCustomerProfileById(ClaimsPrincipal userClaims)
+        public async Task<CustomerProfileDTO?> GetCustomerProfile(ClaimsPrincipal userClaims)
         {
             var user = await _userManager.FindByIdAsync(userClaims.FindFirst("id")?.Value);
             return new CustomerProfileDTO
