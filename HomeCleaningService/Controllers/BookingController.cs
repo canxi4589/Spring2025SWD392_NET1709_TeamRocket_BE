@@ -3,6 +3,7 @@ using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace HomeCleaningService.Controllers
             _customerService = customerService;
         }
         [HttpGet("bookingHistory")]
+        [Authorize]
         public async Task<IActionResult> GetAllBookingByUser()
         {
             var user = await _customerService.GetCustomerByIdAsync(User);
@@ -32,6 +34,7 @@ namespace HomeCleaningService.Controllers
             return NotFound();
         }
         [HttpGet("bookingDetail")]
+        [Authorize]
         public async Task<IActionResult> GetBookingDetailById(Guid id)
         {
             var bookingDetail = await _bookingService.GetBookingDetailById(id);
