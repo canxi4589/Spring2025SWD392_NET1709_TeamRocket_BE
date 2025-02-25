@@ -1,6 +1,7 @@
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
 using HCP.Service.Services;
+using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.RequestService;
@@ -104,6 +105,8 @@ builder.Services.AddScoped<ITokenHelper, TokenHelper>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICleaningService1,CleaningService1>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IHandleRequestService, HandleRequestService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
