@@ -3,6 +3,7 @@ using HCP.Repository.Entities;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpGet("customer")]
+        [Authorize]
         public async Task<IActionResult> getAddressByCustomer()
         {
             var user = await _customerService.GetCustomerByIdAsync(User);
