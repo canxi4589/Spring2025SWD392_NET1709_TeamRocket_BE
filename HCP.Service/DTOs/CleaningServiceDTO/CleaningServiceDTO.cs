@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HCP.Service.DTOs.CleaningServiceDTO
@@ -71,4 +72,32 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public housekeeperDetailDTO housekeeper {  get; set; }
 
      }
+    
+    public class ServiceDetailWithStatusDTO
+    {
+        public Guid id { get; set; }
+        public string name { get; set; }
+        public string status { get; set; }
+        public int numOfBooks {  get; set; }
+        public string location { get;set; }
+        public decimal reviews {  get; set; }
+        public int numOfReviews {  get; set; }
+        public int numOfPics { get; set; }
+        public string overview { get; set; }
+        public List<ImgDTO> images { get; set; }
+        public List<string> steps { get; set; }
+        public List<AdditionalServicedDTO> additionalServices { get; set; }
+        public housekeeperDetailDTO housekeeper {  get; set; }
+
+     }
+
+    public class ServiceStatusUpdateDto
+    {
+        [JsonPropertyName("service_id")]
+        public Guid ServiceId { get; set; }
+
+        [JsonPropertyName("is_approve")]
+        public bool IsApprove { get; set; }   // True = "active", False = "rejected"
+    }
+
 }

@@ -1,5 +1,7 @@
-﻿using HCP.Service.DTOs.CleaningServiceDTO;
+﻿using HCP.Repository.Entities;
+using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Services.ListService;
+using System.Security.Claims;
 
 namespace HCP.Service.Services.CleaningService1
 {
@@ -10,5 +12,7 @@ namespace HCP.Service.Services.CleaningService1
         Task<PaginatedList<CategoryDTO>> GetAllCategories(int pageIndex, int pageSize);
         Task<CleaningServiceListDTO> GetAllServiceItems(int? pageIndex, int? pageSize);
         Task<ServiceDetailDTO> GetServiceById(Guid serviceId);
+        Task<List<ServiceDetailWithStatusDTO>> GetServiceByUser(ClaimsPrincipal userClaims);
+        Task<CleaningService?> CreateCleaningServiceAsync(CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims);
     }
 }
