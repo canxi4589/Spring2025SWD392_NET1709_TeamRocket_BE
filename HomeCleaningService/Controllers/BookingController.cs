@@ -25,7 +25,7 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> GetAllBookingByUser()
         {
-            var user = await _customerService.GetCustomerByIdAsync(User);
+            var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
                 var list = await _bookingService.GetBookingByUser(user);
