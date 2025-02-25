@@ -11,7 +11,6 @@ namespace HCP.Repository.Entities
     {
         public string ServiceName { get; set; }
         [ForeignKey("Category")]
-
         public Guid CategoryId { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }

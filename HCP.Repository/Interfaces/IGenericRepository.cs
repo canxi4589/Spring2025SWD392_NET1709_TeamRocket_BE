@@ -38,5 +38,7 @@ namespace HCP.Repository.Interfaces
             Func<IQueryable<T>, IIncludableQueryable<T, object>>? includeProperties = null
         );
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
+        Task AddRangeAsync(IEnumerable<T> entities);
+        Task<int> SaveChangesAsync();
     }
 }
