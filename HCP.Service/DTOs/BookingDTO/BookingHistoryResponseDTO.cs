@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HCP.Service.DTOs.CleaningServiceDTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,12 +15,18 @@ namespace HCP.Service.DTOs.BookingDTO
         public string Status { get; set; }
         public decimal TotalPrice { get; set; }
         public string Note { get; set; }
-        public string City { get; set; }
-        public string Province { get; set; }
-        public string AddressLine { get; set; }
+        public string Location { get; set; }
         public string ServiceName { get; set; }
         public double CleaningServiceDuration { get; set; }
         public Guid BookingId { get; set; }
+    }
+    public class BookingHistoryResponseListDTO
+    {
+        public List<BookingHistoryResponseDTO> Items { get; set; }
+        public int totalCount { get; set; }
+        public int totalPages { get; set; }
+        public bool hasNext { get; set; }
+        public bool hasPrevious { get; set; }
     }
     public class BookingHistoryDetailResponseDTO
     {
@@ -30,9 +37,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public string Status { get; set; }
         public decimal TotalPrice { get; set; }
         public string Note { get; set; }
-        public string City { get; set; }
-        public string Province { get; set; }
-        public string AddressLine { get; set; }
+        public string Location { get; set; }
         public string ServiceName { get; set; }
         public List<string> AdditionalServiceName { get; set; }
         public DateTime PaymentDate { get; set; }
