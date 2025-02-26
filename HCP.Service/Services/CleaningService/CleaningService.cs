@@ -115,10 +115,13 @@ namespace HCP.Service.Services.CleaningService1
             );
 
             var service = services.FirstOrDefault();
-
             if (service == null)
                 return null;
-
+            var user =await _userManager.FindByIdAsync(service.UserId);
+            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == user.Id && c.IsDefault);
+            var service1 = await _unitOfWork.Repository<CleaningService>().ListAsync(filter: c => c.UserId == user.Id,
+                orderBy: query => query.OrderByDescending(u => u.Id)
+);
             return new ServiceDetailDTO
             {
                 id = service.Id,
@@ -137,23 +140,47 @@ namespace HCP.Service.Services.CleaningService1
                     name = a.Name,
                     price = a.Amount.ToString("0.0"),
                 }).ToList(),
-                housekeeper = service.User != null
-                    ? new housekeeperDetailDTO
-                    {
-                        id = service.User.Id,
-                        name = service.User.FullName,
-                        //review = service.User.ServiceRatings.Any() ?
-                        //         service.User.ServiceRatings.Average(r => r.Rating).ToString("0.0") : "No reviews",
-                        review = "No Reviews",
-                        avatar = service.User.Avatar,
-                        memberSince = /*service.User..ToString("yyyy-MM-dd")*/"2025-03-12",
-                        address = /*$"{service.User.City}, {service.User.Province}"*/ "HCM,Phu Giao",
-                        email = service.User.Email,
-                        mobile = service.User.PhoneNumber,
-                        numOfServices = service.User.Services?.Count ?? 0
-                    }
-                    : null
+                housekeeper =
+                     new housekeeperDetailDTO
+                     {
+                         id = service.User.Id,
+                         name = service.User.FullName,
+                         //review = service.User.ServiceRatings.Any() ?
+                         //         service.User.ServiceRatings.Average(r => r.Rating).ToString("0.0") : "No reviews",
+                         review = "No Reviews",
+                         avatar = service.User.Avatar,
+                         memberSince = /*service.User..ToString("yyyy-MM-dd")*/"2025-03-12",
+                         address = $"{address.City}, {address.Province}",
+                         email = service.User.Email,
+                         mobile = service.User.PhoneNumber,
+                         numOfServices = service1.Count()
+                     }
             };
+        }
+        public async Task<List<ServiceTimeSlotDTO1>> GetAllServiceTimeSlot(Guid serviceId, DateTime targetDate, string dayOfWeek)
+        {
+            var slots = await _unitOfWork.Repository<ServiceTimeSlot>().ListAsync(filter: s =>
+                s.ServiceId == serviceId && s.DayOfWeek == dayOfWeek, orderBy: b => b.OrderBy(c => c.StartTime)
+            );
+
+            var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(filter: b =>
+                b.CleaningServiceId == serviceId &&
+                b.PreferDateStart == targetDate, orderBy: c => c.OrderBy(c => c.Id)
+            );
+
+            var availableSlots = await Task.WhenAll(slots.Select(async slot =>
+            {
+                bool isAvailable = await IsTimeSlotAvailable(serviceId, targetDate, slot.StartTime, slot.EndTime);
+                return new ServiceTimeSlotDTO1
+                {
+                    Id = slot.Id,
+                    TimeStart = slot.StartTime,
+                    TimeEnd = slot.EndTime,
+                    DayOfWeek = slot.DayOfWeek
+                };
+            }));
+
+            return availableSlots.Where(slot => slot != null).ToList();
         }
 
         public async Task<List<ServiceDetailWithStatusDTO>> GetServiceByUser(ClaimsPrincipal userClaims)
@@ -296,6 +323,16 @@ namespace HCP.Service.Services.CleaningService1
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
             return newService;
+        }
+        public async Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            var isBooked = await _unitOfWork.Repository<Booking>().ExistsAsync(
+                b => b.CleaningServiceId == serviceId &&
+                     b.PreferDateStart == targetDate &&
+                     ((b.TimeStart <= endTime && b.TimeEnd >= startTime) && b.Status == "OnGoing") 
+            );
+
+            return !isBooked;
         }
     }
 }

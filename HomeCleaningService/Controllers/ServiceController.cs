@@ -1,5 +1,7 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.Integrations.BlobStorage;
+using HCP.Service.Services;
 using HCP.Service.Services.CleaningService1;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Identity;
@@ -13,10 +15,12 @@ namespace HomeCleaningService.Controllers
     {
         private readonly ICleaningService1 _cleaningService;
         private readonly UserManager<AppUser> _userManager;
-        public ServiceController(ICleaningService1 cleaningService, UserManager<AppUser> userManager)
+        private readonly IBlobStorageService _blobStorageService;
+        public ServiceController(ICleaningService1 cleaningService, UserManager<AppUser> userManager, IBlobStorageService blobStorageService)
         {
             _cleaningService = cleaningService;
             _userManager = userManager;
+            _blobStorageService = blobStorageService;
         }
 
         [HttpGet("Categories")]
@@ -74,6 +78,35 @@ namespace HomeCleaningService.Controllers
                 .SetSuccessResponse(createdService);
             return Ok(successResponse);
         }
+        [HttpPost("uploadMultiple")]
+        public async Task<IActionResult> UploadFiles([FromForm] List<IFormFile> files)
+        {
+            var response = new AppResponse<List<string>>();
+
+            if (files == null || files.Count == 0)
+            {
+                return BadRequest(response.SetErrorResponse("Files", "No files uploaded."));
+            }
+
+            foreach (var file in files)
+            {
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    return BadRequest(response.SetErrorResponse("FileSize", $"File {file.FileName} exceeds the size limit of 5 MB."));
+                }
+            }
+
+            try
+            {
+                var sasUrls = await _blobStorageService.UploadFilesAsync(files);
+                return Ok(response.SetSuccessResponse(sasUrls, "Upload", "Files uploaded successfully!"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, response.SetErrorResponse("Exception", ex.Message));
+            }
+        }
+
 
     }
 }

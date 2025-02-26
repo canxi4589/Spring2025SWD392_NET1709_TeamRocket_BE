@@ -1,5 +1,6 @@
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
+using HCP.Service.Integrations.BlobStorage;
 using HCP.Service.Services;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CleaningService1;
@@ -109,9 +110,9 @@ builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IHandleRequestService, HandleRequestService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IBlobStorageService,BlobStorageService>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 
-builder.Services.AddSingleton<BlobStorageService>();
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.
