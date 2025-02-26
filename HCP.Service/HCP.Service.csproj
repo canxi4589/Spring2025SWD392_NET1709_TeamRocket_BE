@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Middlewares\" />
-    <Folder Include="Integrations\" />
   </ItemGroup>
 
   <ItemGroup>

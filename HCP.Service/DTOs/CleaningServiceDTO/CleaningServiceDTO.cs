@@ -100,4 +100,11 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public bool IsApprove { get; set; }   // True = "active", False = "rejected"
     }
 
+    public class ServiceTimeSlotDTO1
+    {
+        public Guid Id { get; set; }
+        public TimeSpan TimeStart { get; set; }
+        public TimeSpan TimeEnd { get; set; }
+        public string DayOfWeek {  get; set; }
+    }
 }

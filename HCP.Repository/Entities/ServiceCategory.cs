@@ -12,6 +12,7 @@ namespace HCP.Repository.Entities
         public string PictureUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        //public string Description { get; set; }
 
         // Navigation properties
         public ICollection<CleaningService> CleaningServices { get; set; }

@@ -1,4 +1,5 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CleaningServiceDTO;
@@ -68,13 +69,13 @@ namespace HCP.Service.Services.BookingService
             if (booking == null)
             {
                 throw new Exception("Booking not found");
-            }
+        }
             var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? "Unknown Service").ToList();
 
             var firstPayment = booking.Payments?.FirstOrDefault(); // Avoid multiple calls
-
+        
             return new BookingHistoryDetailResponseDTO
             {
                 BookingId = booking.Id,

@@ -16,8 +16,8 @@ namespace HCP.Repository.Entities
         public string Status { get; set; }
         public decimal TotalPrice { get; set; }
         public DateTime? CompletedAt { get; set; }
-        public int Rating { get; set; }
-        public int Feedback {  get; set; }
+        public double? Rating { get; set; }
+        public string? Feedback {  get; set; }
 
         [ForeignKey("Customer")]
         public string CustomerId { get; set; }
