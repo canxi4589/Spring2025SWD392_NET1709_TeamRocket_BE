@@ -25,7 +25,7 @@ namespace HomeCleaningService.Controllers
             _customerService = customerService;
         }
 
-        [HttpGet("customer")]
+        [HttpGet()]
         [Authorize]
         public async Task<IActionResult> getAddressByCustomer()
         {
@@ -34,6 +34,40 @@ namespace HomeCleaningService.Controllers
             {
                 var list = await _addressService.GetAddressByUser(user);
                 return Ok(new AppResponse<List<AddressDTO>>().SetSuccessResponse(list));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+        [HttpPost()]
+        [Authorize]
+        public async Task<IActionResult> createAddress(CreataAddressDTO creataAddressDTO)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if(user != null)
+            {
+                var address = await _addressService.CreateAddress(user, creataAddressDTO);
+                if (address != null)
+                {
+                    var successResponse = new AppResponse<AddressDTO>().SetSuccessResponse(address);
+                    return Ok(successResponse);
+                }
+                return BadRequest(new AppResponse<string>().SetErrorResponse("Error", "Failed to create address"));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+        [HttpPut()]
+        [Authorize]
+        public async Task<IActionResult> updateAddress(UpdateAddressDTO updateAddressDTO)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var address = await _addressService.UpdateAddress(user, updateAddressDTO);
+                if (address != null)
+                {
+                    var successResponse = new AppResponse<AddressDTO>().SetSuccessResponse(address);
+                    return Ok(successResponse);
+                }
+                return BadRequest(new AppResponse<string>().SetErrorResponse("Error", "Failed to update address"));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
         }

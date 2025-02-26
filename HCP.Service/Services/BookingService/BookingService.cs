@@ -36,7 +36,7 @@ namespace HCP.Service.Services.BookingService
                 Status = c.Status,
                 TotalPrice = c.TotalPrice,
                 Note = c.Note,
-                Location = c.AddressLine + " " + c.Province + " " + c.City,
+                Location = c.AddressLine + ", " + c.Province + ", " + c.City,
                 ServiceName = c.CleaningService.ServiceName,
                 CleaningServiceDuration = c.CleaningService.Duration
             });

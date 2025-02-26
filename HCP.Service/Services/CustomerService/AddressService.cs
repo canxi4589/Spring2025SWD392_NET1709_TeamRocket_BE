@@ -26,12 +26,89 @@ namespace HCP.Service.Services.CustomerService
             var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
             return adrList.Select(c => new AddressDTO
             {
+                Id = c.Id,
+                IsDefault = c.IsDefault,
                 Address = c.AddressLine1,
                 City = c.City,
                 Province = c.Province,
                 Title = c.Title,
                 ZipCode = c.Zipcode
             }).ToList();
+        }
+        public async Task<AddressDTO> CreateAddress(AppUser user, CreataAddressDTO addressDTO)
+        {
+
+            var addresses = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+            if (addresses.Count() > 9)
+            {
+                throw new Exception("You can only have 10 addresses at the same time");
+            }
+            if (addressDTO.IsDefault)
+            {
+                foreach (var adr in addresses)
+                {
+                    adr.IsDefault = false;
+                    _unitOfWork.Repository<Address>().Update(adr);
+                }
+            }
+            var address = new Address
+            {
+                AddressLine1 = addressDTO.Address,
+                City = addressDTO.City,
+                Province = addressDTO.Province,
+                Zipcode = addressDTO.Zipcode,
+                IsDefault = addressDTO.IsDefault,
+                Title = addressDTO.Title,
+                UserId = user.Id,
+                User = user
+            };
+            await _unitOfWork.Repository<Address>().AddAsync(address);
+            await _unitOfWork.Repository<Address>().SaveChangesAsync();
+            return new AddressDTO
+            {
+                Id = address.Id,
+                Address = address.AddressLine1,
+                City = address.City,
+                Province = address.Province,
+                Title = address.Title,
+                ZipCode = address.Zipcode,
+                IsDefault = address.IsDefault
+            };
+        }
+        public async Task<AddressDTO> UpdateAddress(AppUser user, UpdateAddressDTO addressDTO)
+        {
+            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.Id.Equals(addressDTO.Id));
+            if (address == null)
+            {
+                throw new Exception("Address not found");
+            }
+            if (addressDTO.IsDefault)
+            {
+                var addresses = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+                foreach (var adr in addresses)
+                {
+                    adr.IsDefault = false;
+                    _unitOfWork.Repository<Address>().Update(adr);
+                }
+            }
+            address.AddressLine1 = addressDTO.Address;
+            address.City = addressDTO.City;
+            address.Province = addressDTO.Province;
+            address.Zipcode = addressDTO.Zipcode;
+            address.IsDefault = addressDTO.IsDefault;
+            address.Title = addressDTO.Title;
+            _unitOfWork.Repository<Address>().Update(address);
+            await _unitOfWork.Repository<Address>().SaveChangesAsync();
+            return new AddressDTO
+            {
+                Id = address.Id,
+                Address = address.AddressLine1,
+                City = address.City,
+                Province = address.Province,
+                Title = address.Title,
+                ZipCode = address.Zipcode,
+                IsDefault = address.IsDefault
+            };
         }
     }
 }
