@@ -1,8 +1,12 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
+using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,10 +24,10 @@ namespace HCP.Service.Services.BookingService
             _unitOfWork = unitOfWork;
             this.userManager = userManager;
         }
-        public async Task<List<BookingHistoryResponseDTO>> GetBookingByUser(AppUser user)
+        public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize)
         {
-            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user);
-            return bookingHistoryList.Select(c => new BookingHistoryResponseDTO
+            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c=>c.CleaningService);
+            var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
             {
                 BookingId = c.Id,
                 PreferDateStart = c.PreferDateStart,
@@ -32,12 +36,31 @@ namespace HCP.Service.Services.BookingService
                 Status = c.Status,
                 TotalPrice = c.TotalPrice,
                 Note = c.Note,
-                City = c.City,
-                Province = c.Province,
-                AddressLine = c.AddressLine,
+                Location = c.AddressLine + " " + c.Province + " " + c.City,
                 ServiceName = c.CleaningService.ServiceName,
                 CleaningServiceDuration = c.CleaningService.Duration
-            }).ToList();
+            });
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = await PaginatedList<BookingHistoryResponseDTO>.CreateAsync(bookingList, 1, bookingList.Count());
+                return new BookingHistoryResponseListDTO
+                {
+                    Items = temp1,
+                    hasNext = temp1.HasNextPage,
+                    hasPrevious = temp1.HasPreviousPage,
+                    totalCount = temp1.TotalCount,
+                    totalPages = temp1.TotalPages,
+                };
+            }
+            var temp2 = await PaginatedList<BookingHistoryResponseDTO>.CreateAsync(bookingList, (int)pageIndex, (int)pageSize);
+            return new BookingHistoryResponseListDTO
+            {
+                Items = temp2,
+                hasNext = temp2.HasNextPage,
+                hasPrevious = temp2.HasPreviousPage,
+                totalCount = temp2.TotalCount,
+                totalPages = temp2.TotalPages,
+            };
         }
         public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Guid id)
         {
@@ -61,10 +84,8 @@ namespace HCP.Service.Services.BookingService
                 Status = booking.Status,
                 TotalPrice = booking.TotalPrice,
                 Note = booking.Note,
-                City = booking.City,
-                Province = booking.Province,
-                AddressLine = booking.AddressLine,
-                ServiceName = booking.CleaningService?.ServiceName ?? "Service Not Available",
+                Location = booking.AddressLine + " " + booking.Province + " " + booking.City,
+                ServiceName = booking.CleaningService?.ServiceName ?? "No Service Available",
                 AdditionalServiceName = additionalServiceNames,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
@@ -72,7 +93,6 @@ namespace HCP.Service.Services.BookingService
                 CleaningServiceDuration = booking.CleaningService?.Duration ?? 0
             };
         }
-
     }
 }
 

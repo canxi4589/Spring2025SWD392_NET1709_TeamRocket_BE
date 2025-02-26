@@ -29,7 +29,7 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> getAddressByCustomer()
         {
-            var user = await _customerService.GetCustomerByIdAsync(User);
+            var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
                 var list = await _addressService.GetAddressByUser(user);
