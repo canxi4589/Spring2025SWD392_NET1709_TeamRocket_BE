@@ -1,4 +1,5 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Services.ListService;
@@ -236,7 +237,7 @@ namespace HCP.Service.Services.CleaningService1
             }).ToList();
         }
 
-        public async Task<CleaningService?> CreateCleaningServiceAsync(CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims)
+        public async Task<CreateCleaningServiceDTO?> CreateCleaningServiceAsync(CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst("id")?.Value;
             if (userId == null) return null;
@@ -246,7 +247,7 @@ namespace HCP.Service.Services.CleaningService1
                 ServiceName = dto.ServiceName,
                 CategoryId = dto.CategoryId,
                 Description = dto.Description,
-                Status = "Pending",
+                Status = ServiceStatus.Pending.ToString(),
                 Rating = 0,
                 RatingCount = 0,
                 Price = dto.Price,
@@ -311,10 +312,10 @@ namespace HCP.Service.Services.CleaningService1
                         ServiceId = newService.Id,
                         StartTime = timeSlotDTO.StartTime,
                         EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(newService.Duration)),
-                        DateStart = timeSlotDTO.DateStart,
+                        DateStart = null,                                                               // sẽ xóa trong db sau
                         DayOfWeek = timeSlotDTO.DayOfWeek,
-                        IsBook = false,
-                        Status = "Active"
+                        IsBook = false,                                                                //sẽ xóa trong db sau
+                        Status = ServiceStatus.Active.ToString()
                     });
                 }
 
@@ -322,14 +323,15 @@ namespace HCP.Service.Services.CleaningService1
             }
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
-            return newService;
+            return dto;
         }
+
         public async Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime)
         {
             var isBooked = await _unitOfWork.Repository<Booking>().ExistsAsync(
                 b => b.CleaningServiceId == serviceId &&
                      b.PreferDateStart == targetDate &&
-                     ((b.TimeStart <= endTime && b.TimeEnd >= startTime) && b.Status == "OnGoing") 
+                     ((b.TimeStart <= endTime && b.TimeEnd >= startTime) && b.Status == BookingStatus.OnGoing.ToString()) 
             );
 
             return !isBooked;
