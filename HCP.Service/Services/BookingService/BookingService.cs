@@ -77,14 +77,13 @@ namespace HCP.Service.Services.BookingService
                 totalPages = temp2.TotalPages,
             };
         }
-        public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Guid id)
+        public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Booking booking)
         {
-            var booking = _unitOfWork.Repository<Booking>().GetById(id);
             if (booking == null)
             {
                 throw new Exception("Booking not found");
             }
-            var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == id).ToList();
+            var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == booking.Id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? "Unknown Service").ToList();
 
@@ -100,7 +99,7 @@ namespace HCP.Service.Services.BookingService
                 TotalPrice = booking.TotalPrice,
                 Note = booking.Note,
                 Location = booking.AddressLine + " " + booking.Province + " " + booking.City,
-                ServiceName = booking.CleaningService?.ServiceName ?? "No Service Available",
+                ServiceName = booking.CleaningService?.ServiceName ?? "Service Not Available",
                 AdditionalServiceName = additionalServiceNames,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
