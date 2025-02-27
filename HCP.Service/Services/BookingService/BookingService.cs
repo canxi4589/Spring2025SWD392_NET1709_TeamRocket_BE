@@ -122,7 +122,7 @@ namespace HCP.Service.Services.BookingService
                 CustomerPhoneNumber = customer.PhoneNumber,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
-                PaymentStatus = firstPayment.Status,
+                PaymentStatus = firstPayment?.Status ?? "Not found",
                 CleaningServiceDuration = booking.CleaningService.Duration
             };
         }
