@@ -24,12 +24,12 @@ namespace HomeCleaningService.Controllers
         }
         [HttpGet("bookingHistory")]
         [Authorize]
-        public async Task<IActionResult> GetAllBookingByUser(int? pageIndex, int? pageSize)
+        public async Task<IActionResult> GetAllBookingByUser(int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
-                var list = await _bookingService.GetBookingByUser(user, pageIndex, pageSize);
+                var list = await _bookingService.GetBookingByUser(user, pageIndex, pageSize, status, day, month, year);
                 return Ok(new AppResponse<BookingHistoryResponseListDTO>().SetSuccessResponse(list));
             }
             return NotFound();

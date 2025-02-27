@@ -25,9 +25,15 @@ namespace HCP.Service.Services.BookingService
             _unitOfWork = unitOfWork;
             this.userManager = userManager;
         }
-        public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize)
+        public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
-            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c=>c.CleaningService);
+            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c=>c.CleaningService).OrderByDescending(c=>c.PreferDateStart);
+            if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
+            if (status?.Equals("On-going", StringComparison.OrdinalIgnoreCase) ?? false && day.HasValue && month.HasValue && year.HasValue)
+            {
+                var targetDate = new DateTime(year.Value, month.Value, day.Value);
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.PreferDateStart.Date == targetDate);
+            }
             var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
             {
                 BookingId = c.Id,
@@ -49,7 +55,7 @@ namespace HCP.Service.Services.BookingService
                     Items = temp1,
                     hasNext = temp1.HasNextPage,
                     hasPrevious = temp1.HasPreviousPage,
-                    totalCount = temp1.TotalCount,
+                    totalCount = bookingList.Count(),
                     totalPages = temp1.TotalPages,
                 };
             }
@@ -59,7 +65,7 @@ namespace HCP.Service.Services.BookingService
                 Items = temp2,
                 hasNext = temp2.HasNextPage,
                 hasPrevious = temp2.HasPreviousPage,
-                totalCount = temp2.TotalCount,
+                totalCount = bookingList.Count(),
                 totalPages = temp2.TotalPages,
             };
         }

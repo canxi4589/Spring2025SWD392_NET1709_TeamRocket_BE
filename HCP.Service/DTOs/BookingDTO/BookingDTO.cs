@@ -22,9 +22,4 @@ namespace HCP.Service.DTOs.BookingDTO
         public string Province { get; set; }
         public string AddressLine { get; set; }
     }
-    public class BookingRequestDTO
-    {
-
-    }
-
 }

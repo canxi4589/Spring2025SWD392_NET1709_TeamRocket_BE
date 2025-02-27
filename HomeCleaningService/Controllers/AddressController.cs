@@ -37,6 +37,21 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
         }
+
+        [HttpGet("paging")]
+        [Authorize]
+        public async Task<IActionResult> getAddressByCustomerPaging(int? pageIndex, int? pageSize)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var list = await _addressService.GetAddressByUserPaging(user, pageIndex, pageSize);
+                return Ok(new AppResponse<GetAddressListDTO>().SetSuccessResponse(list));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+
+
         [HttpPost()]
         [Authorize]
         public async Task<IActionResult> createAddress(CreataAddressDTO creataAddressDTO)
