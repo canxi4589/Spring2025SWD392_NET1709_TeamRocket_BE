@@ -77,17 +77,30 @@ namespace HCP.Service.Services.BookingService
                 totalPages = temp2.TotalPages,
             };
         }
-        public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Booking booking)
+        public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Booking input)
         {
+            var bookings = await _unitOfWork.Repository<Booking>().ListAsync(
+                filter: c => c.Id == input.Id,
+                includeProperties: query => query
+                    .Include(c => c.CleaningService)
+                    .Include(c => c.Payments)
+                    .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
+                    .Include(c => c.Customer)
+                    .Include(c => c.CleaningService.User)
+            );
+
+            var booking = bookings.FirstOrDefault();
             if (booking == null)
             {
                 throw new Exception("Booking not found");
             }
+            //var list = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Id == booking.Id).Include(c => c.CleaningService).Include(c => c.Payments).ToList();
             var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == booking.Id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? "Unknown Service").ToList();
-
-            var firstPayment = booking.Payments?.FirstOrDefault(); // Avoid multiple calls
+            var firstPayment = booking.Payments.FirstOrDefault();
+            var customer = await userManager.FindByIdAsync(booking.CustomerId);
+            var housekeeper = await userManager.FindByIdAsync(booking.CleaningService.UserId);
 
             return new BookingHistoryDetailResponseDTO
             {
@@ -99,12 +112,18 @@ namespace HCP.Service.Services.BookingService
                 TotalPrice = booking.TotalPrice,
                 Note = booking.Note,
                 Location = booking.AddressLine + " " + booking.Province + " " + booking.City,
-                ServiceName = booking.CleaningService?.ServiceName ?? "Service Not Available",
+                ServiceName = booking.CleaningService.ServiceName,
                 AdditionalServiceName = additionalServiceNames,
+                HousekeeperName = housekeeper.FullName,
+                HouseKeeperMail = housekeeper.Email,
+                HouseKeeperPhoneNumber = housekeeper.PhoneNumber,
+                CustomerName = customer.FullName,
+                CustomerMail = customer.Email,
+                CustomerPhoneNumber = customer.PhoneNumber,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
-                PaymentStatus = firstPayment?.Status ?? "Pending",
-                CleaningServiceDuration = booking.CleaningService?.Duration ?? 0
+                PaymentStatus = firstPayment.Status,
+                CleaningServiceDuration = booking.CleaningService.Duration
             };
         }
     }

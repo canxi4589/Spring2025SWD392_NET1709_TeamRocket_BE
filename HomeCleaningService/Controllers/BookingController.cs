@@ -45,10 +45,14 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> GetBookingDetailById(Guid id)
         {
             var booking = await _unitOfWork.Repository<Booking>().FindAsync(c=>c.Id == id);
-            var bookingDetail = await _bookingService.GetBookingDetailById(booking);
-            if (bookingDetail != null)
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
             {
-                return Ok(new AppResponse<BookingHistoryDetailResponseDTO>().SetSuccessResponse(bookingDetail));
+                var bookingDetail = await _bookingService.GetBookingDetailById(booking);
+                if (bookingDetail != null)
+                {
+                    return Ok(new AppResponse<BookingHistoryDetailResponseDTO>().SetSuccessResponse(bookingDetail));
+                }
             }
             return NotFound();
         }
