@@ -43,5 +43,21 @@ namespace HCP.Service.Services.RequestService
             return (true, "Service status updated successfully");
         }
 
+        //public async Task<CreateCleaningServiceDTO> GetAllPendingService()
+        //{
+        //    var services = _unitOfWork.Repository<CleaningService>().GetAll().Where(cs => cs.Status == "Pending");
+        //    var pendingServices = new List<CreateCleaningServiceDTO>();
+        //    foreach (var service in services)
+        //    {
+        //        var user = await _userManager.FindByIdAsync(service.UserId);
+        //        var serviceDetail = new CreateCleaningServiceDTO
+        //        {
+        //            AdditionalServices = service.AdditionalServices,
+
+        //        };
+        //        pendingServices.Services.Add(serviceDetail);
+        //    }
+        //    return pendingServices;
+        //}
     }
 }

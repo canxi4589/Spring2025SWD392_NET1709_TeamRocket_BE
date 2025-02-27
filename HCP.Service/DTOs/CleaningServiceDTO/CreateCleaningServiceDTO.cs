@@ -78,8 +78,5 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
 
         [JsonPropertyName("day_of_week")]
         public string DayOfWeek { get; set; }
-
-        [JsonPropertyName("date_start")]
-        public DateTime DateStart { get; set; }
     }
 }
