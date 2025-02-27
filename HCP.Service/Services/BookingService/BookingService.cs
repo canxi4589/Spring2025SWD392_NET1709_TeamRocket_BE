@@ -6,6 +6,7 @@ using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,12 +28,19 @@ namespace HCP.Service.Services.BookingService
         }
         public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
-            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c=>c.CleaningService).OrderByDescending(c=>c.PreferDateStart);
-            if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
-            if (status?.Equals("On-going", StringComparison.OrdinalIgnoreCase) ?? false && day.HasValue && month.HasValue && year.HasValue)
+            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c => c.CleaningService).OrderByDescending(c => c.PreferDateStart);
+            if (status != null)
+            {
+                if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
+                if (status.Equals("On-going"))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status.Equals("On-going"));
+                }
+            }
+            if (day.HasValue && month.HasValue && year.HasValue)
             {
                 var targetDate = new DateTime(year.Value, month.Value, day.Value);
-                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.PreferDateStart.Date == targetDate);
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.PreferDateStart.Day == targetDate.Day && c.PreferDateStart.Month == targetDate.Month && c.PreferDateStart.Year == targetDate.Year);
             }
             var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
             {
@@ -55,7 +63,7 @@ namespace HCP.Service.Services.BookingService
                     Items = temp1,
                     hasNext = temp1.HasNextPage,
                     hasPrevious = temp1.HasPreviousPage,
-                    totalCount = bookingList.Count(),
+                    totalCount = temp1.TotalCount,
                     totalPages = temp1.TotalPages,
                 };
             }
@@ -75,13 +83,13 @@ namespace HCP.Service.Services.BookingService
             if (booking == null)
             {
                 throw new Exception("Booking not found");
-        }
+            }
             var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? "Unknown Service").ToList();
 
             var firstPayment = booking.Payments?.FirstOrDefault(); // Avoid multiple calls
-        
+
             return new BookingHistoryDetailResponseDTO
             {
                 BookingId = booking.Id,
