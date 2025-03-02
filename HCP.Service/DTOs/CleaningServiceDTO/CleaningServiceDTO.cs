@@ -55,6 +55,7 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public Guid id { get; set; }
         public string name { get; set; }
         public string price { get; set; }
+        public string? url { get;set; }
     }
     public class ServiceDetailDTO
     {
@@ -106,5 +107,11 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public TimeSpan TimeStart { get; set; }
         public TimeSpan TimeEnd { get; set; }
         public string DayOfWeek {  get; set; }
+    }
+    public class TimeSLotRequest
+    {
+        public Guid serviceId {  get; set; }
+        public DateTime targetDate {  get; set; }
+        public string dayOfWeek {  get; set; }
     }
 }

@@ -14,6 +14,7 @@ namespace HCP.Repository.Entities
         [ForeignKey("Booking")]
 
         public Guid BookingId { get; set; }
+        //[Column(TypeName = "decimal(18,2)")]
         public double Amount { get; set; }
         public bool IsActive { get; set; }
 

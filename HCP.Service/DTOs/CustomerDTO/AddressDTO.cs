@@ -22,6 +22,7 @@ namespace HCP.Service.DTOs.CustomerDTO
         public string Title { get; set; }
         public bool IsDefault { get; set; } = false;
     }
+
     public class CreataAddressDTO
     {
         [Required]
