@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HCP.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250302084828_UpdateEntities2")]
-    partial class UpdateEntities2
+    [Migration("20250302182410_Entities")]
+    partial class Entities
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +42,9 @@ namespace HCP.Repository.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Url")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -356,6 +359,9 @@ namespace HCP.Repository.Migrations
 
                     b.Property<string>("ServiceName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StaffId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")

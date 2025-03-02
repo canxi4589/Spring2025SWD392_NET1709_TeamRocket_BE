@@ -1,4 +1,6 @@
-﻿using HCP.Service.DTOs.BookingDTO;
+﻿﻿using HCP.Repository.Entities;
+using HCP.Repository.Interfaces;
+using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
@@ -15,21 +17,25 @@ namespace HomeCleaningService.Controllers
     [ApiController]
     public class BookingController : ControllerBase
     {
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IBookingService _bookingService;
         private readonly ICustomerService _customerService;
-        public BookingController(IBookingService bookingService, ICustomerService customerService)
+
+        public BookingController(IUnitOfWork unitOfWork, IBookingService bookingService, ICustomerService customerService)
         {
+            _unitOfWork = unitOfWork;
             _bookingService = bookingService;
             _customerService = customerService;
         }
+
         [HttpGet("bookingHistory")]
         [Authorize]
-        public async Task<IActionResult> GetAllBookingByUser(int? pageIndex, int? pageSize)
+        public async Task<IActionResult> GetAllBookingByUser(int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
-                var list = await _bookingService.GetBookingByUser(user, pageIndex, pageSize);
+                var list = await _bookingService.GetBookingByUser(user, pageIndex, pageSize, status, day, month, year);
                 return Ok(new AppResponse<BookingHistoryResponseListDTO>().SetSuccessResponse(list));
             }
             return NotFound();
@@ -38,13 +44,17 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> GetBookingDetailById(Guid id)
         {
-            var bookingDetail = await _bookingService.GetBookingDetailById(id);
-            if (bookingDetail != null)
+            var booking = await _unitOfWork.Repository<Booking>().FindAsync(c => c.Id == id);
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
             {
-                return Ok(new AppResponse<BookingHistoryDetailResponseDTO>().SetSuccessResponse(bookingDetail));
+                var bookingDetail = await _bookingService.GetBookingDetailById(booking);
+                if (bookingDetail != null)
+                {
+                    return Ok(new AppResponse<BookingHistoryDetailResponseDTO>().SetSuccessResponse(bookingDetail));
+                }
             }
             return NotFound();
         }
-
     }
 }
