@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -96,6 +97,30 @@ namespace HCP.Service.Services.CustomerService
             };
         }
 
+        public async Task<CustomerCheckoutProfile?> GetCustomerCheckoutProfile(ClaimsPrincipal userClaims)
+        {
+            var user = await _userManager.FindByIdAsync(userClaims.FindFirst("id")?.Value);
+            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+            var result = new CustomerCheckoutProfile
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Birthday = user.Birthday,
+            }
+            ;
+            result.addressDTOs = adrList.Select(c => new AddressDTO
+            {
+                Id = c.Id,
+                IsDefault = c.IsDefault,
+                Address = c.AddressLine1,
+                City = c.City,
+                District = c.District,
+                Title = c.Title,
+                PlaceId = c.PlaceId
+            }).ToList();
+           return result;
+        }
 
     }
 }

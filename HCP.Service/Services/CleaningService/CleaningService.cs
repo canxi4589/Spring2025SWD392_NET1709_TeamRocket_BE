@@ -314,7 +314,6 @@ namespace HCP.Service.Services.CleaningService1
                         StartTime = timeSlotDTO.StartTime,
                         EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(newService.Duration)),                                                              
                         DayOfWeek = timeSlotDTO.DayOfWeek,
-                        IsBook = false,                                                               
                         Status = ServiceStatus.Active.ToString()
                     });
                 }
@@ -335,7 +334,6 @@ namespace HCP.Service.Services.CleaningService1
                 });
                 await _unitOfWork.Repository<DistancePricingRule>().AddRangeAsync(distanceRules);
             }
-
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
             return dto;
         }
@@ -350,5 +348,23 @@ namespace HCP.Service.Services.CleaningService1
 
             return !isBooked;
         }
+        public async Task<List<AdditionalServicedDTO>> GetAllAdditonalServicesById(Guid serviceId)
+        {
+            var list = await _unitOfWork.Repository<AdditionalService>().ListAsync(
+                filter: c => c.CleaningServiceId == serviceId && c.IsActive,
+                orderBy: c => c.OrderBy(c => c.Id)
+            );
+
+            var result = list.Select(c => new AdditionalServicedDTO
+            {
+                id = c.Id,
+                name = c.Name,
+                price = c.Amount.ToString("F2"), // Ensures proper price formatting
+                url = /*c.Url */ "Empty"
+            }).ToList();
+
+            return result;
+        }
+
     }
 }
