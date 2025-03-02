@@ -240,7 +240,11 @@ namespace HCP.Service.Services.CleaningService1
         public async Task<CreateCleaningServiceDTO?> CreateCleaningServiceAsync(CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst("id")?.Value;
-            if (userId == null) return null;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User not authenticated");
+            }
+            var user = await _userManager.FindByIdAsync(userId) ?? throw new KeyNotFoundException("User not found");
 
             var newService = new CleaningService
             {
