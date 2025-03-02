@@ -1,3 +1,4 @@
+using Hangfire;
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
 using HCP.Service.Integrations.BlobStorage;
@@ -6,6 +7,7 @@ using HCP.Service.Services;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.CustomerService;
+using HCP.Service.Services.EmailService;
 using HCP.Service.Services.RequestService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -102,6 +104,10 @@ builder.Services.AddCors(options =>
 
 });
 builder.Services.AddHttpClient();
+builder.Services.AddHangfire(config => config
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITokenHelper, TokenHelper>();
