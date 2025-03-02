@@ -37,7 +37,7 @@ namespace HCP.Service.Services.BookingService
                 Status = c.Status,
                 TotalPrice = c.TotalPrice,
                 Note = c.Note,
-                Location = c.AddressLine + ", " + c.Province + ", " + c.City,
+                Location = c.AddressLine + ", " + c.District + ", " + c.City,
                 ServiceName = c.CleaningService.ServiceName,
                 CleaningServiceDuration = c.CleaningService.Duration
             });
@@ -85,7 +85,7 @@ namespace HCP.Service.Services.BookingService
                 Status = booking.Status,
                 TotalPrice = booking.TotalPrice,
                 Note = booking.Note,
-                Location = booking.AddressLine + " " + booking.Province + " " + booking.City,
+                Location = booking.AddressLine + " " + booking.District + " " + booking.City,
                 ServiceName = booking.CleaningService?.ServiceName ?? "No Service Available",
                 AdditionalServiceName = additionalServiceNames,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,

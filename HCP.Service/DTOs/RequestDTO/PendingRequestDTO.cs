@@ -1,51 +1,65 @@
-﻿using HCP.Repository.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace HCP.Service.DTOs.CleaningServiceDTO
+namespace HCP.Service.DTOs.RequestDTO
 {
-    public class CreateCleaningServiceDTO
+    public class PendingRequestDTO
     {
-        [Required]
-        [JsonPropertyName("service_name")]
-        public string ServiceName { get; set; } = "This is Service Name";
+        [JsonPropertyName("service_id")]
+        public Guid ServiceId { get; set; }
 
-        [Required]
+        [JsonPropertyName("service_name")]
+        public string ServiceName { get; set; }
+
         [JsonPropertyName("category_id")]
         public Guid CategoryId { get; set; }
 
-        [JsonPropertyName("description")]
-        public string Description { get; set; } = "This is Description";
+        [JsonPropertyName("category_name")]
+        public string CategoryName { get; set; }
 
-        [Required]
-        [JsonPropertyName("price")]
+        [JsonPropertyName("category_picture_url")]
+        public string PictureUrl { get; set; }
+
+        [JsonPropertyName("service_description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName("service_status")]
+        public string Status { get; set; }
+
+        [JsonPropertyName("service_price")]
         public decimal Price { get; set; }
 
-        [Required]
-        [JsonPropertyName("city")]
-        public string City { get; set; } = "Raumania";
+        [JsonPropertyName("service_city")]
+        public string City { get; set; }
 
-        [Required]
-        [JsonPropertyName("place_id")]
-        public string PlaceId { get; set; } = "Raumania";
+        [JsonPropertyName("service_district")]
+        public string District { get; set; }
 
-        [Required]
-        [JsonPropertyName("province")]
-        public string District { get; set; } = "Binh Thanh";
+        [JsonPropertyName("service_place_id")]
+        public string PlaceId { get; set; }
 
-        [Required]
-        [JsonPropertyName("address_line")]
-        public string AddressLine { get; set; } = "This is Address Line";
+        [JsonPropertyName("service_address")]
+        public string AddressLine { get; set; }
 
-        [Required]
         [JsonPropertyName("duration")]
         public double Duration { get; set; }
+
+        [JsonPropertyName("created_time")]
+        public DateTime CreatedAt { get; set; }
+
+        [JsonPropertyName("updated_time")]
+        public DateTime UpdatedAt { get; set; }
+
+        [JsonPropertyName("user_id")]
+        public string UserId { get; set; }
+
+        [JsonPropertyName("user_name")]
+        public string UserName { get; set; }
 
         public List<AdditionalServiceDTO> AdditionalServices { get; set; } = new();
         public List<ServiceImgDTO> ServiceImages { get; set; } = new();
@@ -82,6 +96,9 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
     {
         [JsonPropertyName("start_time")]
         public TimeSpan StartTime { get; set; }
+
+        [JsonPropertyName("end_time")]
+        public TimeSpan EndTime { get; set; }
 
         [JsonPropertyName("day_of_week")]
         public string DayOfWeek { get; set; }

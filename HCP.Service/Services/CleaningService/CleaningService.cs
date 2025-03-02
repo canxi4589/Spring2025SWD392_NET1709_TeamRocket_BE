@@ -48,7 +48,7 @@ namespace HCP.Service.Services.CleaningService1
                 name = c.ServiceName,
                 category = c.Category.CategoryName,
                 overallRating = c.Rating,
-                location = c.AddressLine + ", " + c.Province+", " + c.City,
+                location = c.AddressLine + ", " + c.District+", " + c.City,
                 price = c.Price,
                 
             }).ToList();
@@ -63,7 +63,7 @@ namespace HCP.Service.Services.CleaningService1
                 category = c.Category.CategoryName,
                 overallRating = c.Rating,
                 price = c.Price,
-                location = c.AddressLine + ", " + c.Province + ", " + c.City
+                location = c.AddressLine + ", " + c.District + ", " + c.City
             });
             if(pageIndex == null || pageSize == null)
             {
@@ -119,7 +119,7 @@ namespace HCP.Service.Services.CleaningService1
             if (service == null)
                 return null;
             var user =await _userManager.FindByIdAsync(service.UserId);
-            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == user.Id && c.IsDefault);
+            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == user.Id && c.IsDefault) ?? new Address();
             var service1 = await _unitOfWork.Repository<CleaningService>().ListAsync(filter: c => c.UserId == user.Id,
                 orderBy: query => query.OrderByDescending(u => u.Id)
 );
@@ -128,7 +128,7 @@ namespace HCP.Service.Services.CleaningService1
                 id = service.Id,
                 name = service.ServiceName,
                 numOfBooks = service.Bookings?.Count ?? 0,
-                location = $"{service.City}, {service.Province}",
+                location = $"{service.City}, {service.District}",
                 reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
                 numOfReviews = service.ServiceRatings.Count,
                 numOfPics = service.ServiceImages.Count,
@@ -151,7 +151,7 @@ namespace HCP.Service.Services.CleaningService1
                          review = "No Reviews",
                          avatar = service.User.Avatar,
                          memberSince = /*service.User..ToString("yyyy-MM-dd")*/"2025-03-12",
-                         address = $"{address.City}, {address.Province}",
+                         address = address.City != null && address.District != null ? $"{address.City}, {address.District}" : string.Empty,
                          email = service.User.Email,
                          mobile = service.User.PhoneNumber,
                          numOfServices = service1.Count()
@@ -207,7 +207,7 @@ namespace HCP.Service.Services.CleaningService1
                 name = service.ServiceName,
                 status = service.Status,
                 numOfBooks = service.Bookings?.Count ?? 0,
-                location = $"{service.City}, {service.Province}",
+                location = $"{service.City}, {service.District}",
                 reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
                 numOfReviews = service.ServiceRatings.Count,
                 numOfPics = service.ServiceImages.Count,
@@ -252,7 +252,8 @@ namespace HCP.Service.Services.CleaningService1
                 RatingCount = 0,
                 Price = dto.Price,
                 City = dto.City,
-                Province = dto.Province,
+                District = dto.District,
+                PlaceId = dto.PlaceId,
                 AddressLine = dto.AddressLine,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -311,15 +312,28 @@ namespace HCP.Service.Services.CleaningService1
                     {
                         ServiceId = newService.Id,
                         StartTime = timeSlotDTO.StartTime,
-                        EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(newService.Duration)),
-                        DateStart = null,                                                               // sẽ xóa trong db sau
+                        EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(newService.Duration)),                                                              
                         DayOfWeek = timeSlotDTO.DayOfWeek,
-                        IsBook = false,                                                                //sẽ xóa trong db sau
+                        IsBook = false,                                                               
                         Status = ServiceStatus.Active.ToString()
                     });
                 }
 
                 await _unitOfWork.Repository<ServiceTimeSlot>().AddRangeAsync(timeSlots);
+            }
+
+            if(dto.ServiceDistanceRule != null)
+            {
+                var distanceRules = dto.ServiceDistanceRule.Select(rule => new DistancePricingRule
+                {
+                    CleaningServiceId = newService.Id,
+                    MinDistance = rule.MinDistance,
+                    MaxDistance = rule.MaxDistance,
+                    BaseFee = rule.BaseFee,
+                    ExtraPerKm = rule.ExtraPerKm,
+                    IsActive = true
+                });
+                await _unitOfWork.Repository<DistancePricingRule>().AddRangeAsync(distanceRules);
             }
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();

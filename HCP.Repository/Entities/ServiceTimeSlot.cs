@@ -11,7 +11,6 @@ namespace HCP.Repository.Entities
     {
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public DateTime? DateStart { get; set; }
         public string DayOfWeek { get; set; }
         public bool IsBook { get; set; }
         public string Status { get; set; }

@@ -18,7 +18,8 @@ namespace HCP.Repository.Entities
         public int RatingCount { get; set; }
         public decimal Price { get; set; }
         public string City { get; set; }
-        public string Province { get; set; }
+        public string District { get; set; }
+        public string PlaceId{ get; set; }
         public string AddressLine { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -35,5 +36,6 @@ namespace HCP.Repository.Entities
         public ICollection<ServiceSteps> ServiceSteps { get; set; }
         public ICollection<ServiceTimeSlot> ServiceTimeSlots { get; set; }
         public ICollection<ServiceRating> ServiceRatings { get; set; }
+        public ICollection<DistancePricingRule> DistancePricingRules { get; set; } = new List<DistancePricingRule>();
     }
 }
