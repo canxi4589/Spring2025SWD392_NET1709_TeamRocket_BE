@@ -25,7 +25,8 @@ namespace HCP.Repository.Entities
         public Guid CleaningServiceId { get; set; }
         public string Note { get; set; }
         public string City { get; set; }
-        public string Province { get; set; }
+        public string District { get; set; }
+        public string PlaceId { get; set; }
         public string AddressLine { get; set; }
         // Navigation properties
         public AppUser Customer { get; set; }

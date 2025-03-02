@@ -1,4 +1,5 @@
 ﻿using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.DTOs.RequestDTO;
 using HCP.Service.Services.RequestService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Http;
@@ -30,6 +31,21 @@ namespace HomeCleaningService.Controllers
             }
 
             return Ok(response.SetSuccessResponse(result.Message));
+        }
+
+        [HttpGet("pending-request")]
+        public async Task<IActionResult> GetAllPendingCreateRequest()
+        {
+            var response = new AppResponse<string>();
+
+            var result = await _handleRequestService.GetPendingCreateServiceRequestsAsync();
+
+            if (result == null)
+            {
+                return BadRequest(response.SetErrorResponse("error", "Something wrong getting Pending Request"));
+            }
+
+            return Ok(new AppResponse<List<PendingRequestDTO>>().SetSuccessResponse(result));
         }
     }
 }

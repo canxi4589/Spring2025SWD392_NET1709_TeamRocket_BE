@@ -17,8 +17,8 @@ namespace HCP.Service.DTOs.CustomerDTO
         [Required]
         public string City { get; set; }
         [Required]
-        public string Province { get; set; }
-        public string ZipCode { get; set; }
+        public string District { get; set; }
+        public string PlaceId { get; set; }
         public string Title { get; set; }
         public bool IsDefault { get; set; } = false;
     }
@@ -34,11 +34,9 @@ namespace HCP.Service.DTOs.CustomerDTO
 
         [Required]
         [MaxLength(100)]
-        public string Province { get; set; }
+        public string District { get; set; }
 
-        [Required]
-        [MaxLength(20)]
-        public string Zipcode { get; set; }
+        public string PlaceId { get; set; }
 
         public bool IsDefault { get; set; } = false;
 
@@ -59,11 +57,9 @@ namespace HCP.Service.DTOs.CustomerDTO
 
         [Required]
         [MaxLength(100)]
-        public string Province { get; set; }
+        public string District { get; set; }
 
-        [Required]
-        [MaxLength(20)]
-        public string Zipcode { get; set; }
+        public string PlaceId{ get; set; }
 
         public bool IsDefault { get; set; } = false;
 

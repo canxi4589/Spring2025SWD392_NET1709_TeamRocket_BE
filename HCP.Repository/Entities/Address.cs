@@ -19,12 +19,11 @@ namespace HCP.Repository.Entities
         public string City { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        public string Province { get; set; }
+        public string PlaceId { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        public string Zipcode { get; set; }
+        [MaxLength(100)]
+        public string District { get; set; }
 
         public bool IsDefault { get; set; } = false;
 

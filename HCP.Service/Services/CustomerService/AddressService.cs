@@ -30,9 +30,9 @@ namespace HCP.Service.Services.CustomerService
                 IsDefault = c.IsDefault,
                 Address = c.AddressLine1,
                 City = c.City,
-                Province = c.Province,
+                District = c.District,
                 Title = c.Title,
-                ZipCode = c.Zipcode
+                PlaceId = c.PlaceId
             }).ToList();
         }
         public async Task<AddressDTO> CreateAddress(AppUser user, CreataAddressDTO addressDTO)
@@ -55,8 +55,8 @@ namespace HCP.Service.Services.CustomerService
             {
                 AddressLine1 = addressDTO.Address,
                 City = addressDTO.City,
-                Province = addressDTO.Province,
-                Zipcode = addressDTO.Zipcode,
+                District = addressDTO.District,
+                PlaceId = addressDTO.PlaceId,
                 IsDefault = addressDTO.IsDefault,
                 Title = addressDTO.Title,
                 UserId = user.Id,
@@ -69,9 +69,9 @@ namespace HCP.Service.Services.CustomerService
                 Id = address.Id,
                 Address = address.AddressLine1,
                 City = address.City,
-                Province = address.Province,
+                District = addressDTO.District,
                 Title = address.Title,
-                ZipCode = address.Zipcode,
+                PlaceId = addressDTO.PlaceId,
                 IsDefault = address.IsDefault
             };
         }
@@ -93,8 +93,8 @@ namespace HCP.Service.Services.CustomerService
             }
             address.AddressLine1 = addressDTO.Address;
             address.City = addressDTO.City;
-            address.Province = addressDTO.Province;
-            address.Zipcode = addressDTO.Zipcode;
+            address.District = addressDTO.District;
+            address.PlaceId = addressDTO.PlaceId;
             address.IsDefault = addressDTO.IsDefault;
             address.Title = addressDTO.Title;
             _unitOfWork.Repository<Address>().Update(address);
@@ -104,9 +104,9 @@ namespace HCP.Service.Services.CustomerService
                 Id = address.Id,
                 Address = address.AddressLine1,
                 City = address.City,
-                Province = address.Province,
+                District = address.District,
                 Title = address.Title,
-                ZipCode = address.Zipcode,
+                PlaceId = address.PlaceId,
                 IsDefault = address.IsDefault
             };
         }

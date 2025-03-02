@@ -394,6 +394,7 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Password reset successful."));
         }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
         {
@@ -408,6 +409,7 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Password reset link sent to your email."));
         }
+
         [HttpPost("testmail")]
         public async Task<IActionResult> TestMail([FromBody] string email)
         {

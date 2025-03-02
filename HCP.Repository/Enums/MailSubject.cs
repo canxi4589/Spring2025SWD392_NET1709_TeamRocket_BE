@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HCP.Repository.Enums
+{
+    public class MailSubject
+    {
+        public string Subject()
+        {
+            return "HCP";
+        }
+    }
+}
