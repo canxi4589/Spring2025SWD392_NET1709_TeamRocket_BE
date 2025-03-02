@@ -1,6 +1,7 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Service.DTOs;
 using HCP.Service.Services;
+using HCP.Service.Services.EmailService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -21,9 +22,11 @@ namespace HomeCleaningService.Controllers
         private readonly ITokenHelper _tokenHelper;
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender;
+        private readonly IEmailSenderService _emailSenderService;
         public string frontendurl;
 
-        public AuthenticationController(ILogger<AuthenticationController> logger, UserManager<AppUser> userManager, ITokenHelper tokenHelper, IConfiguration configuration, IEmailSender emailSender)
+        public AuthenticationController(ILogger<AuthenticationController> logger, UserManager<AppUser> userManager, 
+            ITokenHelper tokenHelper, IConfiguration configuration, IEmailSender emailSender, IEmailSenderService emailSenderService)
         {
             _logger = logger;
             _userManager = userManager;
@@ -31,6 +34,7 @@ namespace HomeCleaningService.Controllers
             _configuration = configuration;
             _emailSender = emailSender;
             frontendurl = configuration["Url:Frontend"] ?? "https://www.youtube.com/";
+            _emailSenderService = emailSenderService;
         }
 
         //[HttpPost("register")]
@@ -180,7 +184,11 @@ namespace HomeCleaningService.Controllers
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmationLink = $"{frontendurl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
-                await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Click <a href='{confirmationLink}'>here</a> to confirm your email.");
+                var lmao = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", user.Email, "https://www.youtube.com/watch?v=pxwm3sqAytE");
+
+                _emailSenderService.SendEmail(user.Email, "Confirm your email", lmao);
+
+                //await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Click <a href='{confirmationLink}'>here</a> to confirm your email.");
 
                 return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Registration successful. Check your email to confirm your account."));
             }
@@ -194,55 +202,52 @@ namespace HomeCleaningService.Controllers
             return BadRequest(new AppResponse<object>().SetErrorResponse(identityErrors));
 
         }
-        //[HttpPost("registerTest")]
-        //public async Task<IActionResult> Register1([FromBody] RegisterDto model)
-        //{
-        //    var stopwatch = Stopwatch.StartNew();
+        [HttpPost("registerTest")]
+        public async Task<IActionResult> Register1([FromBody] RegisterDto model)
+        {
+            var stopwatch = Stopwatch.StartNew();
 
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(new AppResponse<object>().SetErrorResponse("ModelState", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray()));
-        //    }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse("ModelState", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray()));
+            }
 
-        //    stopwatch.Stop();
-        //    Console.WriteLine($"[INFO] Model validation took: {stopwatch.ElapsedMilliseconds} ms");
+            stopwatch.Stop();
+            Console.WriteLine($"[INFO] Model validation took: {stopwatch.ElapsedMilliseconds} ms");
 
-        //    stopwatch.Restart();
-        //    var user = new AppUser { UserName = model.Email, Email = model.Email, PhoneNumber = model.PhoneNumber, FullName = model.FullName };
-        //    var result = await _userManager.CreateAsync(user, model.Password);
-        //    stopwatch.Stop();
-        //    Console.WriteLine($"[INFO] Creating user took: {stopwatch.ElapsedMilliseconds} ms");
+            stopwatch.Restart();
+            var user = new AppUser { UserName = model.Email, Email = model.Email, PhoneNumber = model.PhoneNumber, FullName = model.FullName };
+            var result = await _userManager.CreateAsync(user, model.Password);
+            stopwatch.Stop();
+            Console.WriteLine($"[INFO] Creating user took: {stopwatch.ElapsedMilliseconds} ms");
 
-        //    if (result.Succeeded)
-        //    {
-        //        stopwatch.Restart();
-        //        var customerRole = await _roleManager.FindByNameAsync("Customer");
-        //        if (customerRole != null)
-        //        {
-        //            var userRole = new IdentityUserRole<string> { UserId = user.Id, RoleId = customerRole.Id };
+            if (result.Succeeded)
+            {
+                stopwatch.Restart();
+               
+                stopwatch.Stop();
+                Console.WriteLine($"[INFO] Assigning role took: {stopwatch.ElapsedMilliseconds} ms");
 
-        //        }
-        //        stopwatch.Stop();
-        //        Console.WriteLine($"[INFO] Assigning role took: {stopwatch.ElapsedMilliseconds} ms");
+                stopwatch.Restart();
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                stopwatch.Stop();
+                Console.WriteLine($"[INFO] Generating token took: {stopwatch.ElapsedMilliseconds} ms");
 
-        //        stopwatch.Restart();
-        //        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        //        stopwatch.Stop();
-        //        Console.WriteLine($"[INFO] Generating token took: {stopwatch.ElapsedMilliseconds} ms");
+                stopwatch.Restart();
+                var confirmationLink = $"{frontendurl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+                var lmao = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", user.Email, "https://www.youtube.com/watch?v=pxwm3sqAytE");
 
-        //        stopwatch.Restart();
-        //        var confirmationLink = $"{frontendurl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-        //        await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Click <a href='{confirmationLink}'>here</a> to confirm your email.");
-        //        stopwatch.Stop();
-        //        Console.WriteLine($"[INFO] Sending email took: {stopwatch.ElapsedMilliseconds} ms");
+                _emailSenderService.SendEmail(user.Email, "Confirm your email", lmao);
+                stopwatch.Stop();
+                Console.WriteLine($"[INFO] Sending email took: {stopwatch.ElapsedMilliseconds} ms");
 
-        //        Console.WriteLine($"[INFO] Total registration time: {stopwatch.ElapsedMilliseconds} ms");
+                Console.WriteLine($"[INFO] Total registration time: {stopwatch.ElapsedMilliseconds} ms");
 
-        //        return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Registration successful. Check your email to confirm your account."));
-        //    }
+                return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Registration successful. Check your email to confirm your account."));
+            }
 
-        //    return BadRequest(new AppResponse<object>().SetErrorResponse("IdentityErrors", result.Errors.Select(e => e.Description).ToArray()));
-        //}
+            return BadRequest(new AppResponse<object>().SetErrorResponse("IdentityErrors", result.Errors.Select(e => e.Description).ToArray()));
+        }
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
@@ -394,6 +399,7 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Password reset successful."));
         }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
         {
@@ -408,11 +414,15 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Password reset link sent to your email."));
         }
+
         [HttpPost("testmail")]
         public async Task<IActionResult> TestMail([FromBody] string email)
         {
-            await _emailSender.SendEmailAsync(email, "Confirm your email", $"Click <a href='https://www.youtube.com/watch?v=pxwm3sqAytE'>here</a> to confirm your email.");
+            //await _emailSender.SendEmailAsync(email, "Confirm your email", $"Click <a href='https://www.youtube.com/watch?v=pxwm3sqAytE'>here</a> to confirm your email.");
+            var lmao = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", email, "https://www.youtube.com/watch?v=pxwm3sqAytE");
 
+            _emailSenderService.SendEmail(email, "Confirm your email", lmao);
+            
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Test email sent successfully."));
         }
 

@@ -6,7 +6,6 @@ using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,22 +25,9 @@ namespace HCP.Service.Services.BookingService
             _unitOfWork = unitOfWork;
             this.userManager = userManager;
         }
-        public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
+        public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize)
         {
-            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c => c.CleaningService).OrderByDescending(c => c.PreferDateStart);
-            if (status != null)
-            {
-                if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
-                if (status.Equals("On-going"))
-                {
-                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status.Equals("On-going"));
-                }
-            }
-            if (day.HasValue && month.HasValue && year.HasValue)
-            {
-                var targetDate = new DateTime(year.Value, month.Value, day.Value);
-                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.PreferDateStart.Day == targetDate.Day && c.PreferDateStart.Month == targetDate.Month && c.PreferDateStart.Year == targetDate.Year);
-            }
+            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c=>c.CleaningService);
             var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
             {
                 BookingId = c.Id,
@@ -51,7 +37,7 @@ namespace HCP.Service.Services.BookingService
                 Status = c.Status,
                 TotalPrice = c.TotalPrice,
                 Note = c.Note,
-                Location = c.AddressLine + ", " + c.Province + ", " + c.City,
+                Location = c.AddressLine + ", " + c.District + ", " + c.City,
                 ServiceName = c.CleaningService.ServiceName,
                 CleaningServiceDuration = c.CleaningService.Duration
             });
@@ -73,35 +59,23 @@ namespace HCP.Service.Services.BookingService
                 Items = temp2,
                 hasNext = temp2.HasNextPage,
                 hasPrevious = temp2.HasPreviousPage,
-                totalCount = bookingList.Count(),
+                totalCount = temp2.TotalCount,
                 totalPages = temp2.TotalPages,
             };
         }
-        public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Booking input)
+        public async Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Guid id)
         {
-            var bookings = await _unitOfWork.Repository<Booking>().ListAsync(
-                filter: c => c.Id == input.Id,
-                includeProperties: query => query
-                    .Include(c => c.CleaningService)
-                    .Include(c => c.Payments)
-                    .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
-                    .Include(c => c.Customer)
-                    .Include(c => c.CleaningService.User)
-            );
-
-            var booking = bookings.FirstOrDefault();
+            var booking = _unitOfWork.Repository<Booking>().GetById(id);
             if (booking == null)
             {
                 throw new Exception("Booking not found");
-            }
-            //var list = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Id == booking.Id).Include(c => c.CleaningService).Include(c => c.Payments).ToList();
-            var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == booking.Id).ToList();
+        }
+            var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? "Unknown Service").ToList();
-            var firstPayment = booking.Payments.FirstOrDefault();
-            var customer = await userManager.FindByIdAsync(booking.CustomerId);
-            var housekeeper = await userManager.FindByIdAsync(booking.CleaningService.UserId);
 
+            var firstPayment = booking.Payments?.FirstOrDefault(); // Avoid multiple calls
+        
             return new BookingHistoryDetailResponseDTO
             {
                 BookingId = booking.Id,
@@ -111,19 +85,13 @@ namespace HCP.Service.Services.BookingService
                 Status = booking.Status,
                 TotalPrice = booking.TotalPrice,
                 Note = booking.Note,
-                Location = booking.AddressLine + " " + booking.Province + " " + booking.City,
-                ServiceName = booking.CleaningService.ServiceName,
+                Location = booking.AddressLine + " " + booking.District + " " + booking.City,
+                ServiceName = booking.CleaningService?.ServiceName ?? "No Service Available",
                 AdditionalServiceName = additionalServiceNames,
-                HousekeeperName = housekeeper.FullName,
-                HouseKeeperMail = housekeeper.Email,
-                HouseKeeperPhoneNumber = housekeeper.PhoneNumber,
-                CustomerName = customer.FullName,
-                CustomerMail = customer.Email,
-                CustomerPhoneNumber = customer.PhoneNumber,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
-                PaymentStatus = firstPayment?.Status ?? "Not found",
-                CleaningServiceDuration = booking.CleaningService.Duration
+                PaymentStatus = firstPayment?.Status ?? "Pending",
+                CleaningServiceDuration = booking.CleaningService?.Duration ?? 0
             };
         }
     }
