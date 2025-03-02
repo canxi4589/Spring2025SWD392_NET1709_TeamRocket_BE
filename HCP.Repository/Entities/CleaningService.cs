@@ -26,9 +26,10 @@ namespace HCP.Repository.Entities
         public double Duration { get; set; }
         [ForeignKey("User")]
         public string UserId { get; set; }
+        public string? StaffId { get; set; }
 
         // Navigation properties
-        public AppUser User { get; set; }
+        public AppUser User { get; set; }                   
         public ServiceCategory Category { get; set; }
         public ICollection<Booking> Bookings { get; set; }
         public ICollection<AdditionalService> AdditionalServices { get; set; }

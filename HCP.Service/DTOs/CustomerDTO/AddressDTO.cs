@@ -1,5 +1,4 @@
 ﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.BookingDTO;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -23,14 +22,7 @@ namespace HCP.Service.DTOs.CustomerDTO
         public string Title { get; set; }
         public bool IsDefault { get; set; } = false;
     }
-    public class GetAddressListDTO
-    {
-        public List<AddressDTO> Items { get; set; }
-        public int totalCount { get; set; }
-        public int totalPages { get; set; }
-        public bool hasNext { get; set; }
-        public bool hasPrevious { get; set; }
-    }
+
     public class CreataAddressDTO
     {
         [Required]

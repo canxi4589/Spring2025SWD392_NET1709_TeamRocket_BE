@@ -3,7 +3,9 @@ using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Integrations.BlobStorage;
 using HCP.Service.Services;
 using HCP.Service.Services.CleaningService1;
+using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,11 +18,13 @@ namespace HomeCleaningService.Controllers
         private readonly ICleaningService1 _cleaningService;
         private readonly UserManager<AppUser> _userManager;
         private readonly IBlobStorageService _blobStorageService;
-        public ServiceController(ICleaningService1 cleaningService, UserManager<AppUser> userManager, IBlobStorageService blobStorageService)
+        private readonly ICustomerService _customerService;
+        public ServiceController(ICleaningService1 cleaningService, UserManager<AppUser> userManager, IBlobStorageService blobStorageService, ICustomerService customerService)
         {
             _cleaningService = cleaningService;
             _userManager = userManager;
             _blobStorageService = blobStorageService;
+            _customerService = customerService;
         }
 
         [HttpGet("Categories")]
@@ -63,6 +67,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPost()]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> CreateCleaningService([FromBody] CreateCleaningServiceDTO dto)
         {
             var createdService = await _cleaningService.CreateCleaningServiceAsync(dto, User);
@@ -78,7 +83,6 @@ namespace HomeCleaningService.Controllers
                 .SetSuccessResponse(createdService);
             return Ok(successResponse);
         }
-
         [HttpPost("uploadMultiple")]
         public async Task<IActionResult> UploadFiles([FromForm] List<IFormFile> files)
         {
@@ -108,6 +112,29 @@ namespace HomeCleaningService.Controllers
             }
         }
 
-
+        [HttpPost("GetTimeSlots")]
+        public async Task<IActionResult> GetServiceTimeSlotByDay([FromBody] TimeSLotRequest dto)
+        {
+            var list = await _cleaningService.GetAllServiceTimeSlot(dto.serviceId,dto.targetDate,dto.dayOfWeek);
+            var successResponse = new AppResponse<object>()
+            .SetSuccessResponse(list);
+            return Ok(successResponse);
+        }
+        [HttpGet("GetAllAdditionals")]
+        public async Task<IActionResult> GetAllAdditionalServices( Guid serviceId)
+        {
+            var list = await _cleaningService.GetAllAdditonalServicesById(serviceId);
+            var successResponse = new AppResponse<object>()
+            .SetSuccessResponse(list);
+            return Ok(successResponse);
+        }
+        [HttpGet("GetCustomerProfileInCheckout")]
+        public async Task<IActionResult> GetCusProfile()
+        {
+            var list = await _customerService.GetCustomerCheckoutProfile(User);
+            var successResponse = new AppResponse<object>()
+            .SetSuccessResponse(list);
+            return Ok(successResponse);
+        }
     }
 }

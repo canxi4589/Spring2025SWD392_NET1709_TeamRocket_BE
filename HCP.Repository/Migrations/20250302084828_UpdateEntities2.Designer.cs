@@ -12,13 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HCP.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-<<<<<<<< HEAD:HCP.Repository/Migrations/20250227150931_Entities.Designer.cs
-    [Migration("20250227150931_Entities")]
-    partial class Entities
-========
-    [Migration("20250302055958_Entities1")]
-    partial class Entities1
->>>>>>>> main:HCP.Repository/Migrations/20250302055958_Entities1.Designer.cs
+    [Migration("20250302084828_UpdateEntities2")]
+    partial class UpdateEntities2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -195,6 +190,9 @@ namespace HCP.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("AddtionalPrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -212,13 +210,13 @@ namespace HCP.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-<<<<<<<< HEAD:HCP.Repository/Migrations/20250227150931_Entities.Designer.cs
-========
+                    b.Property<decimal>("DistancePrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("District")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
->>>>>>>> main:HCP.Repository/Migrations/20250302055958_Entities1.Designer.cs
                     b.Property<string>("Feedback")
                         .HasColumnType("nvarchar(max)");
 
@@ -233,15 +231,11 @@ namespace HCP.Repository.Migrations
                     b.Property<DateTime>("PreferDateStart")
                         .HasColumnType("datetime2");
 
-<<<<<<<< HEAD:HCP.Repository/Migrations/20250227150931_Entities.Designer.cs
-                    b.Property<string>("Province")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-========
->>>>>>>> main:HCP.Repository/Migrations/20250302055958_Entities1.Designer.cs
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
+
+                    b.Property<decimal>("ServicePrice")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -699,9 +693,6 @@ namespace HCP.Repository.Migrations
 
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time");
-
-                    b.Property<bool>("IsBook")
-                        .HasColumnType("bit");
 
                     b.Property<Guid>("ServiceId")
                         .HasColumnType("uniqueidentifier");

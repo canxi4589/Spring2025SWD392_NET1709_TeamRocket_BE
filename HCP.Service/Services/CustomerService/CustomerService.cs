@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,15 +29,21 @@ namespace HCP.Service.Services.CustomerService
 
         public async Task<CustomerProfileDTO?> GetCustomerProfile(ClaimsPrincipal userClaims)
         {
-            var user = await _userManager.FindByIdAsync(userClaims.FindFirst("id")?.Value);
-            return new CustomerProfileDTO
+            var userId = userClaims.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User not authenticated");
+            }
+            var user = await _userManager.FindByIdAsync(userId);
+            return user == null
+                ? throw new KeyNotFoundException("User not found")
+                : new CustomerProfileDTO
             {
                 FullName = user.FullName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Avatar = user.Avatar,
                 Birthday = user.Birthday,
-                Gender = true,   //must be changed
+                Gender = user.Gender,
             };
         }
 
@@ -67,17 +74,11 @@ namespace HCP.Service.Services.CustomerService
                 throw new UnauthorizedAccessException("User not authenticated");
             }
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                throw new KeyNotFoundException("User not found");
-            }
-
+            var user = await _userManager.FindByIdAsync(userId) ?? throw new KeyNotFoundException("User not found");
             user.FullName = customer.FullName;
             user.PhoneNumber = customer.PhoneNumber;
-            user.Avatar = customer.Avatar;
             user.Birthday = customer.Birthdate;
-            //user.Gender = customer.Gender;
+            user.Gender = customer.Gender;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
@@ -89,13 +90,36 @@ namespace HCP.Service.Services.CustomerService
             {
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber,
-                Avatar = user.Avatar,
                 Birthday = user.Birthday,
                 Email = userEmail,
-                Gender = true
+                Gender = user.Gender
             };
         }
 
+        public async Task<CustomerCheckoutProfile?> GetCustomerCheckoutProfile(ClaimsPrincipal userClaims)
+        {
+            var user = await _userManager.FindByIdAsync(userClaims.FindFirst("id")?.Value);
+            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+            var result = new CustomerCheckoutProfile
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Birthday = user.Birthday,
+            }
+            ;
+            result.addressDTOs = adrList.Select(c => new AddressDTO
+            {
+                Id = c.Id,
+                IsDefault = c.IsDefault,
+                Address = c.AddressLine1,
+                City = c.City,
+                District = c.District,
+                Title = c.Title,
+                PlaceId = c.PlaceId
+            }).ToList();
+           return result;
+        }
 
     }
 }

@@ -30,43 +30,7 @@ namespace HCP.Service.Integrations.Vnpay
         private readonly string vnp_TmnCode;
         public string CreatePaymentUrl(Booking order, string returnUrl)
         {
-            //var orderType = 250000;
-            //string data = $"{order.OrderId}|2.1.0|pay|{vnp_TmnCode}|{order.OrderId}|{order.OrderDate:yyyyMMddHHmmss}|{order.OrderDate:yyyyMMddHHmmss}|{"127.0.0.1"}|Thanh toan don hang: {order.OrderId}";
-
-            //var ExpireDate = order.OrderDate.AddMinutes(15).ToString("yyyyMMddHHmmss");
-            //string checksum = Utils.HmacSHA512(vnp_HashSecret, data);
-            //decimal convertMoney = order.TotalAmount * 25000;
-            returnUrl = "https://google.com.vn";
-
-            var vnPay = new VnPayLibrary();
-
-            vnPay.AddRequestData("vnp_Amount", ((int)order.TotalPrice * 100000).ToString());
-            vnPay.AddRequestData("vnp_Command", "pay");
-            vnPay.AddRequestData("vnp_CreateDate", order.CreatedDate.ToString("yyyyMMddHHmmss"));
-            vnPay.AddRequestData("vnp_CurrCode", "VND");
-            vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
-            vnPay.AddRequestData("vnp_Locale", "vn");
-            vnPay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang: {order.Id}");
-            vnPay.AddRequestData("vnp_OrderType", "other");
-            vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
-            vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-            vnPay.AddRequestData("vnp_TxnRef", order.Id.ToString());
-            vnPay.AddRequestData("vnp_Version", "2.1.0");
-            /*vnPay.AddRequestData("vnp_Amount", convertMoney.ToString());*/
-
-            string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
-            return paymentUrl;
-
-        }
-        public string CreatePayment(Booking order, string returnUrl)
-        {
-            //var orderType = 250000;
-            //string data = $"{order.OrderId}|2.1.0|pay|{vnp_TmnCode}|{order.OrderId}|{order.OrderDate:yyyyMMddHHmmss}|{order.OrderDate:yyyyMMddHHmmss}|{"127.0.0.1"}|Thanh toan don hang: {order.OrderId}";
-
-            //var ExpireDate = order.OrderDate.AddMinutes(15).ToString("yyyyMMddHHmmss");
-            //string checksum = Utils.HmacSHA512(vnp_HashSecret, data);
-            //decimal convertMoney = order.TotalAmount * 25000;
-            returnUrl = "https://dss-api.azurewebsites.net/api/Payment/PaymentReturn-VNPAY";
+            returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
 
             var vnPay = new VnPayLibrary();
             var amount = (long)Math.Round(order.TotalPrice * 2300000);
@@ -83,9 +47,32 @@ namespace HCP.Service.Integrations.Vnpay
             vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
             vnPay.AddRequestData("vnp_TxnRef", order.Id.ToString());
             vnPay.AddRequestData("vnp_Version", "2.1.0");
-            /*vnPay.AddRequestData("vnp_Amount", convertMoney.ToString());*/
 
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+            return paymentUrl;
+
+        }
+        public string CreatePaymentUrl1(decimal amount, string returnUrl)
+        {
+            returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
+
+            var vnPay = new VnPayLibrary();
+            var amount1 = (long)Math.Round(amount * 230000);
+
+            vnPay.AddRequestData("vnp_Amount", (amount1).ToString());
+            vnPay.AddRequestData("vnp_Command", "pay");
+            vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnPay.AddRequestData("vnp_CurrCode", "VND");
+            vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            vnPay.AddRequestData("vnp_Locale", "vn");
+            vnPay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang: {Guid.NewGuid()}");
+            vnPay.AddRequestData("vnp_OrderType", "other");
+            vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
+            vnPay.AddRequestData("vnp_TmnCode", "7CY9UEAF");
+            vnPay.AddRequestData("vnp_TxnRef", Guid.NewGuid().ToString());
+            vnPay.AddRequestData("vnp_Version", "2.1.0");
+
+            string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T");
             return paymentUrl;
 
         }
