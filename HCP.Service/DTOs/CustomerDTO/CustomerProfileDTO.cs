@@ -17,9 +17,6 @@ namespace HCP.Service.DTOs.CustomerDTO
         [JsonPropertyName("birth_date")]
         public DateTime? Birthday { get; set; }
 
-        [JsonPropertyName("Avatar")]
-        public string? Avatar { get; set; }
-
         [JsonPropertyName("gender")]
         public bool? Gender { get; set; }
 
@@ -45,10 +42,6 @@ namespace HCP.Service.DTOs.CustomerDTO
         [Phone]
         [JsonPropertyName("phone")]
         public required string PhoneNumber { get; set; }
-
-        [Required]
-        [JsonPropertyName("avatar")]
-        public required string Avatar { get; set; }
 
         [Required]
         [JsonPropertyName("birth_date")]

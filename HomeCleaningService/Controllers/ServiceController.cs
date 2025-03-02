@@ -4,6 +4,7 @@ using HCP.Service.Integrations.BlobStorage;
 using HCP.Service.Services;
 using HCP.Service.Services.CleaningService1;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -63,6 +64,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPost()]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> CreateCleaningService([FromBody] CreateCleaningServiceDTO dto)
         {
             var createdService = await _cleaningService.CreateCleaningServiceAsync(dto, User);

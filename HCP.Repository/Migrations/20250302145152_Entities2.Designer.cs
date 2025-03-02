@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HCP.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250302055958_Entities1")]
-    partial class Entities1
+    [Migration("20250302145152_Entities2")]
+    partial class Entities2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -347,6 +347,9 @@ namespace HCP.Repository.Migrations
 
                     b.Property<string>("ServiceName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StaffId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
