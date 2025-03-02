@@ -16,5 +16,6 @@ namespace HCP.Service.Services.CleaningService1
         Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime);
         Task<List<ServiceDetailWithStatusDTO>> GetServiceByUser(ClaimsPrincipal userClaims);
         Task<CreateCleaningServiceDTO?> CreateCleaningServiceAsync(CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims);
+        Task<List<AdditionalServicedDTO>> GetAllAdditonalServicesById(Guid serviceId);
     }
 }

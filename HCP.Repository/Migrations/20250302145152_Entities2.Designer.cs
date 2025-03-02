@@ -14,6 +14,7 @@ namespace HCP.Repository.Migrations
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20250302145152_Entities2")]
     partial class Entities2
+
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

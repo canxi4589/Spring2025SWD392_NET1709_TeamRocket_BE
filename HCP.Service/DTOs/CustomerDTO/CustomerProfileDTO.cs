@@ -47,4 +47,20 @@ namespace HCP.Service.DTOs.CustomerDTO
         [JsonPropertyName("birth_date")]
         public required DateTime Birthdate { get; set; }
     }
+    public class CustomerCheckoutProfile
+    {
+        [JsonPropertyName("full_name")]
+        public string? FullName { get; set; }
+
+        [JsonPropertyName("birth_date")]
+        public DateTime? Birthday { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("phone")]
+        public string? PhoneNumber { get; set; }
+        public List<AddressDTO> addressDTOs { get; set; }
+    }
+
 }
