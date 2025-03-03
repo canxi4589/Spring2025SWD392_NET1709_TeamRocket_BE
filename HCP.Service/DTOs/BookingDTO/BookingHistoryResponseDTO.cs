@@ -1,6 +1,7 @@
-﻿using HCP.Service.DTOs.CleaningServiceDTO;
+﻿﻿using HCP.Service.DTOs.CleaningServiceDTO;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,5 +45,11 @@ namespace HCP.Service.DTOs.BookingDTO
         public double CleaningServiceDuration { get; set; }
         public string PaymentMethod { get; set; }
         public string PaymentStatus { get; set; }
+        public string HousekeeperName { get; set; }
+        public string HouseKeeperMail { get; set; }
+        public string HouseKeeperPhoneNumber { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerMail { get; set; }
+        public string CustomerPhoneNumber { get; set; }
     }
 }

@@ -1,12 +1,5 @@
-﻿using HCP.Repository.Entities;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace HCP.Service.DTOs.CleaningServiceDTO
 {
@@ -36,7 +29,7 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public string PlaceId { get; set; } = "Raumania";
 
         [Required]
-        [JsonPropertyName("province")]
+        [JsonPropertyName("district")]
         public string District { get; set; } = "Binh Thanh";
 
         [Required]
