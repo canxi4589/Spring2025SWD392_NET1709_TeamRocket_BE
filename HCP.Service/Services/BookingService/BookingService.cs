@@ -136,8 +136,6 @@ namespace HCP.Service.Services.BookingService
             {
                 throw new KeyNotFoundException("User not found");
             }
-
-
             var service = await _unitOfWork.Repository<CleaningService>().GetEntityByIdAsync(request.ServiceId);
             if (service == null)
                 throw new Exception("Service not found");
@@ -158,6 +156,7 @@ namespace HCP.Service.Services.BookingService
                     new PaymentMethodDTO { Name = "Wallet",IsChoosable = false },
                     new PaymentMethodDTO { Name = "VNPay" ,IsChoosable = true }
                 };
+            var timespan = _unitOfWork.Repository<ServiceTimeSlot>().GetById(request.TimeSlotId);
 
             var response = new CheckoutResponseDTO
             {

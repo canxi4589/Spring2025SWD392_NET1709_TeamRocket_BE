@@ -67,7 +67,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPost()]
-        [Authorize(Roles = "Staff")]
+        [Authorize]
         public async Task<IActionResult> CreateCleaningService([FromBody] CreateCleaningServiceDTO dto)
         {
             var createdService = await _cleaningService.CreateCleaningServiceAsync(dto, User);
