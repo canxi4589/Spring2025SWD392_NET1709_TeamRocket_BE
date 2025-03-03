@@ -34,7 +34,7 @@ namespace HCP.Repository.Data
 
         // Pricing & Transactions
         public DbSet<Package> Packages { get; set; }
-        public DbSet<DistancePricingRule> DistancePricingRules { get; set; }
+        public DbSet<DistancePricingRule> DistancePricingRules {  get; set; }
         public DbSet<Commissions> Commissions { get; set; }
         public DbSet<SystemWallet> SystemWallets { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }

@@ -2,6 +2,7 @@
 using HCP.Service.DTOs.RequestDTO;
 using HCP.Service.Services.RequestService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,11 +20,12 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPut("approve-new-service")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UpdateServiceStatus([FromBody] ServiceStatusUpdateDto dto)
         {
             var response = new AppResponse<string>();
 
-            var result = await _handleRequestService.UpdateServiceStatusAsync(dto);
+            var result = await _handleRequestService.UpdateServiceStatusAsync(dto, User);
 
             if (!result.Success)
             {
@@ -47,5 +49,22 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<List<PendingRequestDTO>>().SetSuccessResponse(result));
         }
+        
+        [HttpGet("pending-request/{id}")]
+        public async Task<IActionResult> GetPendingCreateRequestDetail(Guid id)
+        {
+            var response = new AppResponse<string>();
+
+            var result = await _handleRequestService.GetPendingCreateServiceDetailAsync(id);
+
+            if (result == null)
+            {
+                return BadRequest(response.SetErrorResponse("error", "Something wrong getting Pending Request"));
+            }
+
+            return Ok(new AppResponse<PendingRequestDTO>().SetSuccessResponse(result));
+        }
+
+
     }
 }

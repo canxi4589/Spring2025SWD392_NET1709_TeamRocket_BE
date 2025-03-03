@@ -92,9 +92,78 @@ namespace HCP.Service.Services.RequestService
             }
             return pendingRequestsDTO;
         }
-
-        public async Task<(bool Success, string Message)> UpdateServiceStatusAsync(ServiceStatusUpdateDto dto)
+        
+        public async Task<PendingRequestDTO> GetPendingCreateServiceDetailAsync(Guid id)
         {
+            var pendingRequests = await _unitOfWork.Repository<CleaningService>()
+                .GetAll()
+                .Where(cs => cs.Id == id)
+                .Include(cs => cs.AdditionalServices) 
+                .Include(cs => cs.ServiceImages)
+                .Include(cs => cs.ServiceTimeSlots)
+                .Include(cs => cs.DistancePricingRules)
+                .ToListAsync(); 
+
+            var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
+            var categories = await _unitOfWork.Repository<ServiceCategory>()
+                .GetAll()
+                .Where(sc => categoryIds.Contains(sc.Id))
+                .ToDictionaryAsync(sc => sc.Id); 
+
+            var pendingRequestsDTO = new List<PendingRequestDTO>();
+
+            foreach (var pendingRequest in pendingRequests)
+            {
+                var item = new PendingRequestDTO
+                {
+                    ServiceId = pendingRequest.Id,
+                    ServiceName = pendingRequest.ServiceName,
+                    CategoryId = pendingRequest.CategoryId,
+                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
+                    PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
+                    Description = pendingRequest.Description,
+                    Status = pendingRequest.Status,
+                    Price = pendingRequest.Price,
+                    City = pendingRequest.City,
+                    District = pendingRequest.District,
+                    PlaceId = pendingRequest.PlaceId,
+                    AddressLine = pendingRequest.AddressLine,
+                    Duration = pendingRequest.Duration,
+                    CreatedAt = pendingRequest.CreatedAt,
+                    UpdatedAt = pendingRequest.UpdatedAt,
+                    UserId = pendingRequest.UserId,
+                    UserName = await GetUserNameByIdAsync(pendingRequest.UserId)
+                };
+
+                item.AdditionalServices = pendingRequest.AdditionalServices
+                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
+                    .ToList();
+
+                item.ServiceImages = pendingRequest.ServiceImages
+                    .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .ToList();
+
+                item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
+                    .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .ToList();
+
+                item.ServiceDistanceRule = pendingRequest.DistancePricingRules
+                    .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
+                    {
+                        MinDistance = dpr.MinDistance,
+                        MaxDistance = dpr.MaxDistance,
+                        BaseFee = dpr.BaseFee,
+                        ExtraPerKm = dpr.ExtraPerKm
+                    }).ToList();
+                pendingRequestsDTO.Add(item);
+            }
+
+            return pendingRequestsDTO[0];
+        }
+
+        public async Task<(bool Success, string Message)> UpdateServiceStatusAsync(ServiceStatusUpdateDto dto, ClaimsPrincipal userClaims)
+        {
+            var staffId = userClaims.FindFirst("id")?.Value;
             var service = await _unitOfWork.Repository<CleaningService>().FindAsync(cs => cs.Id == dto.ServiceId);
             if (service == null)
             {
@@ -106,6 +175,7 @@ namespace HCP.Service.Services.RequestService
                 return (false, "Service status can only be updated if it is 'Pending'");
             }
 
+            service.StaffId = staffId;
             service.Status = dto.IsApprove ? "Active" : "Rejected";
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
