@@ -5,6 +5,7 @@ using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Services.ListService;
+using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -192,7 +193,15 @@ namespace HCP.Service.Services.BookingService
         }
         public Booking UpdateStatusBooking(Guid id, string status)
         {
+
             var bookingRepository = _unitOfWork.Repository<Booking>();
+            var paymentRepository = _unitOfWork.Repository<Payment>();
+            var payment = paymentRepository.GetAll().FirstOrDefault(c => c.BookingId == id);
+
+            if (payment == null)
+                throw new KeyNotFoundException("Payment record not found");
+
+            payment.Status = "Failed";
 
             var booking =  bookingRepository.GetById(id);
             if (booking == null)
@@ -293,6 +302,40 @@ namespace HCP.Service.Services.BookingService
 
             return booking;
         }
+        public async Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay")
+        {
+            var paymentRepository = _unitOfWork.Repository<Payment>();
+
+            var payment = new Payment
+            {
+                BookingId = bookingId,
+                PaymentDate = DateTime.UtcNow,
+                PaymentMethod = paymentMethod,
+                Status = "succeed",
+                Amount = amount
+            };
+
+            await paymentRepository.AddAsync(payment);
+            await _unitOfWork.Complete();
+
+            return payment;
+        }
+        public async Task<Payment> UpdatePaymentStatusAsync(Guid paymentId,string status)
+        {
+            var paymentRepository = _unitOfWork.Repository<Payment>();
+            var payment = await paymentRepository.GetEntityByIdAsync(paymentId);
+
+            if (payment == null)
+                throw new KeyNotFoundException("Payment record not found");
+
+            payment.Status = status;
+            paymentRepository.Update(payment);
+            await _unitOfWork.Complete();
+            return payment;
+
+        }
+
+
     }
 }
 

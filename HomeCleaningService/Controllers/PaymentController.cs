@@ -48,7 +48,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreatePayment1")]
         [Authorize]
-        public IActionResult CreatePayment1([FromBody] decimal request)
+        public IActionResult CreatePayment1([FromBody] decimal request,string paymentMethod)
         {
             //Order order = _vnPayRepository.GetOrderById(orderId);
             try
@@ -60,7 +60,6 @@ namespace HomeCleaningService.Controllers
                 /*string returnUrl = Url.Action("PaymentReturn", "Checkout", null, Request.Scheme);*/
                 var returnUrl = "https://google.com.vn";
                 string paymentUrl = ivnpay.CreatePaymentUrl1(request, returnUrl);
-
                 return Ok(new { url = paymentUrl });
             }
             catch (Exception ex)
@@ -70,7 +69,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreatePayment")]
         [Authorize]
-        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request)
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod)
         {
             var userClaims = User;
 
@@ -78,7 +77,7 @@ namespace HomeCleaningService.Controllers
             {
                 // Create the booking
                 var booking = await _bookingService.CreateBookingAsync(request, userClaims);
-
+                await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, paymentMethod);
                 // Generate the VNPay payment URL
                 var returnUrl = "https://your-return-url.com";
                 string paymentUrl = ivnpay.CreatePaymentUrl(booking, returnUrl);
