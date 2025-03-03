@@ -1,4 +1,4 @@
-﻿using HCP.Repository.Entities;
+﻿﻿using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CustomerDTO;
@@ -44,7 +44,7 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> GetBookingDetailById(Guid id)
         {
-            var booking = await _unitOfWork.Repository<Booking>().FindAsync(c=>c.Id == id);
+            var booking = await _unitOfWork.Repository<Booking>().FindAsync(c => c.Id == id);
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
@@ -56,6 +56,5 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound();
         }
-
     }
 }

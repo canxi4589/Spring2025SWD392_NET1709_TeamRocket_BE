@@ -67,7 +67,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPost()]
-        [Authorize(Roles = "Staff")]
+        [Authorize]
         public async Task<IActionResult> CreateCleaningService([FromBody] CreateCleaningServiceDTO dto)
         {
             var createdService = await _cleaningService.CreateCleaningServiceAsync(dto, User);
@@ -113,7 +113,9 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPost("GetTimeSlots")]
+        [Authorize]
         public async Task<IActionResult> GetServiceTimeSlotByDay([FromBody] TimeSLotRequest dto)
+
         {
             var list = await _cleaningService.GetAllServiceTimeSlot(dto.serviceId,dto.targetDate,dto.dayOfWeek);
             var successResponse = new AppResponse<object>()
@@ -121,6 +123,7 @@ namespace HomeCleaningService.Controllers
             return Ok(successResponse);
         }
         [HttpGet("GetAllAdditionals")]
+        [Authorize]
         public async Task<IActionResult> GetAllAdditionalServices( Guid serviceId)
         {
             var list = await _cleaningService.GetAllAdditonalServicesById(serviceId);
@@ -129,6 +132,7 @@ namespace HomeCleaningService.Controllers
             return Ok(successResponse);
         }
         [HttpGet("GetCustomerProfileInCheckout")]
+        [Authorize]
         public async Task<IActionResult> GetCusProfile()
         {
             var list = await _customerService.GetCustomerCheckoutProfile(User);

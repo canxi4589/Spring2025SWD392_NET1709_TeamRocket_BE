@@ -2,7 +2,9 @@
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
+using HCP.Service.Services.EmailService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -17,14 +19,17 @@ namespace HomeCleaningService.Controllers
         private readonly IBookingService _bookingService;
         private readonly UserManager<AppUser> _userManager;
         private readonly Ivnpay ivnpay;
+        private readonly IEmailSenderService _emailSenderService;
 
-        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay)
+        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService)
         {
             _userManager = userManager;
             _bookingService = bookingService;
             this.ivnpay = ivnpay;
+            _emailSenderService = emailSenderService;
         }
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> GetCheckout([FromBody] CheckoutRequestDTO request)
         {
             var response = new AppResponse<CheckoutResponseDTO>();
@@ -45,7 +50,8 @@ namespace HomeCleaningService.Controllers
             }
         }
         [HttpPost("CreatePayment1")]
-        public IActionResult CreatePayment1([FromBody] decimal request)
+        [Authorize]
+        public IActionResult CreatePayment1([FromBody] decimal request,string paymentMethod)
         {
             //Order order = _vnPayRepository.GetOrderById(orderId);
             try
@@ -57,7 +63,6 @@ namespace HomeCleaningService.Controllers
                 /*string returnUrl = Url.Action("PaymentReturn", "Checkout", null, Request.Scheme);*/
                 var returnUrl = "https://google.com.vn";
                 string paymentUrl = ivnpay.CreatePaymentUrl1(request, returnUrl);
-
                 return Ok(new { url = paymentUrl });
             }
             catch (Exception ex)
@@ -66,26 +71,35 @@ namespace HomeCleaningService.Controllers
             }
         }
         [HttpPost("CreatePayment")]
-        public IActionResult CreatePayment([FromBody] CheckoutResponseDTO request)
+        [Authorize]
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod)
         {
-            //Order order = _vnPayRepository.GetOrderById(orderId);
+            var userClaims = User;
             try
             {
-                // Save the order to the database
-                /*                _vnPayRepository.SaveOrder(order);*/
+                // Create the booking
+                var booking = await _bookingService.CreateBookingAsync(request, userClaims);
+                await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, paymentMethod);
+                // Generate the VNPay payment URL
+                var returnUrl = "https://your-return-url.com";
+                string paymentUrl = ivnpay.CreatePaymentUrl(booking, returnUrl);
 
-                // Create VNPay payment URL
-                /*string returnUrl = Url.Action("PaymentReturn", "Checkout", null, Request.Scheme);*/
-                var returnUrl = "https://google.com.vn";
-                string paymentUrl = ivnpay.CreatePaymentUrl1(request.TotalPrice, returnUrl);
-
-                return Ok(new { url = paymentUrl });
+                return Ok(new { bookingId = booking.Id, url = paymentUrl });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new AppResponse<string>().SetErrorResponse("Unauthorized", ex.Message));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new AppResponse<string>().SetErrorResponse("Not Found", ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new AppResponse<string>().SetErrorResponse("Error", ex.Message));
             }
         }
+
 
         [HttpGet("PaymentReturn-VNPAY")]
         public IActionResult PaymentReturn()
@@ -95,19 +109,23 @@ namespace HomeCleaningService.Controllers
                 // Retrieve the order ID from the query string
                 if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
                 {
-                    //Order order = _vnPayRepository.GetOrderById(orderId);
                     if (true)
                     {
                         var paymentStatus = Request.Query["vnp_ResponseCode"];
                         if (paymentStatus == "00") //"00" means success
                         {
-                            //return Redirect("https://www.google.com/"); // Redirect to success page
-                            return Redirect("https://www.youtube.com/");
+                        var user = _userManager.GetUserAsync(User).Result;
+                        var lmao = EmailBodyTemplate.GetThankYouEmail(user.FullName);
+
+                        _emailSenderService.SendEmail("caotri1203@gmail.com", "Thank you", lmao);
+
+                        //return Redirect("https://www.google.com/"); // Redirect to success page
+                        return Redirect("http://localhost:5173/service/checkout/success");
                         }
                         else
                         {
-                            //return Redirect("https://www.youtube.com/"); // Redirect to failure page
-                            return Redirect("https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-types/enums");
+                        _bookingService.UpdateStatusBooking(orderId, "IsDeleted");
+                        return Redirect("http://localhost:5173/service/checkout/fail");
                         }
                     }
                 

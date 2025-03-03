@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HCP.Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateEntities : Migration
+    public partial class Entities : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -82,7 +82,7 @@ namespace HCP.Repository.Migrations
                 {
                     table.PrimaryKey("PK_Commissions", x => x.Id);
                 });
-            
+
             migrationBuilder.CreateTable(
                 name: "Packages",
                 columns: table => new
@@ -283,7 +283,8 @@ namespace HCP.Repository.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Duration = table.Column<double>(type: "float", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    StaffId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -365,7 +366,8 @@ namespace HCP.Repository.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CleaningServiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Amount = table.Column<double>(type: "float", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -389,6 +391,9 @@ namespace HCP.Repository.Migrations
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ServicePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DistancePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    AddtionalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Rating = table.Column<double>(type: "float", nullable: true),
                     Feedback = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -515,7 +520,6 @@ namespace HCP.Repository.Migrations
                     StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     DayOfWeek = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsBook = table.Column<bool>(type: "bit", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ServiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },

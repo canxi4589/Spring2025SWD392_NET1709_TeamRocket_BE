@@ -184,7 +184,7 @@ namespace HomeCleaningService.Controllers
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmationLink = $"{frontendurl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
-                var lmao = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", user.Email, "https://www.youtube.com/watch?v=pxwm3sqAytE");
+                var lmao = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", user.Email, confirmationLink);
 
                 _emailSenderService.SendEmail(user.Email, "Confirm your email", lmao);
 
