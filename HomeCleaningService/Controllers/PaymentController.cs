@@ -2,6 +2,7 @@
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
+using HCP.Service.Services.EmailService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -18,12 +19,14 @@ namespace HomeCleaningService.Controllers
         private readonly IBookingService _bookingService;
         private readonly UserManager<AppUser> _userManager;
         private readonly Ivnpay ivnpay;
+        private readonly IEmailSenderService _emailSenderService;
 
-        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay)
+        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService)
         {
             _userManager = userManager;
             _bookingService = bookingService;
             this.ivnpay = ivnpay;
+            _emailSenderService = emailSenderService;
         }
         [HttpPost]
         [Authorize]
@@ -72,7 +75,6 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod)
         {
             var userClaims = User;
-
             try
             {
                 // Create the booking
@@ -112,13 +114,18 @@ namespace HomeCleaningService.Controllers
                         var paymentStatus = Request.Query["vnp_ResponseCode"];
                         if (paymentStatus == "00") //"00" means success
                         {
+                        var user = _userManager.GetUserAsync(User).Result;
+                        var lmao = EmailBodyTemplate.GetThankYouEmail(user.FullName);
+
+                        _emailSenderService.SendEmail("caotri1203@gmail.com", "Thank you", lmao);
+
                         //return Redirect("https://www.google.com/"); // Redirect to success page
-                        return Redirect("https://www.youtube.com/");
+                        return Redirect("http://localhost:5173/service/checkout/success");
                         }
                         else
                         {
                         _bookingService.UpdateStatusBooking(orderId, "IsDeleted");
-                        return Redirect("https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-types/enums");
+                        return Redirect("http://localhost:5173/service/checkout/fail");
                         }
                     }
                 

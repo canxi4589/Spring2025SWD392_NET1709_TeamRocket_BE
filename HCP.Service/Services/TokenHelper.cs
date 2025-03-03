@@ -21,13 +21,14 @@ public class TokenHelper : ITokenHelper
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
-
+        var phoneNumber = user.PhoneNumber ?? "0366532672";
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Name, user.FullName),
             new Claim("id", user.Id),
             new Claim("role", role),
-            new Claim("email",user.Email!)
+            new Claim("email",user.Email!),
+            new Claim("phone",phoneNumber)
         };
 
         var key = new SymmetricSecurityKey(secretKey);
