@@ -11,5 +11,9 @@ namespace HCP.Service.Services.BookingService
         Task<BookingHistoryDetailResponseDTO> GetBookingDetailById(Booking booking);
         //Task<Guid> CreateBooking(BookingDTO bookingDTO);
         Task<CheckoutResponseDTO> GetCheckoutInfo(CheckoutRequestDTO request, ClaimsPrincipal userClaims);
+        Task<Booking> CreateBookingAsync(ConfirmBookingDTO dto, ClaimsPrincipal userClaims);
+        Task<Booking> GetBookingById(Guid id);
+        Booking UpdateStatusBooking(Guid id, string status);
+        Task DeleteBooking(Guid id);
     }
 }

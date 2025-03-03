@@ -24,6 +24,14 @@ namespace HCP.Service.DTOs.BookingDTO
         public Guid ServiceId { get; set; }
         public List<Guid> BookingAdditionalIds { get; set; } = new List<Guid>();
     }
+    public class ConfirmBookingDTO
+    {
+        public DateTime StartDate {  get; set; }
+        public Guid TimeSlotId { get; set; }
+        public Guid AddressId { get; set; }
+        public Guid ServiceId { get; set; }
+        public List<Guid> BookingAdditionalIds { get; set; } = new List<Guid>();
+    }
     public class CheckoutResponseDTO
     {
         public string UserName {  get; set; }
