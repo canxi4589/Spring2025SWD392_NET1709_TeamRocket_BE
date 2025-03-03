@@ -15,5 +15,7 @@ namespace HCP.Service.Services.BookingService
         Task<Booking> GetBookingById(Guid id);
         Booking UpdateStatusBooking(Guid id, string status);
         Task DeleteBooking(Guid id);
+        Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay");
+        Task<Payment> UpdatePaymentStatusAsync(Guid paymentId, string status);
     }
 }
