@@ -1,8 +1,10 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Service.Integrations.Currency;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -31,11 +33,15 @@ namespace HCP.Service.Integrations.Vnpay
         public string CreatePaymentUrl(Booking order, string returnUrl)
         {
             returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
+            ExchangRate exchangRate = new ExchangRate();
+            double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
+            var AmountInUsd = Convert.ToDouble(order.TotalPrice, CultureInfo.InvariantCulture);
+
+            double amountInVnd = Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
 
             var vnPay = new VnPayLibrary();
-            var amount = (long)Math.Round(order.TotalPrice * 2300000);
 
-            vnPay.AddRequestData("vnp_Amount", (amount).ToString());
+            vnPay.AddRequestData("vnp_Amount", (amountInVnd*100).ToString());
             vnPay.AddRequestData("vnp_Command", "pay");
             vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             vnPay.AddRequestData("vnp_CurrCode", "VND");

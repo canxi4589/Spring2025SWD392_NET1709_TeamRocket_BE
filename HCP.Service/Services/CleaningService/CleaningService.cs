@@ -140,6 +140,7 @@ namespace HCP.Service.Services.CleaningService1
                     id = a.Id,
                     name = a.Name,
                     price = a.Amount.ToString("0.0"),
+                    url = a.Url,
                 }).ToList(),
                 housekeeper =
                      new housekeeperDetailDTO
@@ -151,7 +152,7 @@ namespace HCP.Service.Services.CleaningService1
                          review = "No Reviews",
                          avatar = service.User.Avatar,
                          memberSince = /*service.User..ToString("yyyy-MM-dd")*/"2025-03-12",
-                         address = address.City != null && address.District != null ? $"{address.City}, {address.District}" : string.Empty,
+                         address = address.City != null && address.District != null ? $"{address.City}, {address.District},{address.AddressLine1}" : string.Empty,
                          email = service.User.Email,
                          mobile = service.User.PhoneNumber,
                          numOfServices = service1.Count()
@@ -360,7 +361,7 @@ namespace HCP.Service.Services.CleaningService1
                 id = c.Id,
                 name = c.Name,
                 price = c.Amount.ToString("F2"), // Ensures proper price formatting
-                url = /*c.Url */ "Empty"
+                url = c.Url
             }).ToList();
 
             return result;

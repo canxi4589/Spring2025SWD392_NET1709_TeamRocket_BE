@@ -3,6 +3,7 @@ using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +26,7 @@ namespace HomeCleaningService.Controllers
             this.ivnpay = ivnpay;
         }
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> GetCheckout([FromBody] CheckoutRequestDTO request)
         {
             var response = new AppResponse<CheckoutResponseDTO>();
@@ -45,6 +47,7 @@ namespace HomeCleaningService.Controllers
             }
         }
         [HttpPost("CreatePayment1")]
+        [Authorize]
         public IActionResult CreatePayment1([FromBody] decimal request)
         {
             //Order order = _vnPayRepository.GetOrderById(orderId);
@@ -66,26 +69,36 @@ namespace HomeCleaningService.Controllers
             }
         }
         [HttpPost("CreatePayment")]
-        public IActionResult CreatePayment([FromBody] CheckoutResponseDTO request)
+        [Authorize]
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request)
         {
-            //Order order = _vnPayRepository.GetOrderById(orderId);
+            var userClaims = User;
+
             try
             {
-                // Save the order to the database
-                /*                _vnPayRepository.SaveOrder(order);*/
+                // Create the booking
+                var booking = await _bookingService.CreateBookingAsync(request, userClaims);
 
-                // Create VNPay payment URL
-                /*string returnUrl = Url.Action("PaymentReturn", "Checkout", null, Request.Scheme);*/
-                var returnUrl = "https://google.com.vn";
-                string paymentUrl = ivnpay.CreatePaymentUrl1(request.TotalPrice, returnUrl);
+                // Generate the VNPay payment URL
+                var returnUrl = "https://your-return-url.com";
+                string paymentUrl = ivnpay.CreatePaymentUrl(booking, returnUrl);
 
-                return Ok(new { url = paymentUrl });
+                return Ok(new { bookingId = booking.Id, url = paymentUrl });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new AppResponse<string>().SetErrorResponse("Unauthorized", ex.Message));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new AppResponse<string>().SetErrorResponse("Not Found", ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new AppResponse<string>().SetErrorResponse("Error", ex.Message));
             }
         }
+
 
         [HttpGet("PaymentReturn-VNPAY")]
         public IActionResult PaymentReturn()
@@ -95,19 +108,18 @@ namespace HomeCleaningService.Controllers
                 // Retrieve the order ID from the query string
                 if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
                 {
-                    //Order order = _vnPayRepository.GetOrderById(orderId);
                     if (true)
                     {
                         var paymentStatus = Request.Query["vnp_ResponseCode"];
                         if (paymentStatus == "00") //"00" means success
                         {
-                            //return Redirect("https://www.google.com/"); // Redirect to success page
-                            return Redirect("https://www.youtube.com/");
+                        //return Redirect("https://www.google.com/"); // Redirect to success page
+                        return Redirect("https://www.youtube.com/");
                         }
                         else
                         {
-                            //return Redirect("https://www.youtube.com/"); // Redirect to failure page
-                            return Redirect("https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-types/enums");
+                        _bookingService.UpdateStatusBooking(orderId, "IsDeleted");
+                        return Redirect("https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-types/enums");
                         }
                     }
                 
