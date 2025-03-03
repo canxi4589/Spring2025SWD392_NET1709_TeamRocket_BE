@@ -25,18 +25,18 @@ namespace HomeCleaningService.Controllers
             _customerService = customerService;
         }
 
-        [HttpGet()]
-        [Authorize]
-        public async Task<IActionResult> getAddressByCustomer()
-        {
-            var user = await _customerService.GetCustomerAsync(User);
-            if (user != null)
-            {
-                var list = await _addressService.GetAddressByUser(user);
-                return Ok(new AppResponse<List<AddressDTO>>().SetSuccessResponse(list));
-            }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
-        }
+        //[HttpGet()]
+        //[Authorize]
+        //public async Task<IActionResult> getAddressByCustomer()
+        //{
+        //    var user = await _customerService.GetCustomerAsync(User);
+        //    if (user != null)
+        //    {
+        //        var list = await _addressService.GetAddressByUser(user);
+        //        return Ok(new AppResponse<List<AddressDTO>>().SetSuccessResponse(list));
+        //    }
+        //    return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        //}
 
         [HttpGet("paging")]
         [Authorize]

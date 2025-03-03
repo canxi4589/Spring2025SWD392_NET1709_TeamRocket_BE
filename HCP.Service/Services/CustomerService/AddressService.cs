@@ -22,20 +22,20 @@ namespace HCP.Service.Services.CustomerService
             this.userManager = userManager;
         }
 
-        public async Task<List<AddressDTO>> GetAddressByUser(AppUser user)
-        {
-            var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
-            return adrList.Select(c => new AddressDTO
-            {
-                Id = c.Id,
-                IsDefault = c.IsDefault,
-                Address = c.AddressLine1,
-                City = c.City,
-                District = c.District,
-                Title = c.Title,
-                PlaceId = c.PlaceId
-            }).ToList();
-        }
+        //public async Task<List<AddressDTO>> GetAddressByUser(AppUser user)
+        //{
+        //    var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+        //    return adrList.Select(c => new AddressDTO
+        //    {
+        //        Id = c.Id,
+        //        IsDefault = c.IsDefault,
+        //        Address = c.AddressLine1,
+        //        City = c.City,
+        //        District = c.District,
+        //        Title = c.Title,
+        //        PlaceId = c.PlaceId
+        //    }).ToList();
+        //}
         public async Task<GetAddressListDTO> GetAddressByUserPaging(AppUser user, int? pageIndex, int? pageSize)
         {
             var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
@@ -45,9 +45,9 @@ namespace HCP.Service.Services.CustomerService
                 IsDefault = c.IsDefault,
                 Address = c.AddressLine1,
                 City = c.City,
-                Province = c.Province,
+                District = c.District,
                 Title = c.Title,
-                ZipCode = c.Zipcode
+                PlaceId = c.PlaceId
             });
             if (pageIndex == null || pageSize == null)
             {
@@ -75,6 +75,10 @@ namespace HCP.Service.Services.CustomerService
         {
 
             var addresses = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+            if (addresses.Count() > 9)
+            {
+                throw new Exception("You can only have 10 addresses at the same time");
+            }
             if (addressDTO.IsDefault)
             {
                 foreach (var adr in addresses)
