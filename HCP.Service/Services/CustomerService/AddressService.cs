@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CustomerDTO;
+using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 
 namespace HCP.Service.Services.CustomerService
@@ -21,10 +22,24 @@ namespace HCP.Service.Services.CustomerService
             this.userManager = userManager;
         }
 
-        public async Task<List<AddressDTO>> GetAddressByUser(AppUser user)
+        //public async Task<List<AddressDTO>> GetAddressByUser(AppUser user)
+        //{
+        //    var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
+        //    return adrList.Select(c => new AddressDTO
+        //    {
+        //        Id = c.Id,
+        //        IsDefault = c.IsDefault,
+        //        Address = c.AddressLine1,
+        //        City = c.City,
+        //        District = c.District,
+        //        Title = c.Title,
+        //        PlaceId = c.PlaceId
+        //    }).ToList();
+        //}
+        public async Task<GetAddressListDTO> GetAddressByUserPaging(AppUser user, int? pageIndex, int? pageSize)
         {
             var adrList = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
-            return adrList.Select(c => new AddressDTO
+            var listAddr = adrList.Select(c => new AddressDTO
             {
                 Id = c.Id,
                 IsDefault = c.IsDefault,
@@ -33,7 +48,28 @@ namespace HCP.Service.Services.CustomerService
                 District = c.District,
                 Title = c.Title,
                 PlaceId = c.PlaceId
-            }).ToList();
+            });
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp = await PaginatedList<AddressDTO>.CreateAsync(listAddr, 1, listAddr.Count());
+                return new GetAddressListDTO
+                {
+                    Items = temp,
+                    hasNext = temp.HasNextPage,
+                    hasPrevious = temp.HasPreviousPage,
+                    totalCount = listAddr.Count(),
+                    totalPages = temp.TotalPages,
+                };
+            }
+            var temp2 = await PaginatedList<AddressDTO>.CreateAsync(listAddr, (int)pageIndex, (int)pageSize);
+            return new GetAddressListDTO
+            {
+                Items = temp2,
+                hasNext = temp2.HasNextPage,
+                hasPrevious = temp2.HasPreviousPage,
+                totalCount = listAddr.Count(),
+                totalPages = temp2.TotalPages,
+            };
         }
         public async Task<AddressDTO> CreateAddress(AppUser user, CreataAddressDTO addressDTO)
         {
