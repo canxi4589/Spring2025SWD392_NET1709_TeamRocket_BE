@@ -38,7 +38,7 @@ namespace HomeCleaningService.Controllers
         //    return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
         //}
 
-        [HttpGet("paging")]
+        [HttpGet()]
         [Authorize]
         public async Task<IActionResult> getAddressByCustomerPaging(int? pageIndex, int? pageSize)
         {
