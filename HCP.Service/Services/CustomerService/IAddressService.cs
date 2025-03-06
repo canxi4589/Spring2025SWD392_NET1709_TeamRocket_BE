@@ -9,5 +9,6 @@ namespace HCP.Service.Services.CustomerService
         Task<GetAddressListDTO> GetAddressByUserPaging(AppUser user, int? pageIndex, int? pageSize);
         Task<AddressDTO> CreateAddress(AppUser user, CreataAddressDTO addressDTO);
         Task<AddressDTO> UpdateAddress(AppUser user, UpdateAddressDTO addressDTO);
+        Task<Boolean> DeleteAddress(AppUser user, Guid addressId);
     }
 }
