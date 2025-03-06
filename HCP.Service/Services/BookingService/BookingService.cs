@@ -33,11 +33,24 @@ namespace HCP.Service.Services.BookingService
 
             var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c => c.CleaningService).OrderByDescending(c => c.PreferDateStart);
             if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
-            if (status?.Equals("On-going", StringComparison.OrdinalIgnoreCase) ?? false && day.HasValue && month.HasValue && year.HasValue)
+            if (status?.Equals("Ongoing", StringComparison.OrdinalIgnoreCase) ?? false && day.HasValue && month.HasValue && year.HasValue)
             {
                 var targetDate = new DateTime(year.Value, month.Value, day.Value);
                 bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.PreferDateStart.Date == targetDate);
             }
+            if (status.Equals("Finished"))
+            {
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Finished.ToString());
+            }
+            if (status.Equals("Canceled"))
+            {
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Canceled.ToString());
+            }
+            if (status.Equals("Refunded"))
+            {
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
+            }
+
             var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
             {
                 BookingId = c.Id,

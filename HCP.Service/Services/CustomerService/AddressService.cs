@@ -7,7 +7,9 @@ using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.ListService;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HCP.Service.Services.CustomerService
 {
@@ -75,10 +77,6 @@ namespace HCP.Service.Services.CustomerService
         {
 
             var addresses = _unitOfWork.Repository<Address>().GetAll().Where(c => c.UserId.Equals(user.Id));
-            if (addresses.Count() > 9)
-            {
-                throw new Exception("You can only have 10 addresses at the same time");
-            }
             if (addressDTO.IsDefault)
             {
                 foreach (var adr in addresses)
@@ -145,6 +143,25 @@ namespace HCP.Service.Services.CustomerService
                 PlaceId = address.PlaceId,
                 IsDefault = address.IsDefault
             };
+        }
+        public async Task<Boolean> DeleteAddress(AppUser user, Guid addressId)
+        {
+            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.Id == addressId);
+            if (address == null)
+            {
+                throw new Exception("Address deleted before or not exist!");
+            }
+            if (address.User == user)
+            {
+                _unitOfWork.Repository<Address>().Delete(address);
+                await _unitOfWork.Repository<Address>().SaveChangesAsync();
+                if (await _unitOfWork.Repository<Address>().ExistsAsync(c => c.Id == addressId))
+                {
+                    throw new Exception("Address deleted not successfull, contact staff to have more help!");
+                }
+                return true;
+            }
+            throw new Exception("Address are belong to this user, please head back to login page!");
         }
     }
 }

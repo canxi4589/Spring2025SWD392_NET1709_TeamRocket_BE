@@ -86,5 +86,23 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
         }
+        [HttpDelete()]
+        [Authorize]
+        public async Task<IActionResult> deleteAddress(Guid addressId)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var address = await _addressService.DeleteAddress(user, addressId);
+                if (address == true)
+                {
+                    var successResponse = new AppResponse<bool>().SetSuccessResponse(address);
+                    return Ok(successResponse);
+                }
+                return BadRequest(new AppResponse<string>().SetErrorResponse("Error", "Failed to delete address"));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+
     }
 }
