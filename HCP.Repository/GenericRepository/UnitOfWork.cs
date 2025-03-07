@@ -55,5 +55,10 @@ namespace HCP.Repository.GenericRepository
             }
             return (IGenericRepository<TEntity>)_repositories[entityType]!;
         }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
     }
 }
