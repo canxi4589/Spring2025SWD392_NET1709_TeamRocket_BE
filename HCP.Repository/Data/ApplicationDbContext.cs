@@ -26,6 +26,10 @@ namespace HCP.Repository.Data
         public DbSet<ServiceSteps> ServiceSteps { get; set; }
         public DbSet<ServiceTimeSlot> ServiceTimeSlots { get; set; }
 
+        //checkout
+        public DbSet<Checkout> Checkout { get; set; }
+        public DbSet<CheckoutAdditionalService> CheckoutAdditionalService { get; set; }
+
         // Booking & Payments
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<BookingAdditional> BookingAdditionals { get; set; }
@@ -46,6 +50,19 @@ namespace HCP.Repository.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+
+            builder.Entity<CheckoutAdditionalService>()
+        .HasOne(cas => cas.Checkout)
+        .WithMany(c => c.CheckoutAdditionalServices)
+        .HasForeignKey(cas => cas.CheckoutId)
+        .OnDelete(DeleteBehavior.NoAction); // Prevent cascade delete issue
+
+            builder.Entity<Checkout>()
+                .HasOne(c => c.Customer)
+                .WithMany()
+                .HasForeignKey(c => c.CustomerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             base.OnModelCreating(builder);
             builder.Entity<Package>()
     .Property(p => p.Price)
@@ -105,8 +122,6 @@ namespace HCP.Repository.Data
     .WithMany()
     .HasForeignKey(rr => rr.BookingId)
     .OnDelete(DeleteBehavior.Restrict); // Prevents cascading delete
-
-
         }
     }
 }

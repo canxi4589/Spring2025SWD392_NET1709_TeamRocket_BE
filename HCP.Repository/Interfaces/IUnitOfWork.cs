@@ -14,5 +14,7 @@ namespace HCP.Repository.Interfaces
 
         Task<int> Complete();
         int CompleteV2();
+
+        Task<int> SaveChangesAsync();
     }
 }
