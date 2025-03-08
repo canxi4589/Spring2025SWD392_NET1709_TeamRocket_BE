@@ -72,7 +72,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreatePayment")]
         [Authorize]
-        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod)
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = "Vnpay")
         {
             var userClaims = User;
             try
@@ -114,10 +114,6 @@ namespace HomeCleaningService.Controllers
                         var paymentStatus = Request.Query["vnp_ResponseCode"];
                         if (paymentStatus == "00") //"00" means success
                         {
-                        var user = _userManager.GetUserAsync(User).Result;
-                        var lmao = EmailBodyTemplate.GetThankYouEmail(user.FullName);
-
-                        _emailSenderService.SendEmail("caotri1203@gmail.com", "Thank you", lmao);
 
                         //return Redirect("https://www.google.com/"); // Redirect to success page
                         return Redirect("http://localhost:5173/service/checkout/success");
