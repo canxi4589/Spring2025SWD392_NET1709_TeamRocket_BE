@@ -16,6 +16,8 @@ namespace HCP.Repository.Entities
         public double Amount { get; set; }
         public bool IsActive { get; set; }
         public string? Url { get; set; }
+        public string? Description {  get; set; }
+        public double? Duration { get; set; } 
         public CleaningService Service { get; set; }
     }
 }

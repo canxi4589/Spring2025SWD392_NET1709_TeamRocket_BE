@@ -24,7 +24,6 @@ namespace HCP.Service.Services.CheckoutService
             _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
-
         public async Task<CheckoutResponseDTO1> CreateCheckout(CheckoutRequestDTO1 requestDTO, ClaimsPrincipal user)
         {
             try

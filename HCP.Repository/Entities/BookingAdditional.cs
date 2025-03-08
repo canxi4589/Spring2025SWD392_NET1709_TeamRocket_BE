@@ -17,7 +17,6 @@ namespace HCP.Repository.Entities
         //[Column(TypeName = "decimal(18,2)")]
         public double Amount { get; set; }
         public bool IsActive { get; set; }
-
         public virtual AdditionalService AdditionalService { get; set; }
         public virtual Booking Booking { get; set; }
     }

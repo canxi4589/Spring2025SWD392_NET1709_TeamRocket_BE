@@ -131,6 +131,7 @@ namespace HCP.Service.Services.CleaningService1
                 location = $"{service.City}, {service.District}",
                 reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
                 numOfReviews = service.ServiceRatings.Count,
+                
                 numOfPics = service.ServiceImages.Count,
                 overview = service.Description,
                 images = service.ServiceImages.Select(i => new ImgDTO { url = i.LinkUrl }).ToList(),
@@ -364,7 +365,7 @@ namespace HCP.Service.Services.CleaningService1
             {
                 id = c.Id,
                 name = c.Name,
-                price = c.Amount.ToString("F2"), // Ensures proper price formatting
+                price = c.Amount.ToString("F2"), 
                 url = c.Url
             }).ToList();
 
