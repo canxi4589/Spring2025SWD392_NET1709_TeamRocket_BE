@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Routing.Constraints;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace HCP.Service.DTOs.CleaningServiceDTO
@@ -54,6 +55,15 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
 
         [JsonPropertyName("amount")]
         public double Amount { get; set; }
+
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; } = "This is a Cleaning Service";
+
+        [JsonPropertyName("duration")]
+        public double Duration { get; set; }
     }
 
     public class ServiceImgDTO
