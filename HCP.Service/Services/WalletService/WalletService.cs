@@ -51,7 +51,7 @@ namespace HCP.Service.Services.WalletService
                 PhoneNumber = user.PhoneNumber
             };
         }
-        public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string fullname, string phonenumber, string mail)
+        public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail)
         {
             var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll();
             if (searchField.Equals("WithdrawRequestUser") || searchField.Equals("WithdrawUser") || searchField.Equals("WithdrawRejectUser") || searchField.Equals("ShowHistoryUser"))

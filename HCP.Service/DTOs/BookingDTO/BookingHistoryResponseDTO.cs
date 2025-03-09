@@ -52,4 +52,47 @@ namespace HCP.Service.DTOs.BookingDTO
         public string CustomerMail { get; set; }
         public string CustomerPhoneNumber { get; set; }
     }
+    public class BookingTransactionShowDTO
+    {
+        public Guid BookingId { get; set; }
+        public Guid PaymentId { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerMail { get; set; }
+        public string CustomerPhoneNumber { get; set; }
+        public decimal Ammount { get; set; }
+        public decimal Commission { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public string PaymentMethod { get; set; }
+        public string Status { get; set; }
+        public string Type { get; set; }
+        public string ServiceName { get; set; }
+        public string LinkUrl { get; set; }
+    }
+    public class BookingTransactionDetailShowDTO
+    {
+        public Guid BookingId { get; set; }
+        public Guid PaymentId { get; set; }
+        public string CustomerName { get; set; }
+        public string? CustomerMail { get; set; }
+        public string? CustomerPhoneNumber { get; set; }
+        public string HousekeeperName { get; set; }
+        public string? HousekeeperMail { get; set; }
+        public string? HousekeeperPhoneNumber { get; set; }
+        public decimal Ammount { get; set; }
+        public decimal Commission { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public string PaymentMethod { get; set; }
+        public string Status { get; set; }
+        public string Type { get; set; }
+        public string ServiceName { get; set; }
+        public string LinkUrl { get; set; }
+    }
+    public class BookingTransactionShowListDTO
+    {
+        public List<BookingTransactionShowDTO> Items { get; set; }
+        public int totalCount { get; set; }
+        public int totalPages { get; set; }
+        public bool hasNext { get; set; }
+        public bool hasPrevious { get; set; }
+    }
 }

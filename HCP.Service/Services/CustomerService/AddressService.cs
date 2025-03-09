@@ -85,6 +85,10 @@ namespace HCP.Service.Services.CustomerService
                     _unitOfWork.Repository<Address>().Update(adr);
                 }
             }
+            if (addresses.Count() == 0)
+            {
+                addressDTO.IsDefault = true;
+            }
             var address = new Address
             {
                 AddressLine1 = addressDTO.Address,

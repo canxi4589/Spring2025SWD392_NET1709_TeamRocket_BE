@@ -32,7 +32,7 @@ namespace HomeCleaningService.Controllers
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
-                var list = await _walletService.GetTransacts(user, pageIndex, pageSize, transactionType.ToString(), fullname, phonenumber, mail); ;
+                var list = await _walletService.GetTransacts(user, pageIndex, pageSize, transactionType.ToString(), fullname, phonenumber, mail);
                 return Ok(new AppResponse<GetWalletWithdrawRequestListDTO>().SetSuccessResponse(list));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
