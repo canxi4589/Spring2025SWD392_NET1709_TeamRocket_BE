@@ -76,7 +76,7 @@ namespace HCP.Service.Services.RequestService
                 };
 
                 item.AdditionalServices = pendingRequest.AdditionalServices
-                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
+                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
                     .ToList();
 
                 item.ServiceImages = pendingRequest.ServiceImages
@@ -143,7 +143,7 @@ namespace HCP.Service.Services.RequestService
                 };
 
                 item.AdditionalServices = pendingRequest.AdditionalServices
-                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
+                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
                     .ToList();
 
                 item.ServiceImages = pendingRequest.ServiceImages
@@ -179,13 +179,13 @@ namespace HCP.Service.Services.RequestService
                 return (false, "Service not found");
             }
 
-            if (service.Status != "Pending")
+            if (service.Status != ServiceStatus.Pending.ToString())
             {
-                return (false, "Service status can only be updated if it is 'Pending'");
+                return (false, $"Service status can only be updated if it is '{ServiceStatus.Pending.ToString()}'");
             }
 
             service.StaffId = staffId;
-            service.Status = dto.IsApprove ? "Active" : "Rejected";
+            service.Status = dto.IsApprove ? ServiceStatus.Active.ToString() : ServiceStatus.Rejected.ToString();
 
             if (!dto.IsApprove)
             {
@@ -267,7 +267,7 @@ namespace HCP.Service.Services.RequestService
                 };
 
                 item.AdditionalServices = pendingRequest.AdditionalServices
-                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
+                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
                     .ToList();
 
                 item.ServiceImages = pendingRequest.ServiceImages

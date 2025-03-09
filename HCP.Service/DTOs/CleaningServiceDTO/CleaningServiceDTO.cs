@@ -56,6 +56,8 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public string name { get; set; }
         public string price { get; set; }
         public string? url { get;set; }
+        public string? Description {  get; set; }
+        public double? Duration {  get; set; }
     }
     public class ServiceDetailDTO
     {
