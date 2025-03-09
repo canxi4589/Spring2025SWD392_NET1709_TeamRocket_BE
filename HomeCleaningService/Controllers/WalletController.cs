@@ -1,0 +1,72 @@
+﻿using HCP.Repository.Entities;
+using HCP.Repository.Enums;
+using HCP.Service.DTOs.CustomerDTO;
+using HCP.Service.DTOs.WalletDTO;
+using HCP.Service.Services.CustomerService;
+using HCP.Service.Services.WalletService;
+using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+
+namespace HomeCleaningService.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class WalletController : ControllerBase
+    {
+        private readonly IWalletService _walletService;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly ICustomerService _customerService;
+
+        public WalletController(IWalletService walletService, UserManager<AppUser> userManager, ICustomerService customerService)
+        {
+            _walletService = walletService;
+            _userManager = userManager;
+            _customerService = customerService;
+        }
+        [HttpGet()]
+        [Authorize]
+        public async Task<IActionResult> getTransactPaging(TransactionType transactionType, int? pageIndex, int? pageSize, string fullname, string phonenumber, string mail)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var list = await _walletService.GetTransacts(user, pageIndex, pageSize, transactionType.ToString(), fullname, phonenumber, mail); ;
+                return Ok(new AppResponse<GetWalletWithdrawRequestListDTO>().SetSuccessResponse(list));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+        [HttpPost("sendWithdrawRequest")]
+        [Authorize]
+        public async Task<IActionResult> createWithdrawRequest(decimal amount)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var withdrawRequest = await _walletService.CreateWithdrawRequest(amount, user);
+                return Ok(new AppResponse<WalletWithdrawRequestDTO>().SetSuccessResponse(withdrawRequest));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+        [HttpPost("processDeposit")]
+        [Authorize]
+        public async Task<IActionResult> processDeposit(string status, decimal amount)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var deposit = await _walletService.processDepositTransaction(status, amount, user);
+                return Ok(new AppResponse<WalletTransactionDepositResponseDTO>().SetSuccessResponse(deposit));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+        }
+        [HttpPost("processWithdraw")]
+        [Authorize(Roles = "Staff")]
+        public async Task<IActionResult> processWithdraw(Guid transId, bool action)
+        {
+            var withdraw = await _walletService.StaffProccessWithdraw(transId, action);
+            return Ok(new AppResponse<WalletTransactionWithdrawResponseDTO>().SetSuccessResponse(withdraw));
+        }
+    }
+}

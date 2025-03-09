@@ -10,6 +10,7 @@ using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
 using HCP.Service.Services.RequestService;
+using HCP.Service.Services.WalletService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +19,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -25,6 +27,11 @@ var config = builder.Configuration;
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddBlobService(config);
@@ -122,6 +129,7 @@ builder.Services.AddScoped<IHandleRequestService, HandleRequestService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBlobStorageService,BlobStorageService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<Ivnpay,VnPay>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 

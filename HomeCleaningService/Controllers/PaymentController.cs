@@ -124,9 +124,7 @@ namespace HomeCleaningService.Controllers
                         return Redirect("http://localhost:5173/service/checkout/fail");
                         }
                     }
-                
             }
-
             return BadRequest("Invalid payment.");
         }
 

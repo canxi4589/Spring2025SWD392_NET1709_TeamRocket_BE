@@ -5,29 +5,62 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HCP.Repository.Entities;
+using HCP.Service.DTOs.CustomerDTO;
 
 namespace HCP.Service.DTOs.WalletDTO
 {
-    //DTO xu ly hoat dong rut va nap cua user wallet: 1 la nap, 2 la rut
-    public class ProcessWalletDTO
+    public class WalletTransactionWithdrawResponseDTO
     {
-        public int Type { get; set; }
         public double Amount { get; set; }
         public double Current { get; set; }
         public double AfterAmount { get; set; }
+        public string Type { get; set; }
         public string UserId { get; set; }
+        public string FullName { get; set; }
+        public string Mail { get; set; }
+        public string PhoneNumber { get; set; }
         public Guid? ReferenceId { get; set; }
-        public AppUser User { get; set; }
-        public bool Status { get; set; }
-
+    }
+    public class WalletTransactionDepositResponseDTO
+    {
+        public double Amount { get; set; }
+        public double Current { get; set; }
+        public double AfterAmount { get; set; }
+        public string Type { get; set; }
+        public string UserId { get; set; }
+        public string FullName { get; set; }
+        public string Mail { get; set; }
+        public string PhoneNumber { get; set; }
+        public Guid? ReferenceId { get; set; }
+        public string Description { get; set; }
     }
     public class WalletWithdrawRequestDTO
     {
         public string Type { get; set; }
         public decimal Amount { get; set; }
         public string UserId { get; set; }
+        public string FullName { get; set; }
+        public string Mail { get; set; }
+        public string PhoneNumber { get; set; }
         public Guid? ReferenceId { get; set; }
-        public AppUser User { get; set; }
-
+    }
+    public class WalletWithdrawStaffShowDTO
+    {
+        public Guid Id { get; set; }
+        public string Type { get; set; }
+        public decimal Amount { get; set; }
+        public string UserId { get; set; }
+        public Guid? ReferenceId { get; set; }
+        public string FullName { get; set; }
+        public string Mail { get; set; }
+        public string PhoneNumber { get; set; }
+    }
+    public class GetWalletWithdrawRequestListDTO
+    {
+        public List<WalletWithdrawStaffShowDTO> Items { get; set; }
+        public int totalCount { get; set; }
+        public int totalPages { get; set; }
+        public bool hasNext { get; set; }
+        public bool hasPrevious { get; set; }
     }
 }
