@@ -35,7 +35,7 @@ namespace HomeCleaningService.Controllers
             return Ok(response.SetSuccessResponse(result.Message));
         }
 
-        [HttpGet("pending-request")]
+        [HttpGet("service-pending-request")]
         public async Task<IActionResult> GetAllPendingCreateRequest()
         {
             var response = new AppResponse<string>();
@@ -50,7 +50,7 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<List<PendingRequestDTO>>().SetSuccessResponse(result));
         }
         
-        [HttpGet("pending-request/{id}")]
+        [HttpGet("service-pending-request/{id}")]
         public async Task<IActionResult> GetPendingCreateRequestDetail(Guid id)
         {
             var response = new AppResponse<string>();
@@ -64,7 +64,6 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<PendingRequestDTO>().SetSuccessResponse(result));
         }
-
 
     }
 }

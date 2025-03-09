@@ -99,6 +99,9 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
 
         [JsonPropertyName("is_approve")]
         public bool IsApprove { get; set; }   // True = "active", False = "rejected"
+
+        [JsonPropertyName("reason")]
+        public string? Reason {  get; set; }
     }
 
     public class ServiceTimeSlotDTO1

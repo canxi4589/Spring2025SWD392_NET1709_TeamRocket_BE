@@ -1,8 +1,11 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
+using HCP.Service.DTOs;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.DTOs.RequestDTO;
+using HCP.Service.Services.CleaningService1;
+using HCP.Service.Services.EmailService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,11 +22,15 @@ namespace HCP.Service.Services.RequestService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IEmailSenderService _emailSenderService;
+        private readonly ICleaningService1 _cleaningService;
 
-        public HandleRequestService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+        public HandleRequestService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IEmailSenderService emailSenderService, ICleaningService1 cleaningService)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+            _emailSenderService = emailSenderService;
+            _cleaningService = cleaningService;
         }
 
         public async Task<List<PendingRequestDTO>> GetPendingCreateServiceRequestsAsync()
@@ -165,6 +172,8 @@ namespace HCP.Service.Services.RequestService
         {
             var staffId = userClaims.FindFirst("id")?.Value;
             var service = await _unitOfWork.Repository<CleaningService>().FindAsync(cs => cs.Id == dto.ServiceId);
+            var housekeeperEmail = await _userManager.GetEmailAsync(await _userManager.FindByIdAsync(service.UserId));
+            var housekeeperName = await _userManager.GetUserNameAsync(await _userManager.FindByIdAsync(service.UserId));
             if (service == null)
             {
                 return (false, "Service not found");
@@ -177,6 +186,12 @@ namespace HCP.Service.Services.RequestService
 
             service.StaffId = staffId;
             service.Status = dto.IsApprove ? "Active" : "Rejected";
+
+            if (!dto.IsApprove)
+            {
+                var rejectedEmailBody = EmailBodyTemplate.GetRejectionEmail(housekeeperName, dto.Reason, dto.ServiceId, service.ServiceName);
+                _emailSenderService.SendEmail(housekeeperEmail, "Information about rejecting Service Creation", rejectedEmailBody);
+            }
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
             return (true, "Service status updated successfully");
@@ -207,5 +222,142 @@ namespace HCP.Service.Services.RequestService
             var user = await _userManager.FindByIdAsync(userId);
             return user?.UserName ?? "Unknown";
         }
+
+        public async Task<List<ApprovalServiceDTO>> GetApprovedServiceByStaffIdAsync(ClaimsPrincipal user)
+        {
+            var userId = user.FindFirst("id")?.Value;
+            var pendingRequests = await _unitOfWork.Repository<CleaningService>()
+                .GetAll()
+                .Where(cs => cs.StaffId == userId)
+                .Include(cs => cs.AdditionalServices)
+                .Include(cs => cs.ServiceImages)
+                .Include(cs => cs.ServiceTimeSlots)
+                .Include(cs => cs.DistancePricingRules)
+                .ToListAsync();
+
+            var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
+            var categories = await _unitOfWork.Repository<ServiceCategory>()
+                .GetAll()
+                .Where(sc => categoryIds.Contains(sc.Id))
+                .ToDictionaryAsync(sc => sc.Id);
+
+            var approvalRequestsDTO = new List<ApprovalServiceDTO>();
+
+            foreach (var pendingRequest in pendingRequests)
+            {
+                var item = new ApprovalServiceDTO
+                {
+                    ServiceId = pendingRequest.Id,
+                    ServiceName = pendingRequest.ServiceName,
+                    CategoryId = pendingRequest.CategoryId,
+                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
+                    PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
+                    Description = pendingRequest.Description,
+                    Status = pendingRequest.Status,
+                    Price = pendingRequest.Price,
+                    City = pendingRequest.City,
+                    District = pendingRequest.District,
+                    PlaceId = pendingRequest.PlaceId,
+                    AddressLine = pendingRequest.AddressLine,
+                    Duration = pendingRequest.Duration,
+                    CreatedAt = pendingRequest.CreatedAt,
+                    UpdatedAt = pendingRequest.UpdatedAt,
+                    UserId = pendingRequest.UserId,
+                    UserName = await GetUserNameByIdAsync(pendingRequest.UserId)
+                };
+
+                item.AdditionalServices = pendingRequest.AdditionalServices
+                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
+                    .ToList();
+
+                item.ServiceImages = pendingRequest.ServiceImages
+                    .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .ToList();
+
+                item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
+                    .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .ToList();
+
+                item.ServiceDistanceRule = pendingRequest.DistancePricingRules
+                    .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
+                    {
+                        MinDistance = dpr.MinDistance,
+                        MaxDistance = dpr.MaxDistance,
+                        BaseFee = dpr.BaseFee,
+                        ExtraPerKm = dpr.ExtraPerKm
+                    }).ToList();
+                approvalRequestsDTO.Add(item);
+            }
+            return approvalRequestsDTO;
+        }
+
+        //public async Task<ApprovalServiceDTO> GetApprovalServiceDTODetailAsync(Guid id)
+        //{
+        //    var pendingRequests = await _unitOfWork.Repository<CleaningService>()
+        //        .GetAll()
+        //        .Where(cs => cs.Id == id)
+        //        .Include(cs => cs.AdditionalServices)
+        //        .Include(cs => cs.ServiceImages)
+        //        .Include(cs => cs.ServiceTimeSlots)
+        //        .Include(cs => cs.DistancePricingRules)
+        //        .ToListAsync();
+
+        //    var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
+        //    var categories = await _unitOfWork.Repository<ServiceCategory>()
+        //        .GetAll()
+        //        .Where(sc => categoryIds.Contains(sc.Id))
+        //        .ToDictionaryAsync(sc => sc.Id);
+
+        //    var approvalRequestsDTO = new List<ApprovalServiceDTO>();
+
+        //    foreach (var pendingRequest in pendingRequests)
+        //    {
+        //        var item = new ApprovalServiceDTO
+        //        {
+        //            ServiceId = pendingRequest.Id,
+        //            ServiceName = pendingRequest.ServiceName,
+        //            CategoryId = pendingRequest.CategoryId,
+        //            CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
+        //            PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
+        //            Description = pendingRequest.Description,
+        //            Status = pendingRequest.Status,
+        //            Price = pendingRequest.Price,
+        //            City = pendingRequest.City,
+        //            District = pendingRequest.District,
+        //            PlaceId = pendingRequest.PlaceId,
+        //            AddressLine = pendingRequest.AddressLine,
+        //            Duration = pendingRequest.Duration,
+        //            CreatedAt = pendingRequest.CreatedAt,
+        //            UpdatedAt = pendingRequest.UpdatedAt,
+        //            UserId = pendingRequest.UserId,
+        //            UserName = await GetUserNameByIdAsync(pendingRequest.UserId)
+        //        };
+
+        //        item.AdditionalServices = pendingRequest.AdditionalServices
+        //            .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
+        //            .ToList();
+
+        //        item.ServiceImages = pendingRequest.ServiceImages
+        //            .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+        //            .ToList();
+
+        //        item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
+        //            .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+        //            .ToList();
+
+        //        item.ServiceDistanceRule = pendingRequest.DistancePricingRules
+        //            .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
+        //            {
+        //                MinDistance = dpr.MinDistance,
+        //                MaxDistance = dpr.MaxDistance,
+        //                BaseFee = dpr.BaseFee,
+        //                ExtraPerKm = dpr.ExtraPerKm
+        //            }).ToList();
+        //        approvalRequestsDTO.Add(item);
+        //    }
+
+        //    return approvalRequestsDTO[0];
+        //}
+
     }
 }
