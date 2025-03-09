@@ -75,6 +75,15 @@ namespace HCP.Service.DTOs.RequestDTO
 
         [JsonPropertyName("amount")]
         public double Amount { get; set; }
+
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("duration")]
+        public double? Duration { get; set; }
     }
 
     public class ServiceImgDTO

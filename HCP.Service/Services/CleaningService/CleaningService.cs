@@ -48,9 +48,9 @@ namespace HCP.Service.Services.CleaningService1
                 name = c.ServiceName,
                 category = c.Category.CategoryName,
                 overallRating = c.Rating,
-                location = c.AddressLine + ", " + c.District+", " + c.City,
+                location = c.AddressLine + ", " + c.District + ", " + c.City,
                 price = c.Price,
-                
+
             }).ToList();
         }
         public async Task<CleaningServiceListDTO> GetAllServiceItems(int? pageIndex, int? pageSize)
@@ -65,7 +65,7 @@ namespace HCP.Service.Services.CleaningService1
                 price = c.Price,
                 location = c.AddressLine + ", " + c.District + ", " + c.City
             });
-            if(pageIndex == null || pageSize == null)
+            if (pageIndex == null || pageSize == null)
             {
                 var temp1 = await PaginatedList<CleaningServiceItemDTO>.CreateAsync(list1, 1, list1.Count());
                 return new CleaningServiceListDTO
@@ -77,7 +77,7 @@ namespace HCP.Service.Services.CleaningService1
                     totalPages = temp1.TotalPages,
                 };
             }
-            var temp =await PaginatedList<CleaningServiceItemDTO>.CreateAsync(list1, (int)pageIndex, (int)pageSize);
+            var temp = await PaginatedList<CleaningServiceItemDTO>.CreateAsync(list1, (int)pageIndex, (int)pageSize);
             var temp2 = new CleaningServiceListDTO
             {
                 Items = temp,
@@ -117,8 +117,8 @@ namespace HCP.Service.Services.CleaningService1
 
             var service = services.FirstOrDefault();
             if (service == null)
-                return null;
-            var user =await _userManager.FindByIdAsync(service.UserId);
+                return null!;
+            var user = await _userManager.FindByIdAsync(service.UserId);
             var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == user.Id && c.IsDefault) ?? new Address();
             var service1 = await _unitOfWork.Repository<CleaningService>().ListAsync(filter: c => c.UserId == user.Id,
                 orderBy: query => query.OrderByDescending(u => u.Id)
@@ -131,7 +131,7 @@ namespace HCP.Service.Services.CleaningService1
                 location = $"{service.City}, {service.District}",
                 reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
                 numOfReviews = service.ServiceRatings.Count,
-                
+
                 numOfPics = service.ServiceImages.Count,
                 overview = service.Description,
                 images = service.ServiceImages.Select(i => new ImgDTO { url = i.LinkUrl }).ToList(),
@@ -142,6 +142,8 @@ namespace HCP.Service.Services.CleaningService1
                     name = a.Name,
                     price = a.Amount.ToString("0.0"),
                     url = a.Url,
+                    Duration = a.Duration,
+                    Description = a.Description
                 }).ToList(),
                 housekeeper =
                      new housekeeperDetailDTO
@@ -221,6 +223,9 @@ namespace HCP.Service.Services.CleaningService1
                     id = a.Id,
                     name = a.Name,
                     price = a.Amount.ToString("0.0"),
+                    Description = a.Description,
+                    Duration = a.Duration,
+                    url = a.Url
                 }).ToList(),
                 housekeeper = service.User != null
                     ? new housekeeperDetailDTO
@@ -279,7 +284,10 @@ namespace HCP.Service.Services.CleaningService1
                     Name = a.Name,
                     CleaningServiceId = newService.Id,
                     Amount = a.Amount,
-                    IsActive = true
+                    IsActive = true,
+                    Description = a.Description,
+                    Url = a.Description,
+                    Duration = a.Duration,
                 });
 
                 await _unitOfWork.Repository<AdditionalService>().AddRangeAsync(additionalServices);
@@ -318,7 +326,7 @@ namespace HCP.Service.Services.CleaningService1
                     {
                         ServiceId = newService.Id,
                         StartTime = timeSlotDTO.StartTime,
-                        EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(newService.Duration)),                                                              
+                        EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(newService.Duration)),
                         DayOfWeek = timeSlotDTO.DayOfWeek,
                         Status = ServiceStatus.Active.ToString()
                     });
@@ -327,7 +335,7 @@ namespace HCP.Service.Services.CleaningService1
                 await _unitOfWork.Repository<ServiceTimeSlot>().AddRangeAsync(timeSlots);
             }
 
-            if(dto.ServiceDistanceRule != null)
+            if (dto.ServiceDistanceRule != null)
             {
                 var distanceRules = dto.ServiceDistanceRule.Select(rule => new DistancePricingRule
                 {
@@ -349,11 +357,12 @@ namespace HCP.Service.Services.CleaningService1
             var isBooked = await _unitOfWork.Repository<Booking>().ExistsAsync(
                 b => b.CleaningServiceId == serviceId &&
                      b.PreferDateStart == targetDate &&
-                     ((b.TimeStart <= endTime && b.TimeEnd >= startTime) && b.Status == BookingStatus.OnGoing.ToString()) 
+                     ((b.TimeStart <= endTime && b.TimeEnd >= startTime) && b.Status == BookingStatus.OnGoing.ToString())
             );
 
             return !isBooked;
         }
+
         public async Task<List<AdditionalServicedDTO>> GetAllAdditonalServicesById(Guid serviceId)
         {
             var list = await _unitOfWork.Repository<AdditionalService>().ListAsync(
@@ -365,12 +374,13 @@ namespace HCP.Service.Services.CleaningService1
             {
                 id = c.Id,
                 name = c.Name,
-                price = c.Amount.ToString("F2"), 
-                url = c.Url
+                price = c.Amount.ToString("F2"),
+                url = c.Url,
+                Duration = c.Duration,
+                Description = c.Description
             }).ToList();
 
             return result;
         }
-
     }
 }
