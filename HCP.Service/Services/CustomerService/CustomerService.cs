@@ -26,7 +26,7 @@ namespace HCP.Service.Services.CustomerService
 
         public async Task<AppUser?> GetCustomerAsync(ClaimsPrincipal userClaims) 
             => await _userManager.FindByIdAsync(userClaims.FindFirst("id")?.Value);
-
+        
         public async Task<CustomerProfileDTO?> GetCustomerProfile(ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst("id")?.Value;

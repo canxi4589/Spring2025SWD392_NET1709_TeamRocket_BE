@@ -9,5 +9,6 @@ namespace HCP.Service.Services.RequestService
         Task<List<PendingRequestDTO>> GetPendingCreateServiceRequestsAsync();
         Task<PendingRequestDTO> GetPendingCreateServiceDetailAsync(Guid id);
         Task<(bool Success, string Message)> UpdateServiceStatusAsync(ServiceStatusUpdateDto dto, ClaimsPrincipal userClaims);
+        Task<List<ApprovalServiceDTO>> GetApprovedServiceByStaffIdAsync(ClaimsPrincipal user);
     }
 }
