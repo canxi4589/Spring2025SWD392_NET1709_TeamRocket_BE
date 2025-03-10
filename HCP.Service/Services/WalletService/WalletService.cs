@@ -32,7 +32,7 @@ namespace HCP.Service.Services.WalletService
         {
             double expectedWithdraw = 0;
             double availableWithdraw = 0;
-            var pendingTransact = _unitOfWork.Repository<WalletTransaction>().GetAll().Where(c=>c.Status.Equals(TransactionStatus.Pending.ToString()));
+            var pendingTransact = _unitOfWork.Repository<WalletTransaction>().GetAll().Where(c=>(c.User == user && c.Status.Equals(TransactionStatus.Pending.ToString())));
             foreach (var transaction in pendingTransact) 
             {
                 expectedWithdraw += (double)transaction.Amount;
