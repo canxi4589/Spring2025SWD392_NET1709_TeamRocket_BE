@@ -1,4 +1,5 @@
-﻿using HCP.Service.DTOs.CleaningServiceDTO;
+﻿using HCP.Repository.Constance;
+using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.DTOs.RequestDTO;
 using HCP.Service.Services.RequestService;
 using HomeCleaningService.Helpers;
@@ -29,7 +30,7 @@ namespace HomeCleaningService.Controllers
 
             if (!result.Success)
             {
-                return BadRequest(response.SetErrorResponse("error", result.Message));
+                return BadRequest(response.SetErrorResponse(KeyConst.PendingRequest, result.Message));
             }
 
             return Ok(response.SetSuccessResponse(result.Message));
@@ -44,7 +45,7 @@ namespace HomeCleaningService.Controllers
 
             if (result == null)
             {
-                return BadRequest(response.SetErrorResponse("error", "Something wrong getting Pending Request"));
+                return BadRequest(response.SetErrorResponse(KeyConst.PendingRequest, RequestConst.GetRequestNullError));
             }
 
             return Ok(new AppResponse<List<PendingRequestDTO>>().SetSuccessResponse(result));
@@ -59,7 +60,7 @@ namespace HomeCleaningService.Controllers
 
             if (result == null)
             {
-                return BadRequest(response.SetErrorResponse("error", "Something wrong getting Pending Request"));
+                return BadRequest(response.SetErrorResponse(KeyConst.PendingRequest, RequestConst.GetRequestNullError));
             }
 
             return Ok(new AppResponse<PendingRequestDTO>().SetSuccessResponse(result));
