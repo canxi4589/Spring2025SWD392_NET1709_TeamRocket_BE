@@ -17,6 +17,8 @@ namespace HCP.Repository.Entities
         [ForeignKey("ServiceTimeSlot")]
         public Guid TimeSLotId { get; set; }
 
+        public DateTime BookingDate { get; set; }
+
         public TimeSpan StartTime { get; set; }
 
         public TimeSpan EndTime { get; set; }

@@ -1,4 +1,5 @@
 ﻿using HCP.Repository.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
@@ -41,5 +42,8 @@ namespace HCP.Repository.Interfaces
         Task AddRangeAsync(IEnumerable<T> entities);
         Task<int> SaveChangesAsync();
         Task<T?> GetEntityAsync(Expression<Func<T, bool>> predicate);
+        Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate);
+
+        Task RemoveRangeAsync(IEnumerable<T> entities);
     }
 }
