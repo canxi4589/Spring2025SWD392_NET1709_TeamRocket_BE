@@ -20,6 +20,8 @@ namespace HCP.Service.DTOs.WalletDTO
         public string Mail { get; set; }
         public string PhoneNumber { get; set; }
         public Guid? ReferenceId { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string Status { get; set; }
     }
     public class WalletTransactionDepositResponseDTO
     {
@@ -33,6 +35,8 @@ namespace HCP.Service.DTOs.WalletDTO
         public string PhoneNumber { get; set; }
         public Guid? ReferenceId { get; set; }
         public string Description { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string Status { get; set; }
     }
     public class WalletWithdrawRequestDTO
     {
@@ -43,6 +47,8 @@ namespace HCP.Service.DTOs.WalletDTO
         public string Mail { get; set; }
         public string PhoneNumber { get; set; }
         public Guid? ReferenceId { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string Status { get; set; }
     }
     public class WalletWithdrawStaffShowDTO
     {
@@ -54,6 +60,8 @@ namespace HCP.Service.DTOs.WalletDTO
         public string FullName { get; set; }
         public string Mail { get; set; }
         public string PhoneNumber { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string Status { get; set; }
     }
     public class GetWalletWithdrawRequestListDTO
     {

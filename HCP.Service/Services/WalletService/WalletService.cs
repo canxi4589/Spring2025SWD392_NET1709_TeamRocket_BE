@@ -30,7 +30,19 @@ namespace HCP.Service.Services.WalletService
         }
         public async Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user)
         {
-            if (user.BalanceWallet < (Double)amount) throw new Exception("Your balance is lower than the amount you wish to withdraw!");
+            double expectedWithdraw = 0;
+            double availableWithdraw = 0;
+            var pendingTransact = _unitOfWork.Repository<WalletTransaction>().GetAll().Where(c=>c.Status.Equals(TransactionStatus.Pending.ToString()));
+            foreach (var transaction in pendingTransact) 
+            {
+                expectedWithdraw += (double)transaction.Amount;
+            }
+            if (user.BalanceWallet<(expectedWithdraw+(double)amount))
+            {
+                availableWithdraw = user.BalanceWallet-(expectedWithdraw);
+                throw new Exception($"You're having pending withdraw requests that total more than your balance! @The amount reccomended is {availableWithdraw}");
+            }
+            if (user.BalanceWallet < (double)amount) throw new Exception("Your balance is lower than the amount you want to withdraw!");
             var wTransaction = new WalletTransaction
             {
                 AfterAmount = 0,
@@ -38,23 +50,27 @@ namespace HCP.Service.Services.WalletService
                 User = user,
                 UserId = user.Id,
                 Amount = amount,
-                Type = "WithdrawRequest"
+                Type = "Withdraw",
+                Status = TransactionStatus.Pending.ToString(),
+                CreatedDate = DateTime.UtcNow,
             };
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
             return new WalletWithdrawRequestDTO
             {
                 Amount = amount,
-                Type = "WithdrawRequest",
+                Type = "Withdraw",
                 UserId = user.Id,
                 FullName = user.FullName,
                 Mail = user.Email,
-                PhoneNumber = user.PhoneNumber
+                PhoneNumber = user.PhoneNumber,
+                CreatedDate = wTransaction.CreatedDate,
+                Status = wTransaction.Status
             };
         }
         public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail)
         {
-            var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll();
+            var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll().OrderByDescending(c=>c.CreatedDate);
             if (searchField.Equals("WithdrawRequestUser") || searchField.Equals("WithdrawUser") || searchField.Equals("WithdrawRejectUser") || searchField.Equals("ShowHistoryUser"))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.Id == user.Id);
@@ -73,7 +89,7 @@ namespace HCP.Service.Services.WalletService
             }
             if (searchField.Equals("ShowHistoryUser"))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("Withdraw") || c.Type.Equals("WithdrawReject") || c.Type.Equals("WithdrawRequest"));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("Withdraw") && (c.Type.Equals("WithdrawReject") || c.Type.Equals("");
             }
             if (searchField.Equals("ShowHistoryStaff"))
             {
@@ -164,9 +180,9 @@ namespace HCP.Service.Services.WalletService
                 await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
                 return new WalletTransactionWithdrawResponseDTO
                 {
-                    Amount = (Double)transact.Amount,
+                    Amount = (double)transact.Amount,
                     Current = user.BalanceWallet,
-                    AfterAmount = (Double)transact.AfterAmount,
+                    AfterAmount = (double)transact.AfterAmount,
                     Type = "WithdrawReject",
                     UserId = user.Id,
                     FullName = user.FullName,
