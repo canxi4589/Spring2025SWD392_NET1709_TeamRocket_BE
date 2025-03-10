@@ -47,8 +47,9 @@ namespace HCP.Service.Services.CheckoutService
 
                 var checkout = new Checkout()
                 {
+                    AddressId = requestDTO.AddressId,
                     AddressLine = checkoutAddress.AddressLine1,
-                    AdditionalPrice = 0, // Set initially to 0
+                    AdditionalPrice = 0,                                // Set initially to 0
                     City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
                     ServiceName = checkoutService.ServiceName,
@@ -62,7 +63,9 @@ namespace HCP.Service.Services.CheckoutService
                     Status = CheckoutStatus.Pending.ToString(),
                     Customer = await _userManager.FindByIdAsync(userId),
                     Note = string.Empty,
-                    TimeSLotId = requestDTO.ServiceTimeSlotId
+                    TimeSLotId = requestDTO.ServiceTimeSlotId,
+                    DistancePrice = 0,                                   // Set initially to 0   
+                    TotalPrice = 0,                                     // Set initially to 0                
                 };
 
                 await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
@@ -103,6 +106,8 @@ namespace HCP.Service.Services.CheckoutService
                 }
 
                 checkout.AdditionalPrice = (decimal)additionalPrice;
+                //checkout.DistancePrice =                                                                  // them logic
+                checkout.TotalPrice = (decimal)additionalPrice + checkout.ServicePrice ;                   //thieu distance price
                 _unitOfWork.Repository<Checkout>().Update(checkout);
                 
                 await _unitOfWork.SaveChangesAsync();
@@ -123,6 +128,7 @@ namespace HCP.Service.Services.CheckoutService
                         Duration = a.Duration,
                         Url = a.Url
                     }).ToList(),
+                    AddressId = requestDTO.AddressId,
                     AddressLine = checkoutAddress.AddressLine1,
                     City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
@@ -135,6 +141,8 @@ namespace HCP.Service.Services.CheckoutService
                     DateOfWeek = checkoutTimeSlot.DayOfWeek,
                     EndTime = checkoutTimeSlot.EndTime,
                     StartTime = checkoutTimeSlot.StartTime,
+                    DistancePrice = checkout.DistancePrice,
+                    TotalPrice = checkout.TotalPrice
                 };
             }
             catch (DbUpdateException dbEx)
@@ -194,6 +202,7 @@ namespace HCP.Service.Services.CheckoutService
                     Duration = a.Duration,
                     Description = a.Description,
                 }).ToList(),
+                AddressId = c.AddressId,
                 AddressLine = c.AddressLine,
                 City = c.City,
                 CleaningServiceId = c.CleaningServiceId,
@@ -205,7 +214,9 @@ namespace HCP.Service.Services.CheckoutService
                 District = c.District,
                 PlaceId = c.PlaceId,
                 ServicePrice = c.ServicePrice,
-                Status = c.Status
+                Status = c.Status,
+                TotalPrice = c.TotalPrice,
+                DistancePrice = c.DistancePrice
             }).ToList();
         }
 
@@ -238,6 +249,7 @@ namespace HCP.Service.Services.CheckoutService
                     Duration = a.Duration,
                     Url = a.Url
                 }).ToList(),
+                AddressId = checkout.AddressId,
                 AddressLine = checkout.AddressLine,
                 City = checkout.City,
                 CleaningServiceId = checkout.CleaningServiceId,
@@ -250,6 +262,8 @@ namespace HCP.Service.Services.CheckoutService
                 DateOfWeek = checkout.DayOfWeek,
                 EndTime = checkout.EndTime,
                 StartTime = checkout.StartTime,
+                DistancePrice = checkout.DistancePrice,
+                TotalPrice  = checkout.TotalPrice
             };
         }
 
