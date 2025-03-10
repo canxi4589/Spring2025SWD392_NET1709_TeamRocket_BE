@@ -36,7 +36,7 @@ namespace HomeCleaningService.Controllers
 
             try
             {
-                var claim = User; 
+                var claim = User;
                 var checkoutInfo = await _bookingService.GetCheckoutInfo(request, claim);
                 return Ok(response.SetSuccessResponse(checkoutInfo));
             }
@@ -51,7 +51,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreateDepositPayment")]
         [Authorize]
-        public async Task<IActionResult> CreateDepositPayment(int amount,string paymentMethod = "Vnpay")
+        public async Task<IActionResult> CreateDepositPayment(int amount, string paymentMethod = "Vnpay")
         {
             var userClaims = User;
             try
@@ -77,7 +77,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreatePayment")]
         [Authorize]
-        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = "Vnpay")
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request, string paymentMethod = "Vnpay")
         {
             var userClaims = User;
             try
@@ -111,24 +111,50 @@ namespace HomeCleaningService.Controllers
         {
             string queryString = Request.QueryString.Value;
             var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
-                // Retrieve the order ID from the query string
-                if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
+            // Retrieve the order ID from the query string
+            if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
+            {
+                if (true)
                 {
-                    if (true)
+                    var paymentStatus = Request.Query["vnp_ResponseCode"];
+                    if (paymentStatus == "00") //"00" means success
                     {
-                        var paymentStatus = Request.Query["vnp_ResponseCode"];
-                        if (paymentStatus == "00") //"00" means success
-                        {
 
                         //return Redirect("https://www.google.com/"); // Redirect to success page
                         return Redirect("http://localhost:5173/service/Checkout/success");
-                        }
-                        else
-                        {
+                    }
+                    else
+                    {
                         _bookingService.UpdateStatusBooking(orderId, "IsDeleted");
                         return Redirect("http://localhost:5173/service/Checkout/fail");
-                        }
                     }
+                }
+            }
+            return BadRequest("Invalid payment.");
+        }
+        [Authorize]
+        [HttpGet("PaymentDepositReturn-VNPAY")]
+        public IActionResult PaymentDepositReturn()
+        {
+            string queryString = Request.QueryString.Value;
+            var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
+            // Retrieve the transaction typw from the query string
+            if (Request.Query["vnp_TxnRef"] == "deposit")
+            {
+                if (true)
+                {
+                    var paymentStatus = Request.Query["vnp_ResponseCode"];
+                    if (paymentStatus == "00") //"00" means success
+                    {
+
+                        //return Redirect("https://www.google.com/"); // Redirect to success page
+                        return Redirect("http://localhost:5173/wallet/deposit/success");
+                    }
+                    else
+                    {
+                        return Redirect("http://localhost:5173/wallet/deposit/fail");
+                    }
+                }
             }
             return BadRequest("Invalid payment.");
         }
