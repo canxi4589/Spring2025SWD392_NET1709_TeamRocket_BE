@@ -55,7 +55,7 @@ namespace HCP.Service.Services.CleaningService1
         }
         public async Task<CleaningServiceListDTO> GetAllServiceItems(int? pageIndex, int? pageSize)
         {
-            var list = _unitOfWork.Repository<CleaningService>().GetAll().Include(c => c.Category);
+            var list = _unitOfWork.Repository<CleaningService>().GetAll().Include(c => c.Category).Include(c => c.ServiceImages);
             var list1 = list.Select(c => new CleaningServiceItemDTO
             {
                 id = c.Id,
@@ -63,7 +63,10 @@ namespace HCP.Service.Services.CleaningService1
                 category = c.Category.CategoryName,
                 overallRating = c.Rating,
                 price = c.Price,
-                location = c.AddressLine + ", " + c.District + ", " + c.City
+                location = c.AddressLine,
+                CategoryName = c.Category.CategoryName,
+                Url = c.ServiceImages.FirstOrDefault().LinkUrl,
+                
             });
             if (pageIndex == null || pageSize == null)
             {
