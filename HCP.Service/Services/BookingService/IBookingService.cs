@@ -17,6 +17,6 @@ namespace HCP.Service.Services.BookingService
         Task DeleteBooking(Guid id);
         Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay");
         Task<Payment> UpdatePaymentStatusAsync(Guid paymentId, string status);
-        Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize);
+        Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize, string? Status);
     }
 }

@@ -56,5 +56,24 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound();
         }
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetHousekeeperBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
+        {
+            var userClaims = User;
+            try
+            {
+                var response = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize);
+                return Ok(response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -24,7 +24,8 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public decimal overallRating { get; set; }
         public decimal price {  get; set; }
         public string location { get; set; }
-
+        public string? Url {  get; set; }
+        public string? CategoryName { get; set; }
     }
     public class CategoryDTO
     {

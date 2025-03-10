@@ -396,7 +396,7 @@ namespace HCP.Service.Services.BookingService
 
         }
 
-        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize)
+        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize,string? Status)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();
             var userId = userClaims.FindFirst("id")?.Value;
@@ -407,9 +407,9 @@ namespace HCP.Service.Services.BookingService
             }
 
             var bookingsQuery = await _unitOfWork.Repository<Booking>().ListAsync(
-                filter: c => c.CleaningService.UserId == userId,
+                filter: c => c.CleaningService.UserId == userId && c.Status != "IsDeleted",
                 includeProperties: query => query
-                    .Include(c => c.CleaningService)
+                    .Include(c => c.CleaningService).ThenInclude(c => c.ServiceImages)
                     .Include(c => c.Payments)
                     .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
                     .Include(c => c.Customer)
