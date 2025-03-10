@@ -34,10 +34,11 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception("User ID not found in claims.");
                 }
 
-                var address = _unitOfWork.Repository<Address>().GetById(requestDTO.AddressId);
-                var service = _unitOfWork.Repository<CleaningService>().GetById(requestDTO.ServiceId);
+                var checkoutAddress = _unitOfWork.Repository<Address>().GetById(requestDTO.AddressId);
+                var checkoutService = _unitOfWork.Repository<CleaningService>().GetById(requestDTO.ServiceId);
+                var checkoutTimeSlot = _unitOfWork.Repository<ServiceTimeSlot>().GetById(requestDTO.ServiceTimeSlotId);
 
-                if (service == null || address == null)
+                if (checkoutService == null || checkoutAddress == null || checkoutTimeSlot == null)
                 {
                     throw new Exception("Invalid Service or Address.");
                 }
@@ -46,14 +47,18 @@ namespace HCP.Service.Services.CheckoutService
 
                 var checkout = new Checkout()
                 {
-                    AddressLine = address.AddressLine1,
+                    AddressLine = checkoutAddress.AddressLine1,
                     AdditionalPrice = 0, // Set initially to 0
-                    City = address.City,
+                    City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
+                    ServiceName = checkoutService.ServiceName,
+                    DayOfWeek = checkoutTimeSlot.DayOfWeek,
+                    StartTime = checkoutTimeSlot.StartTime,
+                    EndTime = checkoutTimeSlot.EndTime,
                     CustomerId = userId,
-                    District = address.District,
-                    ServicePrice = service.Price,
-                    PlaceId = address.PlaceId,
+                    District = checkoutAddress.District,
+                    ServicePrice = checkoutService.Price,
+                    PlaceId = checkoutAddress.PlaceId,
                     Status = CheckoutStatus.Pending.ToString(),
                     Customer = await _userManager.FindByIdAsync(userId),
                     Note = string.Empty,
@@ -61,7 +66,7 @@ namespace HCP.Service.Services.CheckoutService
                 };
 
                 await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
-                await _unitOfWork.SaveChangesAsync(); 
+                await _unitOfWork.SaveChangesAsync();
 
                 var additionalServices = new List<CheckoutAdditionalService>();
 
@@ -77,6 +82,7 @@ namespace HCP.Service.Services.CheckoutService
                             var checkoutAdditionalService = new CheckoutAdditionalService()
                             {
                                 AdditionalServiceId = additional.AdditionalServiceId,
+                                AdditionalServiceName = additionalServiceEntity.Name,
                                 Amount = (decimal)additionalServiceEntity.Amount,
                                 IsActive = additionalServiceEntity.IsActive,
                                 Url = additionalServiceEntity.Url,
@@ -99,7 +105,7 @@ namespace HCP.Service.Services.CheckoutService
                 checkout.AdditionalPrice = (decimal)additionalPrice;
                 _unitOfWork.Repository<Checkout>().Update(checkout);
 
-                await _unitOfWork.SaveChangesAsync(); // ✅ Save all changes
+                await _unitOfWork.SaveChangesAsync();
 
                 return new CheckoutResponseDTO1()
                 {
@@ -109,20 +115,25 @@ namespace HCP.Service.Services.CheckoutService
                     AdditionalServices = additionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
                     {
                         AdditionalServiceId = a.AdditionalServiceId,
+                        AdditionalServiceName = a.AdditionalServiceName,
                         Amount = (double)a.Amount,
                         IsActive = a.IsActive,
                         Description = a.Description,
                         Duration = a.Duration,
                         Url = a.Url
                     }).ToList(),
-                    AddressLine = address.AddressLine1,
-                    City = address.City,
+                    AddressLine = checkoutAddress.AddressLine1,
+                    City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
-                    District = address.District,
-                    PlaceId = address.PlaceId,
-                    ServicePrice = service.Price,
+                    CleaningServiceName = checkoutService.ServiceName,
+                    District = checkoutAddress.District,
+                    PlaceId = checkoutAddress.PlaceId,
+                    ServicePrice = checkoutService.Price,
                     Status = CheckoutStatus.Pending.ToString(),
-                    TimeSlotId = requestDTO.ServiceTimeSlotId
+                    TimeSlotId = requestDTO.ServiceTimeSlotId,
+                    DateOfWeek = checkoutTimeSlot.DayOfWeek,
+                    EndTime = checkoutTimeSlot.EndTime,
+                    StartTime = checkoutTimeSlot.StartTime,
                 };
             }
             catch (DbUpdateException dbEx)
@@ -136,8 +147,6 @@ namespace HCP.Service.Services.CheckoutService
                 throw;
             }
         }
-
-
 
         public async Task<bool> ChangeStatusCheckout(Guid checkoutId)
         {
@@ -177,6 +186,7 @@ namespace HCP.Service.Services.CheckoutService
                 AdditionalServices = c.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
                 {
                     AdditionalServiceId = a.AdditionalServiceId,
+                    AdditionalServiceName = a.AdditionalServiceName,
                     Amount = (double)a.Amount,
                     IsActive = a.IsActive,
                     Url = a.Url,
@@ -186,11 +196,60 @@ namespace HCP.Service.Services.CheckoutService
                 AddressLine = c.AddressLine,
                 City = c.City,
                 CleaningServiceId = c.CleaningServiceId,
+                CleaningServiceName = c.ServiceName,
+                DateOfWeek = c.DayOfWeek,
+                EndTime = c.EndTime,
+                StartTime = c.StartTime,
+                TimeSlotId = c.TimeSLotId,
                 District = c.District,
                 PlaceId = c.PlaceId,
                 ServicePrice = c.ServicePrice,
                 Status = c.Status
             }).ToList();
+        }
+
+        public async Task<CheckoutResponseDTO1> GetCheckoutById(Guid checkoutId)
+        {
+            var checkout = await _unitOfWork.Repository<Checkout>()
+                                                .GetAll()
+                                                .Where(c => c.Id == checkoutId)
+                                                .Include(c => c.CheckoutAdditionalServices)
+                                                    .ThenInclude(cas => cas.AdditionalService)
+                                                .FirstOrDefaultAsync();
+
+            if (checkout == null)
+            {
+                return new CheckoutResponseDTO1(); // Return empty list if userId is null
+            }
+
+            return new CheckoutResponseDTO1()
+            {
+                CheckoutId = checkoutId,
+                CustomerId = checkout.CustomerId,
+                AdditionalPrice = (decimal)checkout.AdditionalPrice,
+                AdditionalServices = checkout.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
+                {
+                    AdditionalServiceId = a.AdditionalServiceId,
+                    AdditionalServiceName = a.AdditionalServiceName,
+                    Amount = (double)a.Amount,
+                    IsActive = a.IsActive,
+                    Description = a.Description,
+                    Duration = a.Duration,
+                    Url = a.Url
+                }).ToList(),
+                AddressLine = checkout.AddressLine,
+                City = checkout.City,
+                CleaningServiceId = checkout.CleaningServiceId,
+                CleaningServiceName = checkout.ServiceName,
+                District = checkout.District,
+                PlaceId = checkout.PlaceId,
+                ServicePrice = checkout.ServicePrice,
+                Status = CheckoutStatus.Pending.ToString(),
+                TimeSlotId = checkout.TimeSLotId,
+                DateOfWeek = checkout.DayOfWeek,
+                EndTime = checkout.EndTime,
+                StartTime = checkout.StartTime,
+            };
         }
 
     }

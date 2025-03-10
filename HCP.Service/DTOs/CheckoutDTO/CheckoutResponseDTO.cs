@@ -18,6 +18,9 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("service_id")]
         public Guid CleaningServiceId { get; set; }
 
+        [JsonPropertyName("service_name")]
+        public string CleaningServiceName { get; set; } = "This is a really good Cleaning Service Name";
+
         [JsonPropertyName("status")]
         public string Status { get; set; }
 
@@ -42,6 +45,15 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("time_slot_id")]
         public Guid TimeSlotId { get; set; }
 
+        [JsonPropertyName("start_time")]
+        public TimeSpan StartTime { get; set; }
+
+        [JsonPropertyName("end_time")]
+        public TimeSpan EndTime { get; set; }
+
+        [JsonPropertyName("date_of_week")]
+        public string DateOfWeek { get; set; }
+
         // List of additional services
         [JsonPropertyName("additional_services")]
         public List<CheckoutAdditionalServiceResponseDTO> AdditionalServices { get; set; } = new ();
@@ -51,6 +63,9 @@ namespace HCP.Service.DTOs.CheckoutDTO
     {
         [JsonPropertyName("addtional_service_id")]
         public Guid AdditionalServiceId { get; set; }
+
+        [JsonPropertyName("addtional_service_name")]
+        public string AdditionalServiceName { get; set; } = "This is a cool Name";
         
         [JsonPropertyName("additinal_service_price")]
         public double Amount { get; set; }

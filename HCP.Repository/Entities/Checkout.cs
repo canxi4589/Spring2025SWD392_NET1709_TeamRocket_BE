@@ -9,11 +9,19 @@ namespace HCP.Repository.Entities
         [ForeignKey("CleaningService")]
         public Guid CleaningServiceId { get; set; }
 
+        public string ServiceName { get; set; }
+
         [ForeignKey("Customer")]
         public string CustomerId { get; set; }
 
         [ForeignKey("ServiceTimeSlot")]
         public Guid TimeSLotId { get; set; }
+
+        public TimeSpan StartTime { get; set; }
+
+        public TimeSpan EndTime { get; set; }
+
+        public string DayOfWeek { get; set; }
 
         public string Status { get; set; } = default!;
 
