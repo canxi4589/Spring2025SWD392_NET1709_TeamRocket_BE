@@ -208,9 +208,8 @@ namespace HCP.Service.Services.WalletService
                 };
             }
         }
-        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(string status, decimal amount, AppUser user)
+        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(decimal amount, AppUser user)
         {
-            if (status != "00") throw new Exception("Transaction failed!");
             var wTransaction = new WalletTransaction
             {
                 AfterAmount = (Decimal)user.BalanceWallet + amount,

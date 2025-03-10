@@ -64,12 +64,12 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("processDeposit")]
         [Authorize]
-        public async Task<IActionResult> processDeposit(string status, decimal amount)
+        public async Task<IActionResult> processDeposit(decimal amount)
         {
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
-                var deposit = await _walletService.processDepositTransaction(status, amount, user);
+                var deposit = await _walletService.processDepositTransaction(amount, user);
                 return Ok(new AppResponse<WalletTransactionDepositResponseDTO>().SetSuccessResponse(deposit));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
