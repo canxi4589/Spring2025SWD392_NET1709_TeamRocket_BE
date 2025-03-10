@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 public class GoongDistanceService : IGoongDistanceService
 {
     private readonly HttpClient _httpClient;
-    private const string GoongApiKey = "YOUR_GOONG_API_KEY";
+    private const string GoongApiKey = "N9JxG9aqmBVPRdSlAJxvCgFp7VeDMcuH3a9YmD5H";
     private const string GoongApiUrl = "https://rsapi.goong.io/DistanceMatrix";
 
     public GoongDistanceService(HttpClient httpClient)
@@ -30,7 +30,7 @@ public class GoongDistanceService : IGoongDistanceService
             var distance = root.GetProperty("rows")[0].GetProperty("elements")[0]
                             .GetProperty("distance").GetProperty("value").GetDouble();
 
-            return distance / 1000.0; // Convert meters to kilometers
+            return distance / 1000.0; 
         }
 
         return null;

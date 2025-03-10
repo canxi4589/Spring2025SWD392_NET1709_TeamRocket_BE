@@ -22,11 +22,12 @@ namespace HCP.Service.Services.BookingService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> userManager;
-
-        public BookingService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+        private readonly IGoongDistanceService _goongDistanceService;
+        public BookingService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IGoongDistanceService goongDistanceService)
         {
             _unitOfWork = unitOfWork;
             this.userManager = userManager;
+            _goongDistanceService = goongDistanceService;
         }
         public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
@@ -143,7 +144,6 @@ namespace HCP.Service.Services.BookingService
         public async Task<CheckoutResponseDTO> GetCheckoutInfo(CheckoutRequestDTO request, ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst("id")?.Value;
-            var userEmail = userClaims.FindFirst("email")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
                 throw new UnauthorizedAccessException("User not authenticated");
@@ -154,6 +154,7 @@ namespace HCP.Service.Services.BookingService
             {
                 throw new KeyNotFoundException("User not found");
             }
+
             var service = await _unitOfWork.Repository<CleaningService>().GetEntityByIdAsync(request.ServiceId);
             if (service == null)
                 throw new Exception("Service not found");
@@ -167,14 +168,34 @@ namespace HCP.Service.Services.BookingService
             );
 
             decimal additionalPrice = (decimal)bookingAdditionals.Sum(ba => ba.Amount);
-            decimal totalPrice = service.Price + additionalPrice;
+            double totalAdditionalDuration = bookingAdditionals.Sum(ba => ba.Duration ?? 0);
+
+            double? distance = await _goongDistanceService.GetDistanceAsync(address.PlaceId, service.PlaceId);
+            if (distance == null) throw new Exception("Failed to calculate distance");
+
+            var pricingRule = await _unitOfWork.Repository<DistancePricingRule>().GetEntityAsync(
+                rule => rule.CleaningServiceId == service.Id &&
+                        rule.MinDistance <= distance &&
+                        rule.MaxDistance >= distance &&
+                        rule.IsActive
+            );
+            if (pricingRule == null)
+                throw new Exception("Service is not available for this distance");
+
+            decimal distancePrice = pricingRule.BaseFee;
+            decimal totalPrice = service.Price + additionalPrice + distancePrice;
+
+            var timeSlot = await _unitOfWork.Repository<ServiceTimeSlot>().GetEntityByIdAsync(request.TimeSlotId);
+            if (timeSlot == null)
+                throw new Exception("Time slot not found");
+
+            bool isWalletChoosable =(decimal) customer.BalanceWallet >= totalPrice;
 
             var paymentMethods = new List<PaymentMethodDTO>
-                {
-                    new PaymentMethodDTO { Name = "Wallet",IsChoosable = false },
-                    new PaymentMethodDTO { Name = "VNPay" ,IsChoosable = true }
-                };
-            var timespan = _unitOfWork.Repository<ServiceTimeSlot>().GetById(request.TimeSlotId);
+    {
+        new PaymentMethodDTO { Name = "Wallet", IsChoosable = isWalletChoosable },
+        new PaymentMethodDTO { Name = "VNPay", IsChoosable = true }
+    };
 
             var response = new CheckoutResponseDTO
             {
@@ -187,24 +208,28 @@ namespace HCP.Service.Services.BookingService
                 AddressLine = address.AddressLine1,
                 ServiceName = service.ServiceName,
                 ServiceBasePrice = service.Price,
-                Distance = "10 kms",
-                DistancePrice = 10,
+                Distance = $"{distance} km",
+                DistancePrice = distancePrice,
                 AddidionalPrice = additionalPrice,
                 TotalPrice = totalPrice,
+                TimeStart = timeSlot.StartTime,
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes(totalAdditionalDuration+30),
                 BookingAdditionalDTOs = bookingAdditionals.Select(ba => new BookingAdditionalDTO
                 {
                     AdditionalId = ba.Id,
+                    Url = ba.Url,
                     Name = ba.Name,
-                    Price = (decimal)ba.Amount
+                    Price = (decimal)ba.Amount,
+                    Duration = ba.Duration
                 }).ToList(),
-                PaymentMethods = paymentMethods.Select(pm => new PaymentMethodDTO { Name = pm.Name }).ToList()
+                PaymentMethods = paymentMethods
             };
 
             return response;
         }
         public async Task<Booking> GetBookingById(Guid id)
         {
-            var bookingRepository =await _unitOfWork.Repository<Booking>().GetEntityByIdAsync(id);
+            var bookingRepository = await _unitOfWork.Repository<Booking>().GetEntityByIdAsync(id);
             return bookingRepository;
 
         }
@@ -220,7 +245,7 @@ namespace HCP.Service.Services.BookingService
 
             payment.Status = "Failed";
 
-            var booking =  bookingRepository.GetById(id);
+            var booking = bookingRepository.GetById(id);
             if (booking == null)
             {
                 throw new KeyNotFoundException("Booking not found.");
@@ -229,7 +254,7 @@ namespace HCP.Service.Services.BookingService
             booking.Status = status;
 
             bookingRepository.Update(booking);
-             _unitOfWork.Complete(); 
+            _unitOfWork.Complete();
 
             return booking;
         }
@@ -255,6 +280,7 @@ namespace HCP.Service.Services.BookingService
             var addressRepository = _unitOfWork.Repository<Address>();
             var bookingAdditionalRepository = _unitOfWork.Repository<BookingAdditional>();
             var paymentRepository = _unitOfWork.Repository<Payment>();
+            var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
 
             var userId = userClaims.FindFirst("id")?.Value;
             var userEmail = userClaims.FindFirst("email")?.Value;
@@ -283,6 +309,21 @@ namespace HCP.Service.Services.BookingService
             var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
                 ba => dto.BookingAdditionalIds.Contains(ba.Id), orderBy: ba => ba.OrderBy(c => c.Id)
             );
+            double? distance = await _goongDistanceService.GetDistanceAsync(address.PlaceId, service.PlaceId);
+            if (distance == null) throw new Exception("Failed to calculate distance");
+
+            var pricingRule = await distancePricingRepository.GetEntityAsync(
+                rule => rule.CleaningServiceId == service.Id &&
+                        rule.MinDistance <= distance &&
+                        rule.MaxDistance >= distance &&
+                        rule.IsActive
+            );
+
+            if (pricingRule == null)
+                throw new Exception("Service is not available for this distance");
+
+            decimal distancePrice = pricingRule.BaseFee;
+
             Guid id = Guid.NewGuid();
             var bookingAdditionals = bookingAdditionals1.Select(c => new BookingAdditional
             {
@@ -291,6 +332,7 @@ namespace HCP.Service.Services.BookingService
                 AdditionalServiceId = c.Id,
             });
 
+            var totalAdditionalDuration = bookingAdditionals1.Sum(a => a.Duration);
             var booking = new Booking
             {
                 Id = id,
@@ -298,27 +340,29 @@ namespace HCP.Service.Services.BookingService
                 CleaningServiceId = service.Id,
                 PreferDateStart = dto.StartDate,
                 TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime,
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration+30),
                 CreatedDate = DateTime.UtcNow,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
                 ServicePrice = service.Price,
-                DistancePrice = 0, // Calculate if needed
+                DistancePrice = distancePrice,
                 AddtionalPrice = (decimal)bookingAdditionals.Sum(a => a.Amount),
                 City = address.City,
                 PlaceId = address.PlaceId,
                 District = address.District,
                 AddressLine = address.AddressLine1,
-                Note = "",
+                Note = dto.Note ?? "",
                 BookingAdditionals = bookingAdditionals.ToList()
-
             };
+
 
             await bookingRepository.AddAsync(booking);
             await _unitOfWork.Complete();
 
             return booking;
         }
+
+
         public async Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay")
         {
             var paymentRepository = _unitOfWork.Repository<Payment>();
@@ -337,7 +381,7 @@ namespace HCP.Service.Services.BookingService
 
             return payment;
         }
-        public async Task<Payment> UpdatePaymentStatusAsync(Guid paymentId,string status)
+        public async Task<Payment> UpdatePaymentStatusAsync(Guid paymentId, string status)
         {
             var paymentRepository = _unitOfWork.Repository<Payment>();
             var payment = await paymentRepository.GetEntityByIdAsync(paymentId);
@@ -351,6 +395,61 @@ namespace HCP.Service.Services.BookingService
             return payment;
 
         }
+
+        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize)
+        {
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var userId = userClaims.FindFirst("id")?.Value;
+
+            if (userId == null)
+            {
+                throw new UnauthorizedAccessException("User not authenticated");
+            }
+
+            var bookingsQuery = await _unitOfWork.Repository<Booking>().ListAsync(
+                filter: c => c.CleaningService.UserId == userId,
+                includeProperties: query => query
+                    .Include(c => c.CleaningService)
+                    .Include(c => c.Payments)
+                    .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
+                    .Include(c => c.Customer)
+            );
+            int totalCount = bookingsQuery.Count();
+
+            var bookings = bookingsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(b => new BookingListItemDto
+                {
+                    Id = b.Id,
+                    PreferDateStart = b.PreferDateStart,
+                    TimeStart = b.TimeStart,
+                    TimeEnd = b.TimeEnd,
+                    Status = b.Status,
+                    IsFinishable = b.Status == BookingStatus.OnGoing.ToString(),
+                    TotalPrice = b.TotalPrice,
+                    ServicePrice = b.ServicePrice,
+                    DistancePrice = b.DistancePrice,
+                    AdditionalPrice = b.AddtionalPrice,
+                    ServiceName = b.CleaningService.ServiceName,
+                    ServiceDescription = b.CleaningService.Description,
+                    ServiceImageUrl = b.CleaningService.ServiceImages.FirstOrDefault()?.LinkUrl,
+                    Customer = new CustomerDto
+                    {
+                        FullName = b.Customer.FullName,
+                        Email = b.Customer.Email,
+                        PhoneNumber = b.Customer.PhoneNumber,
+                        AvatarUrl = b.Customer.Avatar
+                    },
+                    AddressLine1 = b.AddressLine,
+                    City = b.City,
+                    District = b.District
+                })
+                .ToList();
+
+            return new BookingListResponseDto { Items = bookings, TotalCount = totalCount };
+        }
+
 
 
     }

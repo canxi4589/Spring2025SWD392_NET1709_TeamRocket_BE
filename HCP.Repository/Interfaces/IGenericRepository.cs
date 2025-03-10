@@ -40,5 +40,6 @@ namespace HCP.Repository.Interfaces
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
         Task AddRangeAsync(IEnumerable<T> entities);
         Task<int> SaveChangesAsync();
+        Task<T?> GetEntityAsync(Expression<Func<T, bool>> predicate);
     }
 }
