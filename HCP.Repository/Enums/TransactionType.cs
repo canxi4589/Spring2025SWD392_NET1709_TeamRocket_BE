@@ -9,23 +9,37 @@ namespace HCP.Repository.Enums
 {
     public enum TransactionType
     {
-        [Description("Deposit transaction")]
+        [Description("Deposit (nap tien) transaction")]
         Deposit,
-        [Description("Withdraw request by staff")]
+
+        [Description("Withdraw transaction type")]
+        Withdraw,
+
+        [Description("Show Withdraw request for staff")]
         WithdrawRequestStaff,
-        [Description("Withdraw by staff")]
+
+        [Description("Show Withdraw by staff")]
         WithdrawStaff,
-        [Description("Withdraw rejected by staff")]
+
+        [Description("Show Withdraw rejected by staff")]
         WithdrawRejectStaff,
+
         [Description("Show transaction history for staff")]
         ShowHistoryStaff,
-        [Description("Withdraw request by user")]
+
+        [Description("Show Withdraw request by user")]
         WithdrawRequestUser,
-        [Description("Withdraw by user")]
+
+        [Description("Show Withdraw by user")]
         WithdrawUser,
-        [Description("Withdraw rejected by user")]
+
+        [Description("Show Withdraw rejected by user")]
         WithdrawRejectUser,
-        [Description("Show transaction history for user")]
-        ShowHistoryUser
+
+        [Description("Show transaction history (bao gom nap tien rut tien (include deposit, done/pending/fail withdraw) for user")]
+        ShowWithdrawHistoryUser,
+
+        [Description("Show transaction history (bao gom nap tien rut tien (include deposit, done/pending/fail withdraw) for user")]
+        ShowAllHistoryUser
     }
 }

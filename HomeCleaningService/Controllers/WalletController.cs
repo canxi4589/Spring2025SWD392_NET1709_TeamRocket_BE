@@ -16,6 +16,18 @@ namespace HomeCleaningService.Controllers
     [ApiController]
     public class WalletController : ControllerBase
     {
+        private List<string> transactionTypes = new List<string>
+        {
+            "Deposit",
+            "WithdrawRequestStaff",
+            "WithdrawStaff",
+            "WithdrawRejectStaff",
+            "ShowHistoryStaff",
+            "WithdrawRequestUser",
+            "WithdrawUser",
+            "WithdrawRejectUser",
+            "ShowHistoryUser"
+        };
         private readonly IWalletService _walletService;
         private readonly UserManager<AppUser> _userManager;
         private readonly ICustomerService _customerService;
@@ -28,12 +40,12 @@ namespace HomeCleaningService.Controllers
         }
         [HttpGet()]
         [Authorize]
-        public async Task<IActionResult> getTransactPaging(TransactionType transactionType, int? pageIndex, int? pageSize, string? fullname, string? phonenumber, string? mail)
+        public async Task<IActionResult> getTransactPaging(string transactionType, int? pageIndex, int? pageSize, string? fullname, string? phonenumber, string? mail)
         {
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
-                var list = await _walletService.GetTransacts(user, pageIndex, pageSize, transactionType.ToString(), fullname, phonenumber, mail);
+                var list = await _walletService.GetTransacts(user, pageIndex, pageSize, transactionType, fullname, phonenumber, mail);
                 return Ok(new AppResponse<GetWalletWithdrawRequestListDTO>().SetSuccessResponse(list));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));

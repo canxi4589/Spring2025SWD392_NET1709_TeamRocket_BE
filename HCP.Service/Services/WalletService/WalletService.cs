@@ -59,7 +59,7 @@ namespace HCP.Service.Services.WalletService
             return new WalletWithdrawRequestDTO
             {
                 Amount = amount,
-                Type = "Withdraw",
+                Type = wTransaction.Type,
                 UserId = user.Id,
                 FullName = user.FullName,
                 Mail = user.Email,
@@ -71,29 +71,37 @@ namespace HCP.Service.Services.WalletService
         public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail)
         {
             var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll().OrderByDescending(c=>c.CreatedDate);
-            if (searchField.Equals("WithdrawRequestUser") || searchField.Equals("WithdrawUser") || searchField.Equals("WithdrawRejectUser") || searchField.Equals("ShowHistoryUser"))
+            if (searchField.Equals(TransactionType.Deposit.ToString()))
+            {
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Deposit.ToString()));
+            }
+            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()) || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.Id == user.Id);
             }
-            if (searchField.Equals("WithdrawRequestStaff") || searchField.Equals("WithdrawRequestUser"))
+            if (searchField.Equals(TransactionType.WithdrawRequestStaff.ToString()) || searchField.Equals(TransactionType.WithdrawRequestUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("WithdrawRequest"));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Pending.ToString()));
             }
-            if (searchField.Equals("WithdrawStaff") || searchField.Equals("WithdrawUser"))
+            if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("Withdraw"));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
-            if (searchField.Equals("WithdrawRejectStaff") || searchField.Equals("WithdrawRejectUser"))
+            if (searchField.Equals(TransactionType.WithdrawRejectStaff.ToString()) || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("WithdrawReject"));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Fail.ToString()));
             }
-            if (searchField.Equals("ShowHistoryUser"))
+            if (searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("Withdraw") && (c.Type.Equals("WithdrawReject") || c.Type.Equals("");
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
             }
-            if (searchField.Equals("ShowHistoryStaff"))
+            if (searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals("Withdraw") || c.Type.Equals("WithdrawReject"));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString()));
+            }
+            if (searchField.Equals(TransactionType.ShowHistoryStaff.ToString()))
+            {
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
             }
             if (!string.IsNullOrEmpty(fullname))
             {
@@ -116,6 +124,8 @@ namespace HCP.Service.Services.WalletService
                 Mail = c.User.Email,
                 PhoneNumber = c.User.PhoneNumber,
                 UserId = c.UserId,
+                CreatedDate = c.CreatedDate,
+                Status = c.Status
             });
             if (pageIndex == null || pageSize == null)
             {
@@ -148,10 +158,14 @@ namespace HCP.Service.Services.WalletService
             {
                 throw new Exception("There something wrong in creating transaction process!");
             }
+            if (transact.Status != TransactionStatus.Pending.ToString())
+            {
+                throw new Exception("Transaction has been processed!");
+            }
             if (action)
             {
                 //Approve
-                transact.Type = "Withdraw";
+                transact.Status = TransactionStatus.Done.ToString();
                 transact.AfterAmount = (Decimal)user.BalanceWallet - transact.Amount;
                 user.BalanceWallet -= (Double)transact.Amount;
                 transact.Current = (Decimal)user.BalanceWallet;
@@ -163,17 +177,19 @@ namespace HCP.Service.Services.WalletService
                     Amount = (Double)transact.Amount,
                     Current = user.BalanceWallet,
                     AfterAmount = (Double)transact.AfterAmount,
-                    Type = "Withdraw",
+                    Type = transact.Type,
                     UserId = user.Id,
                     FullName = user.FullName,
                     Mail = user.Email,
                     PhoneNumber = user.PhoneNumber,
+                    Status = transact.Status,
+                    CreatedDate = transact.CreatedDate,
                 };
             }
             else
             {
                 //Reject
-                transact.Type = "WithdrawReject";
+                transact.Status = TransactionStatus.Fail.ToString();
                 transact.AfterAmount = (Decimal)user.BalanceWallet;
                 transact.Current = (Decimal)user.BalanceWallet;
                 _unitOfWork.Repository<WalletTransaction>().Update(transact);
@@ -183,16 +199,18 @@ namespace HCP.Service.Services.WalletService
                     Amount = (double)transact.Amount,
                     Current = user.BalanceWallet,
                     AfterAmount = (double)transact.AfterAmount,
-                    Type = "WithdrawReject",
+                    Type = transact.Type,
                     UserId = user.Id,
                     FullName = user.FullName,
                     Mail = user.Email,
+                    Status = transact.Status,
+                    CreatedDate = transact.CreatedDate
                 };
             }
         }
         public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(string status, decimal amount, AppUser user)
         {
-            if (status != "00") throw new Exception("Transaction failed");
+            if (status != "00") throw new Exception("Transaction failed!");
             var wTransaction = new WalletTransaction
             {
                 AfterAmount = (Decimal)user.BalanceWallet + amount,
@@ -200,7 +218,9 @@ namespace HCP.Service.Services.WalletService
                 User = user,
                 UserId = user.Id,
                 Amount = amount,
-                Type = "Deposit"
+                Type = TransactionType.Deposit.ToString(),
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.UtcNow
             };
             user.BalanceWallet += (Double)amount;
             await _userManager.UpdateAsync(user);
@@ -208,15 +228,17 @@ namespace HCP.Service.Services.WalletService
             await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
             return new WalletTransactionDepositResponseDTO
             {
-                Amount = (Double)amount,
+                Amount = (Double)wTransaction.Amount,
                 Current = user.BalanceWallet,
                 AfterAmount = (Double)wTransaction.AfterAmount,
-                Type = "Deposit",
+                Type = wTransaction.Type,
                 UserId = user.Id,
                 FullName = user.FullName,
                 Mail = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Description = "Deposit success"
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.UtcNow,
+                Description = "Deposit success!"
             };
         }
         public async Task<double> getUserBalance(AppUser user)
