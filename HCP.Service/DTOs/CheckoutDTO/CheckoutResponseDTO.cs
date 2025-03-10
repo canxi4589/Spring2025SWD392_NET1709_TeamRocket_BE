@@ -39,6 +39,9 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("address")]
         public string AddressLine { get; set; }
 
+        [JsonPropertyName("time_slot_id")]
+        public Guid TimeSlotId { get; set; }
+
         // List of additional services
         [JsonPropertyName("additional_services")]
         public List<CheckoutAdditionalServiceResponseDTO> AdditionalServices { get; set; } = new ();
@@ -54,5 +57,14 @@ namespace HCP.Service.DTOs.CheckoutDTO
 
         [JsonPropertyName("status")]
         public bool IsActive { get; set; }
+
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("duration")]
+        public double? Duration { get; set; }
     }
 }

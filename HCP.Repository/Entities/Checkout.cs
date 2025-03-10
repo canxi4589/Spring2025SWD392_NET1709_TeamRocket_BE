@@ -12,6 +12,9 @@ namespace HCP.Repository.Entities
         [ForeignKey("Customer")]
         public string CustomerId { get; set; }
 
+        [ForeignKey("ServiceTimeSlot")]
+        public Guid TimeSLotId { get; set; }
+
         public string Status { get; set; } = default!;
 
         public decimal TotalPrice { get; set; }
