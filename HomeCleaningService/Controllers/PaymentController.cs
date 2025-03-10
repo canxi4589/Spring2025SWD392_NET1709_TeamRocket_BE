@@ -49,27 +49,6 @@ namespace HomeCleaningService.Controllers
                 return BadRequest(response.SetErrorResponse("Error", ex.Message));
             }
         }
-        [HttpPost("CreatePayment1")]
-        [Authorize]
-        public IActionResult CreatePayment1([FromBody] decimal request,string paymentMethod)
-        {
-            //Order order = _vnPayRepository.GetOrderById(orderId);
-            try
-            {
-                // Save the order to the database
-                /*                _vnPayRepository.SaveOrder(order);*/
-
-                // Create VNPay payment URL
-                /*string returnUrl = Url.Action("PaymentReturn", "Checkout", null, Request.Scheme);*/
-                var returnUrl = "https://google.com.vn";
-                string paymentUrl = ivnpay.CreatePaymentUrl1(request, returnUrl);
-                return Ok(new { url = paymentUrl });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
         [HttpPost("CreatePayment")]
         [Authorize]
         public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = "Vnpay")
@@ -100,7 +79,7 @@ namespace HomeCleaningService.Controllers
             }
         }
 
-
+        [Authorize]
         [HttpGet("PaymentReturn-VNPAY")]
         public IActionResult PaymentReturn()
         {
@@ -116,12 +95,12 @@ namespace HomeCleaningService.Controllers
                         {
 
                         //return Redirect("https://www.google.com/"); // Redirect to success page
-                        return Redirect("http://localhost:5173/service/checkout/success");
+                        return Redirect("http://localhost:5173/service/Checkout/success");
                         }
                         else
                         {
                         _bookingService.UpdateStatusBooking(orderId, "IsDeleted");
-                        return Redirect("http://localhost:5173/service/checkout/fail");
+                        return Redirect("http://localhost:5173/service/Checkout/fail");
                         }
                     }
             }

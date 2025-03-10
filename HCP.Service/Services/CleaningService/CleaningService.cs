@@ -35,7 +35,7 @@ namespace HCP.Service.Services.CleaningService1
             {
                 id = c.Id,
                 name = c.CategoryName,
-                description = "hehe",
+                description = c.Description ?? "",
                 imgUrl = c.PictureUrl
             }).ToList();
         }
@@ -96,7 +96,7 @@ namespace HCP.Service.Services.CleaningService1
             {
                 id = c.Id,
                 name = c.CategoryName,
-                description = "hehe",
+                description = c.Description ?? "",
                 imgUrl = c.PictureUrl
             });
 
@@ -131,7 +131,7 @@ namespace HCP.Service.Services.CleaningService1
                 location = $"{service.City}, {service.District}",
                 reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
                 numOfReviews = service.ServiceRatings.Count,
-
+                Price = service.Price,
                 numOfPics = service.ServiceImages.Count,
                 overview = service.Description,
                 images = service.ServiceImages.Select(i => new ImgDTO { url = i.LinkUrl }).ToList(),
@@ -164,28 +164,37 @@ namespace HCP.Service.Services.CleaningService1
         }
         public async Task<List<ServiceTimeSlotDTO1>> GetAllServiceTimeSlot(Guid serviceId, DateTime targetDate, string dayOfWeek)
         {
-            var slots = await _unitOfWork.Repository<ServiceTimeSlot>().ListAsync(filter: s =>
-                s.ServiceId == serviceId && s.DayOfWeek == dayOfWeek, orderBy: b => b.OrderBy(c => c.StartTime)
+            var slots = await _unitOfWork.Repository<ServiceTimeSlot>().ListAsync(
+                filter: s => s.ServiceId == serviceId && s.DayOfWeek == dayOfWeek,
+                orderBy: s => s.OrderBy(c => c.StartTime)
             );
 
-            var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(filter: b =>
-                b.CleaningServiceId == serviceId &&
-                b.PreferDateStart == targetDate, orderBy: c => c.OrderBy(c => c.Id)
+            var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(
+                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart == targetDate,
+                orderBy: b => b.OrderBy(c => c.TimeStart) 
             );
 
-            var availableSlots = await Task.WhenAll(slots.Select(async slot =>
+            var availableSlots = new List<ServiceTimeSlotDTO1>();
+
+            foreach (var slot in slots)
             {
-                bool isAvailable = await IsTimeSlotAvailable(serviceId, targetDate, slot.StartTime, slot.EndTime);
-                return new ServiceTimeSlotDTO1
-                {
-                    Id = slot.Id,
-                    TimeStart = slot.StartTime,
-                    TimeEnd = slot.EndTime,
-                    DayOfWeek = slot.DayOfWeek
-                };
-            }));
+                bool isAvailable = !bookedSlots.Any(b =>
+                    b.TimeStart < slot.EndTime && b.TimeEnd > slot.StartTime 
+                );
 
-            return availableSlots.Where(slot => slot != null).ToList();
+                if (isAvailable)
+                {
+                    availableSlots.Add(new ServiceTimeSlotDTO1
+                    {
+                        Id = slot.Id,
+                        TimeStart = slot.StartTime,
+                        TimeEnd = slot.EndTime,
+                        DayOfWeek = slot.DayOfWeek
+                    });
+                }
+            }
+
+            return availableSlots;
         }
 
         public async Task<List<ServiceDetailWithStatusDTO>> GetServiceByUser(ClaimsPrincipal userClaims)
@@ -204,6 +213,7 @@ namespace HCP.Service.Services.CleaningService1
 
             if (services == null || !services.Any())
                 return null;
+            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == userId && c.IsDefault) ?? new Address();
 
             return services.Select(service => new ServiceDetailWithStatusDTO
             {
@@ -235,7 +245,7 @@ namespace HCP.Service.Services.CleaningService1
                         review = "No Reviews",
                         avatar = service.User.Avatar,
                         memberSince = "2025-03-12",
-                        address = "HCM,Phu Giao",
+                        address = address.City != null && address.District != null ? $"{address.City}, {address.District},{address.AddressLine1}" : string.Empty,
                         email = service.User.Email,
                         mobile = service.User.PhoneNumber,
                         numOfServices = service.User.Services?.Count ?? 0
