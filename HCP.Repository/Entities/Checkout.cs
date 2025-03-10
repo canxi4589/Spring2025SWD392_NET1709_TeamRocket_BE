@@ -37,6 +37,9 @@ namespace HCP.Repository.Entities
         public decimal AdditionalPrice { get; set; } // Fixed spelling
 
         public string Note { get; set; }
+
+        [ForeignKey("Address")]
+        public Guid AddressId { get; set; }
         public string City { get; set; }
         public string District { get; set; }
         public string PlaceId { get; set; }

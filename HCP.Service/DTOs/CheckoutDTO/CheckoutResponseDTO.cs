@@ -30,6 +30,9 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("addtional_price")]
         public decimal AdditionalPrice { get; set; }
 
+        [JsonPropertyName("address_id")]
+        public Guid AddressId {  get; set; }
+
         [JsonPropertyName("city")]
         public string City { get; set; }
 
@@ -53,6 +56,12 @@ namespace HCP.Service.DTOs.CheckoutDTO
 
         [JsonPropertyName("date_of_week")]
         public string DateOfWeek { get; set; }
+
+        [JsonPropertyName("total_price")]
+        public decimal TotalPrice {  get; set; }
+
+        [JsonPropertyName("distance_price")]
+        public decimal DistancePrice {  get; set; }
 
         // List of additional services
         [JsonPropertyName("additional_services")]
