@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using System.Security.Claims;
+using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.DTOs.WalletDTO;
@@ -67,6 +68,18 @@ namespace HomeCleaningService.Controllers
         {
             var withdraw = await _walletService.StaffProccessWithdraw(transId, action);
             return Ok(new AppResponse<WalletTransactionWithdrawResponseDTO>().SetSuccessResponse(withdraw));
+        }
+        [HttpGet("balance")]
+        [Authorize]
+        public async Task<IActionResult> balanceShow()
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var deposit = await _walletService.getUserBalance(user);
+                return Ok(new AppResponse<double>().SetSuccessResponse(deposit));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
         }
     }
 }

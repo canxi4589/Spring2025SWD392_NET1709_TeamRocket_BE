@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using HCP.Repository.Entities;
@@ -201,6 +202,10 @@ namespace HCP.Service.Services.WalletService
                 PhoneNumber = user.PhoneNumber,
                 Description = "Deposit success"
             };
+        }
+        public async Task<double> getUserBalance(AppUser user)
+        {
+            return user.BalanceWallet;
         }
     }
 }
