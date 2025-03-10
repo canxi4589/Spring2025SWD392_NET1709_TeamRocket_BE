@@ -61,19 +61,22 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> GetHousekeeperBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
         {
             var userClaims = User;
+            var response = new AppResponse<BookingListResponseDto>();
+
             try
             {
-                var response = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
-                return Ok(response);
+                var result = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
+                return Ok(response.SetSuccessResponse(result));
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return Unauthorized(response.SetErrorResponse("Unauthorized", ex.Message));
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(response.SetErrorResponse("Error", ex.Message));
             }
         }
+
     }
 }

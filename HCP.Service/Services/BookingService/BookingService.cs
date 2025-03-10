@@ -396,7 +396,7 @@ namespace HCP.Service.Services.BookingService
 
         }
 
-        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize,string? Status)
+        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize, string? status)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();
             var userId = userClaims.FindFirst("id")?.Value;
@@ -406,14 +406,18 @@ namespace HCP.Service.Services.BookingService
                 throw new UnauthorizedAccessException("User not authenticated");
             }
 
+            // Fetch bookings with optional status filtering
             var bookingsQuery = await _unitOfWork.Repository<Booking>().ListAsync(
-                filter: c => c.CleaningService.UserId == userId && c.Status != "IsDeleted",
+                filter: c => c.CleaningService.UserId == userId &&
+                             c.Status != "IsDeleted" &&
+                             (string.IsNullOrEmpty(status) || c.Status == status), // Status filter
                 includeProperties: query => query
                     .Include(c => c.CleaningService).ThenInclude(c => c.ServiceImages)
                     .Include(c => c.Payments)
                     .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
                     .Include(c => c.Customer)
-            );
+            ) ?? new List<Booking>(); // Ensure it's not null
+
             int totalCount = bookingsQuery.Count();
 
             var bookings = bookingsQuery
@@ -424,7 +428,7 @@ namespace HCP.Service.Services.BookingService
                     Id = b.Id,
                     PreferDateStart = b.PreferDateStart,
                     TimeStart = b.TimeStart,
-                    TimeEnd = b.TimeEnd,
+                    TimeEnd = b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0)), // Added duration
                     Status = b.Status,
                     IsFinishable = b.Status == BookingStatus.OnGoing.ToString(),
                     TotalPrice = b.TotalPrice,
