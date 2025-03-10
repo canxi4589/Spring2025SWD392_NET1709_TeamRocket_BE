@@ -1,4 +1,5 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.Services.CheckoutService;
 using HomeCleaningService.Helpers;
@@ -47,7 +48,6 @@ namespace HomeCleaningService.Controllers
             }
         }
 
-
         [HttpPut("change-status/{checkoutId}")]
         [Authorize]
         public async Task<IActionResult> ChangeStatusCheckout(Guid checkoutId)
@@ -63,6 +63,24 @@ namespace HomeCleaningService.Controllers
 
             var successResponse = new AppResponse<object>()
                 .SetSuccessResponse("Checkout status updated successfully.");
+            return Ok(successResponse);
+        }
+        
+        [HttpGet("{checkoutId}")]
+        [Authorize]
+        public async Task<IActionResult> GetCheckoutById(Guid checkoutId)
+        {
+            var checkoutResponse = await _checkoutService.GetCheckoutById(checkoutId);
+
+            if (checkoutResponse == null)
+            {
+                var errorResponse = new AppResponse<object>()
+                    .SetErrorResponse("Checkout", $"No checkout with id: {checkoutId} found.");
+                return NotFound(errorResponse);
+            }
+
+            var successResponse = new AppResponse<CheckoutResponseDTO1>()
+                .SetSuccessResponse(checkoutResponse);
             return Ok(successResponse);
         }
 

@@ -8,6 +8,8 @@ namespace HCP.Repository.Entities
         [ForeignKey("AdditionalService")]
         public Guid AdditionalServiceId { get; set; }
 
+        public string AdditionalServiceName { get; set; } = "This is Service about cleaning...";
+
         [ForeignKey("Checkout")]
         public Guid CheckoutId { get; set; }
 

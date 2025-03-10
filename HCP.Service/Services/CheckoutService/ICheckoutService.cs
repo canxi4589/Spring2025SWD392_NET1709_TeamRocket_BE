@@ -9,5 +9,7 @@ namespace HCP.Service.Services.CheckoutService
         Task<CheckoutResponseDTO1> CreateCheckout(CheckoutRequestDTO1 requestDTO, ClaimsPrincipal user);
         Task<bool> ChangeStatusCheckout(Guid checkoutId);
         Task<List<CheckoutResponseDTO1>> GetPendingCheckouts(ClaimsPrincipal user);
+
+        Task<CheckoutResponseDTO1> GetCheckoutById(Guid checkoutId);
     }
 }
