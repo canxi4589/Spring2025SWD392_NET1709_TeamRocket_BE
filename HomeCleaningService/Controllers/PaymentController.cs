@@ -49,6 +49,32 @@ namespace HomeCleaningService.Controllers
                 return BadRequest(response.SetErrorResponse("Error", ex.Message));
             }
         }
+        [HttpPost("CreateDepositPayment")]
+        [Authorize]
+        public async Task<IActionResult> CreateDepositPayment(int amount,string paymentMethod = "Vnpay")
+        {
+            var userClaims = User;
+            try
+            {
+                // Generate the VNPay payment URL
+                var returnUrl = "https://your-return-url.com";
+                string paymentUrl = ivnpay.CreateDepositPaymentUrl(amount, returnUrl);
+
+                return Ok(new { url = paymentUrl });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new AppResponse<string>().SetErrorResponse("Unauthorized", ex.Message));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new AppResponse<string>().SetErrorResponse("Not Found", ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new AppResponse<string>().SetErrorResponse("Error", ex.Message));
+            }
+        }
         [HttpPost("CreatePayment")]
         [Authorize]
         public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = "Vnpay")

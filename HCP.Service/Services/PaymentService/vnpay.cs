@@ -54,6 +54,29 @@ namespace Services.Charge
             return paymentUrl;
 
         }
+        public string CreateDepositPayment(int amount, string returnUrl)
+        {
+            returnUrl = "https://localhost:7262/api/Payment/PaymentReturn-VNPAY";
+
+            var vnPay = new VnPayLibrary();
+
+            vnPay.AddRequestData("vnp_Amount", ((amount*250000).ToString());     //xử lí cái này
+            vnPay.AddRequestData("vnp_Command", "pay");
+            vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnPay.AddRequestData("vnp_CurrCode", "VND");
+            vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            vnPay.AddRequestData("vnp_Locale", "vn");
+            vnPay.AddRequestData("vnp_OrderInfo", $"Xu ly nap tien");
+            vnPay.AddRequestData("vnp_OrderType", "other");
+            vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
+            vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+            vnPay.AddRequestData("vnp_TxnRef", "Deposit");
+            vnPay.AddRequestData("vnp_Version", "2.1.0");
+            /*vnPay.AddRequestData("vnp_Amount", convertMoney.ToString());*/
+
+            string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+            return paymentUrl;
+        }
         public string CreatePayment(Booking booking, string returnUrl)
         {
             //var orderType = 250000;

@@ -27,7 +27,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpGet()]
         [Authorize]
-        public async Task<IActionResult> getTransactPaging(TransactionType transactionType, int? pageIndex, int? pageSize, string fullname, string phonenumber, string mail)
+        public async Task<IActionResult> getTransactPaging(TransactionType transactionType, int? pageIndex, int? pageSize, string? fullname, string? phonenumber, string? mail)
         {
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
