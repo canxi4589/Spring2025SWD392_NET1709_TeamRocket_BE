@@ -365,6 +365,110 @@ namespace HCP.Service.Services.CleaningService1
             return dto;
         }
 
+        public async Task<CreateCleaningServiceDTO?> UpdateCleaningServiceAsync(Guid serviceId, CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims)
+        {
+            var userId = userClaims.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("");
+            }
+
+            var service = await _unitOfWork.Repository<CleaningService>().FindAsync(s => s.Id == serviceId && s.UserId == userId);
+            if (service == null)
+            {
+                throw new KeyNotFoundException("");
+            }
+
+            service.ServiceName = dto.ServiceName;
+            service.CategoryId = dto.CategoryId;
+            service.Description = dto.Description;
+            service.Price = dto.Price;
+            service.City = dto.City;
+            service.District = dto.District;
+            service.PlaceId = dto.PlaceId;
+            service.AddressLine = dto.AddressLine;
+            service.Duration = dto.Duration;
+            service.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.Repository<CleaningService>().Update(service);
+
+            var existingAdditionalServices = await _unitOfWork.Repository<AdditionalService>().FindAllAsync(a => a.CleaningServiceId == serviceId);
+            await _unitOfWork.Repository<AdditionalService>().RemoveRangeAsync(existingAdditionalServices);
+            if (dto.AdditionalServices != null)
+            {
+                var newAdditionalServices = dto.AdditionalServices.Select(a => new AdditionalService
+                {
+                    Name = a.Name,
+                    CleaningServiceId = serviceId,
+                    Amount = a.Amount,
+                    IsActive = true,
+                    Description = a.Description,
+                    Url = a.Url,
+                    Duration = a.Duration,
+                });
+                await _unitOfWork.Repository<AdditionalService>().AddRangeAsync(newAdditionalServices);
+            }
+
+            var existingImages = await _unitOfWork.Repository<ServiceImg>().FindAllAsync(i => i.CleaningServiceId == serviceId);
+            await _unitOfWork.Repository<ServiceImg>().RemoveRangeAsync(existingImages);
+            if (dto.ServiceImages != null)
+            {
+                var newImages = dto.ServiceImages.Select(img => new ServiceImg
+                {
+                    CleaningServiceId = serviceId,
+                    LinkUrl = img.LinkUrl
+                });
+                await _unitOfWork.Repository<ServiceImg>().AddRangeAsync(newImages);
+            }
+
+            var existingSteps = await _unitOfWork.Repository<ServiceSteps>().FindAllAsync(s => s.ServiceId == serviceId);
+            await _unitOfWork.Repository<ServiceSteps>().RemoveRangeAsync(existingSteps);
+            if (dto.ServiceSteps != null)
+            {
+                var newSteps = dto.ServiceSteps.Select(step => new ServiceSteps
+                {
+                    ServiceId = serviceId,
+                    StepOrder = step.StepOrder,
+                    StepDescription = step.StepDescription
+                });
+                await _unitOfWork.Repository<ServiceSteps>().AddRangeAsync(newSteps);
+            }
+
+            var existingTimeSlots = await _unitOfWork.Repository<ServiceTimeSlot>().FindAllAsync(t => t.ServiceId == serviceId);
+            await _unitOfWork.Repository<ServiceTimeSlot>().RemoveRangeAsync(existingTimeSlots);
+            if (dto.ServiceTimeSlots != null)
+            {
+                var newTimeSlots = dto.ServiceTimeSlots.Select(timeSlotDTO => new ServiceTimeSlot
+                {
+                    ServiceId = serviceId,
+                    StartTime = timeSlotDTO.StartTime,
+                    EndTime = timeSlotDTO.StartTime.Add(TimeSpan.FromHours(service.Duration)),
+                    DayOfWeek = timeSlotDTO.DayOfWeek,
+                    Status = ServiceStatus.Active.ToString()
+                });
+                await _unitOfWork.Repository<ServiceTimeSlot>().AddRangeAsync(newTimeSlots);
+            }
+
+            var existingDistanceRules = await _unitOfWork.Repository<DistancePricingRule>().FindAllAsync(d => d.CleaningServiceId == serviceId);
+            await _unitOfWork.Repository<DistancePricingRule>().RemoveRangeAsync(existingDistanceRules);
+            if (dto.ServiceDistanceRule != null)
+            {
+                var newDistanceRules = dto.ServiceDistanceRule.Select(rule => new DistancePricingRule
+                {
+                    CleaningServiceId = serviceId,
+                    MinDistance = rule.MinDistance,
+                    MaxDistance = rule.MaxDistance,
+                    BaseFee = rule.BaseFee,
+                    ExtraPerKm = rule.ExtraPerKm,
+                    IsActive = true
+                });
+                await _unitOfWork.Repository<DistancePricingRule>().AddRangeAsync(newDistanceRules);
+            }
+
+            await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
+            return dto;
+        }
+
         public async Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime)
         {
             var isBooked = await _unitOfWork.Repository<Booking>().ExistsAsync(

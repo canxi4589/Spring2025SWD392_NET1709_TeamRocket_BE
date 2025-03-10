@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.Services.CheckoutService;
@@ -31,20 +32,20 @@ namespace HomeCleaningService.Controllers
 
                 if (createdCheckout == null)
                 {
-                    return BadRequest(new { error = "Failed to create checkout." });
+                    return BadRequest(new { error = CheckoutConst.CreateCheckoutError });
                 }
 
-                return Ok(new { message = "Checkout created successfully!", data = createdCheckout });
+                return Ok(new { message = CheckoutConst.CreateCheckoutSuccess, data = createdCheckout });
             }
             catch (DbUpdateException dbEx)
             {
                 Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
-                return StatusCode(500, new { error = "Database error occurred.", details = dbEx.Message });
+                return StatusCode(500, new { error = DBErrorConst.DatabaseError, details = dbEx.Message });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Unhandled Exception: {ex.Message}");
-                return StatusCode(500, new { error = "Internal Server Error", details = ex.Message });
+                return StatusCode(500, new { error = DBErrorConst.InternalError, details = ex.Message });
             }
         }
 
@@ -57,12 +58,12 @@ namespace HomeCleaningService.Controllers
             if (!isUpdated)
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Checkout", "Failed to change checkout status. Checkout may not exist.");
+                    .SetErrorResponse(KeyConst.Checkout, CheckoutConst.UpdateCheckoutError);
                 return NotFound(errorResponse);
             }
 
             var successResponse = new AppResponse<object>()
-                .SetSuccessResponse("Checkout status updated successfully.");
+                .SetSuccessResponse(CheckoutConst.UpdateCheckoutSuccess);
             return Ok(successResponse);
         }
         
@@ -75,7 +76,7 @@ namespace HomeCleaningService.Controllers
             if (checkoutResponse == null)
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Checkout", $"No checkout with id: {checkoutId} found.");
+                    .SetErrorResponse(KeyConst.Checkout, CheckoutConst.GetCheckoutNullError);
                 return NotFound(errorResponse);
             }
 
@@ -93,7 +94,7 @@ namespace HomeCleaningService.Controllers
             if (!pendingCheckouts.Any())
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Checkout", "No pending checkouts found.");
+                    .SetErrorResponse(KeyConst.Checkout, CheckoutConst.GetCheckoutNullError);
                 return NotFound(errorResponse);
             }
 

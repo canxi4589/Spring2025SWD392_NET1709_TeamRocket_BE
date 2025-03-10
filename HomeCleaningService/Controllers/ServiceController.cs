@@ -83,6 +83,26 @@ namespace HomeCleaningService.Controllers
                 .SetSuccessResponse(createdService);
             return Ok(successResponse);
         }
+
+
+        [HttpPut("{serviceId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateCleaningService(Guid serviceId, [FromBody] CreateCleaningServiceDTO dto)
+        {
+            var updatedService = await _cleaningService.UpdateCleaningServiceAsync(serviceId, dto, User);
+
+            if (updatedService == null)
+            {
+                var errorResponse = new AppResponse<object>()
+                    .SetErrorResponse("Cleaning Service", "Fail");
+                return BadRequest(errorResponse);
+            }
+
+            var successResponse = new AppResponse<object>()
+                .SetSuccessResponse(updatedService);
+            return Ok(successResponse);
+        }
+
         [HttpPost("uploadMultiple")]
         public async Task<IActionResult> UploadFiles([FromForm] List<IFormFile> files)
         {

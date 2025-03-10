@@ -169,5 +169,16 @@ namespace HCP.Repository.GenericRepository
         {
             _context.Set<T>().Update(entity);
         }
+
+        public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().Where(predicate).ToListAsync();
+        }
+
+        public async Task RemoveRangeAsync(IEnumerable<T> entities)
+        {
+            _context.Set<T>().RemoveRange(entities);
+            await _context.SaveChangesAsync();
+        }
     }
 }

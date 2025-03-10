@@ -12,6 +12,8 @@ namespace HCP.Repository.Entities
         public decimal Amount { get; set; }
         public decimal Current { get; set; }
         public decimal AfterAmount { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string Status {  get; set; }
         public string Type { get; set; }
         [ForeignKey("User")]
         public string UserId { get; set; }
