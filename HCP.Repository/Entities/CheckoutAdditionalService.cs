@@ -16,6 +16,10 @@ namespace HCP.Repository.Entities
 
         public bool IsActive { get; set; }
 
+        public string? Url { get; set; }
+        public string? Description { get; set; }
+        public double? Duration { get; set; }
+
         public virtual AdditionalService AdditionalService { get; set; }
         public virtual Checkout Checkout { get; set; }
     }

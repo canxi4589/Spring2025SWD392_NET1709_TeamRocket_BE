@@ -42,8 +42,28 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception("Invalid Service or Address.");
                 }
 
-                var additionalServices = new List<CheckoutAdditionalService>();
                 var additionalPrice = 0.0;
+
+                var checkout = new Checkout()
+                {
+                    AddressLine = address.AddressLine1,
+                    AdditionalPrice = 0, // Set initially to 0
+                    City = address.City,
+                    CleaningServiceId = requestDTO.ServiceId,
+                    CustomerId = userId,
+                    District = address.District,
+                    ServicePrice = service.Price,
+                    PlaceId = address.PlaceId,
+                    Status = CheckoutStatus.Pending.ToString(),
+                    Customer = await _userManager.FindByIdAsync(userId),
+                    Note = string.Empty,
+                    TimeSLotId = requestDTO.ServiceTimeSlotId
+                };
+
+                await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
+                await _unitOfWork.SaveChangesAsync(); 
+
+                var additionalServices = new List<CheckoutAdditionalService>();
 
                 if (requestDTO.AdditionalServices != null)
                 {
@@ -56,61 +76,44 @@ namespace HCP.Service.Services.CheckoutService
                         {
                             var checkoutAdditionalService = new CheckoutAdditionalService()
                             {
-                                Id = Guid.NewGuid(),
                                 AdditionalServiceId = additional.AdditionalServiceId,
                                 Amount = (decimal)additionalServiceEntity.Amount,
-                                IsActive = additionalServiceEntity.IsActive
+                                IsActive = additionalServiceEntity.IsActive,
+                                Url = additionalServiceEntity.Url,
+                                Duration = additionalServiceEntity.Duration,
+                                Description = additionalServiceEntity.Description,
+                                CheckoutId = checkout.Id
                             };
 
                             additionalServices.Add(checkoutAdditionalService);
                             additionalPrice += additionalServiceEntity.Amount;
                         }
-                        else
-                        {
-                            Console.WriteLine($"Additional service not found: {additional.AdditionalServiceId}");
-                        }
                     }
                 }
 
-                var checkout = new Checkout()
+                if (additionalServices.Any())
                 {
-                    AddressLine = address.AddressLine1,
-                    AdditionalPrice = (decimal)additionalPrice,
-                    CheckoutAdditionalServices = additionalServices,
-                    City = address.City,
-                    CleaningServiceId = requestDTO.ServiceId,
-                    CustomerId = userId,
-                    District = address.District,
-                    ServicePrice = service.Price,
-                    PlaceId = address.PlaceId,
-                    Status = CheckoutStatus.Pending.ToString(),
-                    Customer = await _userManager.FindByIdAsync(userId),
-                    Note = string.Empty
-                };
-
-                await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
-
-                Console.WriteLine("Saving Checkout...");
-                var saveResult = await _unitOfWork.SaveChangesAsync();
-                Console.WriteLine($"SaveChangesAsync result: {saveResult}");
-
-                foreach (var additionalService in additionalServices)
-                {
-                    additionalService.CheckoutId = checkout.Id;
+                    await _unitOfWork.Repository<CheckoutAdditionalService>().AddRangeAsync(additionalServices);
                 }
 
-                await _unitOfWork.Repository<CheckoutAdditionalService>().AddRangeAsync(additionalServices);
-                await _unitOfWork.SaveChangesAsync();
+                checkout.AdditionalPrice = (decimal)additionalPrice;
+                _unitOfWork.Repository<Checkout>().Update(checkout);
+
+                await _unitOfWork.SaveChangesAsync(); // ✅ Save all changes
 
                 return new CheckoutResponseDTO1()
                 {
+                    CheckoutId = checkout.Id,
                     CustomerId = userId,
                     AdditionalPrice = (decimal)additionalPrice,
                     AdditionalServices = additionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
                     {
                         AdditionalServiceId = a.AdditionalServiceId,
                         Amount = (double)a.Amount,
-                        IsActive = a.IsActive
+                        IsActive = a.IsActive,
+                        Description = a.Description,
+                        Duration = a.Duration,
+                        Url = a.Url
                     }).ToList(),
                     AddressLine = address.AddressLine1,
                     City = address.City,
@@ -119,9 +122,10 @@ namespace HCP.Service.Services.CheckoutService
                     PlaceId = address.PlaceId,
                     ServicePrice = service.Price,
                     Status = CheckoutStatus.Pending.ToString(),
+                    TimeSlotId = requestDTO.ServiceTimeSlotId
                 };
             }
-                catch (DbUpdateException dbEx)
+            catch (DbUpdateException dbEx)
             {
                 Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
                 throw new Exception("Database error occurred.");
@@ -132,6 +136,7 @@ namespace HCP.Service.Services.CheckoutService
                 throw;
             }
         }
+
 
 
         public async Task<bool> ChangeStatusCheckout(Guid checkoutId)
@@ -145,6 +150,7 @@ namespace HCP.Service.Services.CheckoutService
             checkout.Status = CheckoutStatus.Completed.ToString();
 
             _unitOfWork.Repository<Checkout>().Update(checkout);
+            await _unitOfWork.Repository<Checkout>().SaveChangesAsync();
             return true;
         }
 
@@ -165,13 +171,17 @@ namespace HCP.Service.Services.CheckoutService
 
             return pendingCheckouts.Select(c => new CheckoutResponseDTO1
             {
+                CheckoutId = c.Id,
                 CustomerId = c.CustomerId,
                 AdditionalPrice = c.AdditionalPrice,
                 AdditionalServices = c.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
                 {
                     AdditionalServiceId = a.AdditionalServiceId,
                     Amount = (double)a.Amount,
-                    IsActive = a.IsActive
+                    IsActive = a.IsActive,
+                    Url = a.Url,
+                    Duration = a.Duration,
+                    Description = a.Description,
                 }).ToList(),
                 AddressLine = c.AddressLine,
                 City = c.City,

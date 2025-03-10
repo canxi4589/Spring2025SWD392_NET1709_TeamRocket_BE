@@ -48,7 +48,6 @@ namespace HomeCleaningService.Controllers
         }
 
 
-
         [HttpPut("change-status/{checkoutId}")]
         [Authorize]
         public async Task<IActionResult> ChangeStatusCheckout(Guid checkoutId)
