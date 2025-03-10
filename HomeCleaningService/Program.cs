@@ -132,6 +132,7 @@ builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<Ivnpay,VnPay>();
 builder.Services.AddScoped<IBookingTransactionService, BookingTransactionService>();
+builder.Services.AddScoped<IGoongDistanceService, GoongDistanceService>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 
 
