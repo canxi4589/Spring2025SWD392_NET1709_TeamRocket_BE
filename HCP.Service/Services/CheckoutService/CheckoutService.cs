@@ -4,13 +4,7 @@ using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CheckoutDTO;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Service.Services.CheckoutService
 {
@@ -53,6 +47,7 @@ namespace HCP.Service.Services.CheckoutService
                     City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
                     ServiceName = checkoutService.ServiceName,
+                    BookingDate = requestDTO.BookingDate,
                     DayOfWeek = checkoutTimeSlot.DayOfWeek,
                     StartTime = checkoutTimeSlot.StartTime,
                     EndTime = checkoutTimeSlot.EndTime,
@@ -107,11 +102,10 @@ namespace HCP.Service.Services.CheckoutService
 
                 checkout.AdditionalPrice = (decimal)additionalPrice;
                 //checkout.DistancePrice =                                                                  // them logic
-                checkout.TotalPrice = (decimal)additionalPrice + checkout.ServicePrice ;                   //thieu distance price
+                checkout.TotalPrice = (decimal)additionalPrice + checkout.ServicePrice;                   //thieu distance price
                 _unitOfWork.Repository<Checkout>().Update(checkout);
-                
-                await _unitOfWork.SaveChangesAsync();
 
+                await _unitOfWork.SaveChangesAsync();
 
                 return new CheckoutResponseDTO1()
                 {
@@ -138,6 +132,7 @@ namespace HCP.Service.Services.CheckoutService
                     ServicePrice = checkoutService.Price,
                     Status = CheckoutStatus.Pending.ToString(),
                     TimeSlotId = requestDTO.ServiceTimeSlotId,
+                    BookingDate = requestDTO.BookingDate,
                     DateOfWeek = checkoutTimeSlot.DayOfWeek,
                     EndTime = checkoutTimeSlot.EndTime,
                     StartTime = checkoutTimeSlot.StartTime,
@@ -162,7 +157,7 @@ namespace HCP.Service.Services.CheckoutService
             var checkout = _unitOfWork.Repository<Checkout>().GetById(checkoutId);
             if (checkout == null)
             {
-                return false;  
+                return false;
             }
 
             checkout.Status = CheckoutStatus.Completed.ToString();
@@ -177,7 +172,7 @@ namespace HCP.Service.Services.CheckoutService
             var userId = user.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                return new List<CheckoutResponseDTO1>(); 
+                return new List<CheckoutResponseDTO1>();
             }
 
             var pendingCheckouts = await _unitOfWork.Repository<Checkout>()
@@ -211,6 +206,7 @@ namespace HCP.Service.Services.CheckoutService
                 EndTime = c.EndTime,
                 StartTime = c.StartTime,
                 TimeSlotId = c.TimeSLotId,
+                BookingDate = c.BookingDate,
                 District = c.District,
                 PlaceId = c.PlaceId,
                 ServicePrice = c.ServicePrice,
@@ -259,14 +255,14 @@ namespace HCP.Service.Services.CheckoutService
                 ServicePrice = checkout.ServicePrice,
                 Status = CheckoutStatus.Pending.ToString(),
                 TimeSlotId = checkout.TimeSLotId,
+                BookingDate = checkout.BookingDate,
                 DateOfWeek = checkout.DayOfWeek,
                 EndTime = checkout.EndTime,
                 StartTime = checkout.StartTime,
                 DistancePrice = checkout.DistancePrice,
-                TotalPrice  = checkout.TotalPrice
+                TotalPrice = checkout.TotalPrice
             };
         }
-
     }
 }
 

@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs;
@@ -126,7 +127,7 @@ namespace HCP.Service.Services.RequestService
                     ServiceId = pendingRequest.Id,
                     ServiceName = pendingRequest.ServiceName,
                     CategoryId = pendingRequest.CategoryId,
-                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
+                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : string.Empty,
                     PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
                     Description = pendingRequest.Description,
                     Status = pendingRequest.Status,
@@ -176,12 +177,12 @@ namespace HCP.Service.Services.RequestService
             var housekeeperName = await _userManager.GetUserNameAsync(await _userManager.FindByIdAsync(service.UserId));
             if (service == null)
             {
-                return (false, "Service not found");
+                return (false, CleaningServiceConst.ServiceNotFound);
             }
 
             if (service.Status != ServiceStatus.Pending.ToString())
             {
-                return (false, $"Service status can only be updated if it is '{ServiceStatus.Pending.ToString()}'");
+                return (false, RequestConst.UpdateRequestStatusError);
             }
 
             service.StaffId = staffId;
@@ -190,11 +191,11 @@ namespace HCP.Service.Services.RequestService
             if (!dto.IsApprove)
             {
                 var rejectedEmailBody = EmailBodyTemplate.GetRejectionEmail(housekeeperName, dto.Reason, dto.ServiceId, service.ServiceName);
-                _emailSenderService.SendEmail(housekeeperEmail, "Information about rejecting Service Creation", rejectedEmailBody);
+                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject , rejectedEmailBody);
             }
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
-            return (true, "Service status updated successfully");
+            return (true, RequestConst.UpdateRequestSuccess);
         }
 
         //public async Task<CreateCleaningServiceDTO> GetAllPendingService()
@@ -250,7 +251,7 @@ namespace HCP.Service.Services.RequestService
                     ServiceId = pendingRequest.Id,
                     ServiceName = pendingRequest.ServiceName,
                     CategoryId = pendingRequest.CategoryId,
-                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
+                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : string.Empty,
                     PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
                     Description = pendingRequest.Description,
                     Status = pendingRequest.Status,

@@ -48,6 +48,9 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("time_slot_id")]
         public Guid TimeSlotId { get; set; }
 
+        [JsonPropertyName("booking_date")]
+        public DateTime BookingDate { get; set; }
+
         [JsonPropertyName("start_time")]
         public TimeSpan StartTime { get; set; }
 
