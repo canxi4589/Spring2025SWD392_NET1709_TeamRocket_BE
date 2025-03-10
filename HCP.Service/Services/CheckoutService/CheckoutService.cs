@@ -109,8 +109,9 @@ namespace HCP.Service.Services.CheckoutService
                 //checkout.DistancePrice =                                                                  // them logic
                 checkout.TotalPrice = (decimal)additionalPrice + checkout.ServicePrice ;                   //thieu distance price
                 _unitOfWork.Repository<Checkout>().Update(checkout);
-
+                
                 await _unitOfWork.SaveChangesAsync();
+
 
                 return new CheckoutResponseDTO1()
                 {
@@ -161,7 +162,7 @@ namespace HCP.Service.Services.CheckoutService
             var checkout = _unitOfWork.Repository<Checkout>().GetById(checkoutId);
             if (checkout == null)
             {
-                return false; // ko tìm thấy checkout nào 
+                return false;  
             }
 
             checkout.Status = CheckoutStatus.Completed.ToString();
@@ -176,7 +177,7 @@ namespace HCP.Service.Services.CheckoutService
             var userId = user.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                return new List<CheckoutResponseDTO1>(); // Return empty list if userId is null
+                return new List<CheckoutResponseDTO1>(); 
             }
 
             var pendingCheckouts = await _unitOfWork.Repository<Checkout>()

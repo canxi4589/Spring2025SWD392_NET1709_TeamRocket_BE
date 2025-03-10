@@ -24,7 +24,8 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public decimal overallRating { get; set; }
         public decimal price {  get; set; }
         public string location { get; set; }
-
+        public string? Url {  get; set; }
+        public string? CategoryName { get; set; }
     }
     public class CategoryDTO
     {
@@ -64,6 +65,7 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public Guid id { get; set; }
         public string name { get; set; }
         public int numOfBooks {  get; set; }
+        public decimal ? Price { get; set; }
         public string location { get;set; }
         public decimal reviews {  get; set; }
         public int numOfReviews {  get; set; }

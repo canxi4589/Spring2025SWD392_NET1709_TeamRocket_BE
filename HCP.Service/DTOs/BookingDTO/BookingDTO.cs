@@ -30,10 +30,13 @@ namespace HCP.Service.DTOs.BookingDTO
         public Guid TimeSlotId { get; set; }
         public Guid AddressId { get; set; }
         public Guid ServiceId { get; set; }
+        public string? Note {  get; set; }
         public List<Guid> BookingAdditionalIds { get; set; } = new List<Guid>();
     }
     public class CheckoutResponseDTO
     {
+        public TimeSpan TimeStart { get; set; }
+        public TimeSpan TimeEnd { get; set; }
         public string UserName {  get; set; }
         public string City { get; set; }
         public string District { get; set; }
@@ -47,6 +50,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public decimal DistancePrice { get; set; }
         public decimal AddidionalPrice {  get; set; }
         public string? Note { get; set; }
+        public string? exchangeRate {  get; set; }
         public decimal TotalPrice {  get; set; }
         public List<BookingAdditionalDTO> BookingAdditionalDTOs = new List<BookingAdditionalDTO>();
         public List<PaymentMethodDTO> PaymentMethods { get; set; } = new List<PaymentMethodDTO>();
@@ -67,12 +71,23 @@ namespace HCP.Service.DTOs.BookingDTO
         public string Url {  get; set; }
         public string Name { get; set; }
         public decimal Price {  get; set; }
+        public double? Duration {  get; set; }
     }
     public class PaymentMethodDTO
     {
         public string Name { get; set; }
         public bool IsChoosable { get; set; }
         public string Reason { get; set; }
+    }
+    public class BookingProofDTO
+    {
+        public string Title { get; set; }
+        public string ImgUrl { get; set; }
+    }
+    public class CompleteBookingDTO
+    {
+        public Guid BookingId { get; set; }
+        public List<BookingProofDTO> Proofs { get; set; }
     }
 
 }

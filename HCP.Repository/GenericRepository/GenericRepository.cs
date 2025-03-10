@@ -155,6 +155,10 @@ namespace HCP.Repository.GenericRepository
             }
             return await query.ToListAsync();
         }
+        public async Task<T?> GetEntityAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().FirstOrDefaultAsync(predicate);
+        }
 
         public async Task<int> SaveChangesAsync()
         {
