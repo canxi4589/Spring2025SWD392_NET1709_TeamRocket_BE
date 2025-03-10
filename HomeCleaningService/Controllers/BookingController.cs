@@ -63,7 +63,7 @@ namespace HomeCleaningService.Controllers
             var userClaims = User;
             try
             {
-                var response = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize);
+                var response = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
                 return Ok(response);
             }
             catch (UnauthorizedAccessException ex)
