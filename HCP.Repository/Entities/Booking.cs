@@ -24,6 +24,7 @@ namespace HCP.Repository.Entities
         public DateTime? CompletedAt { get; set; }
         public double? Rating { get; set; }
         public string? Feedback {  get; set; }
+        public bool isRating { get; set; } = false;
 
         [ForeignKey("Customer")]
         public string CustomerId { get; set; }
