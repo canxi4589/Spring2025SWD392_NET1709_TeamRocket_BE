@@ -10,6 +10,7 @@ using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
 using HCP.Service.Services.RequestService;
+using HCP.Service.Services.AdminManService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -128,7 +129,11 @@ builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<Ivnpay,VnPay>();
 builder.Services.AddScoped<IBookingTransactionService, BookingTransactionService>();
 builder.Services.AddScoped<IGoongDistanceService, GoongDistanceService>();
+builder.Services.AddScoped<IAdminManService, AdminManService>();
+builder.Services.AddScoped<IAdminServiceService, AdminServiceService>();
+builder.Services.AddScoped<IAdminManServiceCategory, AdminManServiceCategory>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
+
 
 
 var app = builder.Build();

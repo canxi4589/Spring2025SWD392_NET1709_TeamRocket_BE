@@ -71,50 +71,73 @@ namespace HCP.Service.Services.WalletService
         public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail)
         {
             var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll().OrderByDescending(c=>c.CreatedDate);
-            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()) || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) || searchField.Equals(TransactionType.Deposit.ToString()))
+            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()) 
+                || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) 
+                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) || searchField.Equals(TransactionType.Deposit.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.Id == user.Id);
             }
+
             if (searchField.Equals(TransactionType.WithdrawRequestStaff.ToString()) || searchField.Equals(TransactionType.WithdrawRequestUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Pending.ToString()));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Pending.ToString()));
             }
+
             if (searchField.Equals(TransactionType.Deposit.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Deposit.ToString()));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString()));
             }
+
             if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
+
             if (searchField.Equals(TransactionType.WithdrawRejectStaff.ToString()) || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Fail.ToString()));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Fail.ToString()));
             }
+
             if (searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
             }
+
             if (searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString())));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString())));
             }
+
             if (searchField.Equals(TransactionType.ShowHistoryStaff.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
             }
+
             if (!string.IsNullOrEmpty(fullname))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.FullName.Equals(fullname));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.User.FullName.Equals(fullname));
             }
+
             if (!string.IsNullOrEmpty(phonenumber))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.PhoneNumber.Equals(phonenumber));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.User.PhoneNumber.Equals(phonenumber));
             }
+
             if (!string.IsNullOrEmpty(mail))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.Email.Equals(mail));
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.User.Email.Equals(mail));
             }
+
             var listTrans = wTransactionList.Select(c => new WalletWithdrawStaffShowDTO
             {
                 Id = c.Id,
