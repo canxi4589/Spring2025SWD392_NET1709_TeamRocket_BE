@@ -9,6 +9,7 @@ using HCP.Service.Services.CheckoutService;
 using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
+using HCP.Service.Services.RatingService;
 using HCP.Service.Services.RequestService;
 using HCP.Service.Services.AdminManService;
 using HCP.Service.Services.WalletService;
@@ -132,6 +133,7 @@ builder.Services.AddScoped<IGoongDistanceService, GoongDistanceService>();
 builder.Services.AddScoped<IAdminManService, AdminManService>();
 builder.Services.AddScoped<IAdminServiceService, AdminServiceService>();
 builder.Services.AddScoped<IAdminManServiceCategory, AdminManServiceCategory>();
+builder.Services.AddScoped<IRatingService, RatingService>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 
 
