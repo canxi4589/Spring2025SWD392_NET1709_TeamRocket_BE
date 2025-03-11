@@ -1,6 +1,8 @@
-﻿using HCP.Service.DTOs.RequestDTO;
+﻿using HCP.Repository.Constance;
+using HCP.Service.DTOs.RequestDTO;
 using HCP.Service.Services.RequestService;
 using HomeCleaningService.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +20,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpGet("staff-requests-approved")]
+        [Authorize]
         public async Task<IActionResult> GetAllPendingCreateRequest()
         {
             var response = new AppResponse<string>();
@@ -26,7 +29,7 @@ namespace HomeCleaningService.Controllers
 
             if (result == null)
             {
-                return BadRequest(response.SetErrorResponse("error", "Something wrong getting History Request of Staff"));
+                return BadRequest(response.SetErrorResponse(KeyConst.Staff, CommonConst.SomethingWrongMessage));
             }
 
             return Ok(new AppResponse<List<ApprovalServiceDTO>>().SetSuccessResponse(result));

@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Service.DTOs.CustomerDTO;
@@ -48,7 +49,7 @@ namespace HomeCleaningService.Controllers
                 var list = await _walletService.GetTransacts(user, pageIndex, pageSize, transactionType, fullname, phonenumber, mail);
                 return Ok(new AppResponse<GetWalletWithdrawRequestListDTO>().SetSuccessResponse(list));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, CommonConst.NotFoundError));
         }
         [HttpPost("sendWithdrawRequest")]
         [Authorize]
@@ -60,7 +61,7 @@ namespace HomeCleaningService.Controllers
                 var withdrawRequest = await _walletService.CreateWithdrawRequest(amount, user);
                 return Ok(new AppResponse<WalletWithdrawRequestDTO>().SetSuccessResponse(withdrawRequest));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
         [HttpPost("processDeposit")]
         [Authorize]
@@ -72,10 +73,10 @@ namespace HomeCleaningService.Controllers
                 var deposit = await _walletService.processDepositTransaction(amount, user);
                 return Ok(new AppResponse<WalletTransactionDepositResponseDTO>().SetSuccessResponse(deposit));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
         [HttpPost("processWithdraw")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> processWithdraw(Guid transId, bool action)
         {
             var withdraw = await _walletService.StaffProccessWithdraw(transId, action);
@@ -91,7 +92,7 @@ namespace HomeCleaningService.Controllers
                 var deposit = await _walletService.getUserBalance(user);
                 return Ok(new AppResponse<double>().SetSuccessResponse(deposit));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
     }
 }
