@@ -5,6 +5,6 @@ namespace HCP.Service.Services.AdminManService
 {
     public interface IAdminManServiceCategory
     {
-        Task<List<ServiceCategoryAdminShowDTO>> GetAllServiceCategoriesAsync();
+        Task<ServiceCategoryAdminShowListDTO> GetAllServiceCategoriesAsync(int? pageIndex, int? pageSize);
     }
 }

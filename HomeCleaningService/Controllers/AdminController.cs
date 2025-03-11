@@ -32,10 +32,10 @@ namespace HomeCleaningService.Controllers
 
         [HttpGet("user")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetUsersByAdmin([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers)
+        public async Task<IActionResult> GetUsersByAdmin([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers, int? pageIndex, int? pageSize)
         {
-            var users = await _userAdminManService.GetUsersByAdminCustom(includeStaff, includeCustomers, includeHousekeepers);
-            return Ok(new AppResponse<List<UserAdminDTO>>().SetSuccessResponse(users));
+            var users = await _userAdminManService.GetUsersByAdminCustom(includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
+            return Ok(new AppResponse<UserAdminListDTO>().SetSuccessResponse(users));
         }
 
         [HttpGet("cleaningService")]
@@ -47,10 +47,10 @@ namespace HomeCleaningService.Controllers
         }
         [HttpGet("serviceCategory")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllCategories()
+        public async Task<IActionResult> GetAllCategories(int? pageIndex, int? pageSize)
         {
-            var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync();
-            return Ok(new AppResponse<List<ServiceCategoryAdminShowDTO>>().SetSuccessResponse(categories));
+            var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync(pageIndex, pageSize);
+            return Ok(new AppResponse<ServiceCategoryAdminShowListDTO>().SetSuccessResponse(categories));
         }
     }
 }

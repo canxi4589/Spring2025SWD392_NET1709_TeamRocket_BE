@@ -73,7 +73,7 @@ namespace HCP.Service.Services.AdminManService
                     Items = temp1,
                     hasNext = temp1.HasNextPage,
                     hasPrevious = temp1.HasPreviousPage,
-                    totalCount = temp1.TotalCount,
+                    totalCount = svList.Count,
                     totalPages = temp1.TotalPages,
                 };
             }
