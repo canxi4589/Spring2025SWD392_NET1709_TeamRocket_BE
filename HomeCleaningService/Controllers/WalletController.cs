@@ -17,18 +17,6 @@ namespace HomeCleaningService.Controllers
     [ApiController]
     public class WalletController : ControllerBase
     {
-        private List<string> transactionTypes = new List<string>
-        {
-            "Deposit",
-            "WithdrawRequestStaff",
-            "WithdrawStaff",
-            "WithdrawRejectStaff",
-            "ShowHistoryStaff",
-            "WithdrawRequestUser",
-            "WithdrawUser",
-            "WithdrawRejectUser",
-            "ShowHistoryUser"
-        };
         private readonly IWalletService _walletService;
         private readonly UserManager<AppUser> _userManager;
         private readonly ICustomerService _customerService;
@@ -63,18 +51,6 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
-        [HttpPost("processDeposit")]
-        [Authorize]
-        public async Task<IActionResult> processDeposit(decimal amount)
-        {
-            var user = await _customerService.GetCustomerAsync(User);
-            if (user != null)
-            {
-                var deposit = await _walletService.processDepositTransaction(amount, user);
-                return Ok(new AppResponse<WalletTransactionDepositResponseDTO>().SetSuccessResponse(deposit));
-            }
-            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
-        }
         [HttpPost("processWithdraw")]
         [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> processWithdraw(Guid transId, bool action)
@@ -93,6 +69,13 @@ namespace HomeCleaningService.Controllers
                 return Ok(new AppResponse<double>().SetSuccessResponse(deposit));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
+        }
+        [HttpGet("moneyExchange")]
+        [Authorize]
+        public async Task<IActionResult> moneyExchange(decimal amount)
+        {
+            var returnAmount = await _walletService.VNDMoneyExchangeFromUSD(amount);
+            return Ok(new AppResponse<double>().SetSuccessResponse(returnAmount));
         }
     }
 }

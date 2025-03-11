@@ -4,6 +4,7 @@ using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.EmailService;
+using HCP.Service.Services.WalletService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -22,15 +23,18 @@ namespace HomeCleaningService.Controllers
         private readonly Ivnpay ivnpay;
         private readonly IEmailSenderService _emailSenderService;
         private readonly string _vnpHashSecret;
+        private readonly IWalletService _walletService;
 
-        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration)
+        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration, IWalletService walletService)
         {
             _vnpHashSecret = configuration["VNPay:HashSecret"];
             _userManager = userManager;
             _bookingService = bookingService;
             this.ivnpay = ivnpay;
             _emailSenderService = emailSenderService;
+            _walletService = walletService;
         }
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> GetCheckout([FromBody] CheckoutRequestDTO request)
@@ -39,7 +43,7 @@ namespace HomeCleaningService.Controllers
 
             try
             {
-                var claim = User; 
+                var claim = User;
                 var checkoutInfo = await _bookingService.GetCheckoutInfo(request, claim);
                 return Ok(response.SetSuccessResponse(checkoutInfo));
             }
@@ -54,7 +58,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreateDepositPayment")]
         [Authorize]
-        public async Task<IActionResult> CreateDepositPayment(int amount,string paymentMethod = KeyConst.VnPay)
+        public async Task<IActionResult> CreateDepositPayment(int amount, string paymentMethod = KeyConst.VnPay)
         {
             var userClaims = User;
             try
@@ -80,7 +84,7 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreatePayment")]
         [Authorize]
-        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = KeyConst.VnPay)
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request, string paymentMethod = KeyConst.VnPay)
         {
             var userClaims = User;
             try
@@ -115,26 +119,52 @@ namespace HomeCleaningService.Controllers
             string queryString = Request.QueryString.Value;
             //var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
             var vnp_HashSecret = _vnpHashSecret;
-                // Retrieve the order ID from the query string
-                if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
+            // Retrieve the order ID from the query string
+            if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
+            {
+                if (true)
                 {
-                    if (true)
+                    var paymentStatus = Request.Query["vnp_ResponseCode"];
+                    if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
                     {
-                        var paymentStatus = Request.Query["vnp_ResponseCode"];
-                        if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
-                        {
 
                         //return Redirect("https://www.google.com/");                                   // Redirect to success page
                         return Redirect("http://localhost:5173/service/Checkout/success");
-                        }
-                        else
-                        {
+                    }
+                    else
+                    {
                         _bookingService.UpdateStatusBooking(orderId, PaymentConst.IsDeleted);
                         return Redirect("http://localhost:5173/service/Checkout/fail");
-                        }
                     }
+                }
             }
             return BadRequest(PaymentConst.InvalidError);
+        }
+        [HttpGet("PaymentDepositReturn-VNPAY")]
+        public async Task<IActionResult> PaymentDepositReturn()
+        {
+            var userClaims = User;
+            string queryString = Request.QueryString.Value;
+
+            var paymentStatus = Request.Query["vnp_ResponseCode"];
+            if (paymentStatus == "00") //"00" means success
+            {
+                string orderInfo = Request.Query["vnp_OrderInfo"];
+
+                decimal usdAmount;
+
+                if (decimal.TryParse(orderInfo, out usdAmount))
+                {
+                    await _walletService.processDepositTransaction(usdAmount, userClaims);
+                    return Redirect("http://localhost:5173/wallet/deposit/success");
+                }
+
+                return BadRequest("Invalid amount format in order info.");
+            }
+            else
+            {
+                return Redirect("http://localhost:5173/wallet/deposit/fail");
+            }
         }
 
 

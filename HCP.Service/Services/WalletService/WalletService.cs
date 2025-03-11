@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Azure;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.DTOs.WalletDTO;
+using HCP.Service.Integrations.Currency;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
@@ -190,16 +194,16 @@ namespace HCP.Service.Services.WalletService
                 //Approve
                 transact.Status = TransactionStatus.Done.ToString();
                 transact.AfterAmount = (Decimal)user.BalanceWallet - transact.Amount;
-                user.BalanceWallet -= (Double)transact.Amount;
+                user.BalanceWallet -= (double)transact.Amount;
                 transact.Current = (Decimal)user.BalanceWallet;
                 _unitOfWork.Repository<WalletTransaction>().Update(transact);
                 await _userManager.UpdateAsync(user);
                 await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
                 return new WalletTransactionWithdrawResponseDTO
                 {
-                    Amount = (Double)transact.Amount,
+                    Amount = (double)transact.Amount,
                     Current = user.BalanceWallet,
-                    AfterAmount = (Double)transact.AfterAmount,
+                    AfterAmount = (double)transact.AfterAmount,
                     Type = transact.Type,
                     UserId = user.Id,
                     FullName = user.FullName,
@@ -231,8 +235,11 @@ namespace HCP.Service.Services.WalletService
                 };
             }
         }
-        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(decimal amount, AppUser user)
+        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(decimal amount, ClaimsPrincipal userClaims)
         {
+            //var user = await _customerService.GetCustomerAsync(userClaims);
+            //if (user == null) throw new Exception(CustomerConst.NotFoundError);
+            var user = await _userManager.FindByIdAsync("ccc7f4f1-593c-49b4-8228-10375da7754c");
             var wTransaction = new WalletTransaction
             {
                 AfterAmount = (Decimal)user.BalanceWallet + amount,
@@ -242,12 +249,13 @@ namespace HCP.Service.Services.WalletService
                 Amount = amount,
                 Type = TransactionType.Deposit.ToString(),
                 Status = TransactionStatus.Done.ToString(),
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.Now
             };
-            user.BalanceWallet += (Double)amount;
+            user.BalanceWallet += (double)amount;
             await _userManager.UpdateAsync(user);
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
-            await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
+
             return new WalletTransactionDepositResponseDTO
             {
                 Amount = (Double)wTransaction.Amount,
@@ -259,13 +267,21 @@ namespace HCP.Service.Services.WalletService
                 Mail = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 Status = TransactionStatus.Done.ToString(),
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 Description = "Deposit success!"
             };
         }
+
         public async Task<double> getUserBalance(AppUser user)
         {
             return user.BalanceWallet;
+        }
+        public async Task<double> VNDMoneyExchangeFromUSD(decimal amount)
+        {
+            ExchangRate exchangRate = new ExchangRate();
+            double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
+            var AmountInUsd = Convert.ToDouble(amount, CultureInfo.InvariantCulture);
+            return Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
         }
     }
 }
