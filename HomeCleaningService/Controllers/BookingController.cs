@@ -1,4 +1,5 @@
-﻿﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CustomerDTO;
@@ -70,11 +71,11 @@ namespace HomeCleaningService.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(response.SetErrorResponse("Unauthorized", ex.Message));
+                return Unauthorized(response.SetErrorResponse(KeyConst.Unathorized, ex.Message));
             }
             catch (Exception ex)
             {
-                return BadRequest(response.SetErrorResponse("Error", ex.Message));
+                return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
 

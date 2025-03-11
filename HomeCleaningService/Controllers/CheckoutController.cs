@@ -39,13 +39,13 @@ namespace HomeCleaningService.Controllers
             }
             catch (DbUpdateException dbEx)
             {
-                Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
-                return StatusCode(500, new { error = DBErrorConst.DatabaseError, details = dbEx.Message });
+                //Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
+                return StatusCode(500, new { error = CommonConst.DatabaseError, details = dbEx.Message });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Unhandled Exception: {ex.Message}");
-                return StatusCode(500, new { error = DBErrorConst.InternalError, details = ex.Message });
+                //Console.WriteLine($"Unhandled Exception: {ex.Message}");
+                return StatusCode(500, new { error = CommonConst.InternalError, details = ex.Message });
             }
         }
 

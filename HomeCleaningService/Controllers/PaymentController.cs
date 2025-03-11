@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
@@ -20,9 +21,11 @@ namespace HomeCleaningService.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly Ivnpay ivnpay;
         private readonly IEmailSenderService _emailSenderService;
+        private readonly string _vnpHashSecret;
 
-        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService)
+        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration)
         {
+            _vnpHashSecret = configuration["VNPay:HashSecret"];
             _userManager = userManager;
             _bookingService = bookingService;
             this.ivnpay = ivnpay;
@@ -42,16 +45,16 @@ namespace HomeCleaningService.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(response.SetErrorResponse("Unauthorized", ex.Message));
+                return Unauthorized(response.SetErrorResponse(KeyConst.Checkout, ex.Message));
             }
             catch (Exception ex)
             {
-                return BadRequest(response.SetErrorResponse("Error", ex.Message));
+                return BadRequest(response.SetErrorResponse(KeyConst.Checkout, ex.Message));
             }
         }
         [HttpPost("CreateDepositPayment")]
         [Authorize]
-        public async Task<IActionResult> CreateDepositPayment(int amount,string paymentMethod = "Vnpay")
+        public async Task<IActionResult> CreateDepositPayment(int amount,string paymentMethod = KeyConst.VnPay)
         {
             var userClaims = User;
             try
@@ -64,20 +67,20 @@ namespace HomeCleaningService.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new AppResponse<string>().SetErrorResponse("Unauthorized", ex.Message));
+                return Unauthorized(new AppResponse<string>().SetErrorResponse(KeyConst.Unathorized, ex.Message));
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new AppResponse<string>().SetErrorResponse("Not Found", ex.Message));
+                return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new AppResponse<string>().SetErrorResponse("Error", ex.Message));
+                return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
         [HttpPost("CreatePayment")]
         [Authorize]
-        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = "Vnpay")
+        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request,string paymentMethod = KeyConst.VnPay)
         {
             var userClaims = User;
             try
@@ -93,15 +96,15 @@ namespace HomeCleaningService.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new AppResponse<string>().SetErrorResponse("Unauthorized", ex.Message));
+                return Unauthorized(new AppResponse<string>().SetErrorResponse(KeyConst.Unathorized, ex.Message));
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new AppResponse<string>().SetErrorResponse("Not Found", ex.Message));
+                return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new AppResponse<string>().SetErrorResponse("Error", ex.Message));
+                return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
 
@@ -110,27 +113,28 @@ namespace HomeCleaningService.Controllers
         public IActionResult PaymentReturn()
         {
             string queryString = Request.QueryString.Value;
-            var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
+            //var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
+            var vnp_HashSecret = _vnpHashSecret;
                 // Retrieve the order ID from the query string
                 if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
                 {
                     if (true)
                     {
                         var paymentStatus = Request.Query["vnp_ResponseCode"];
-                        if (paymentStatus == "00") //"00" means success
+                        if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
                         {
 
-                        //return Redirect("https://www.google.com/"); // Redirect to success page
+                        //return Redirect("https://www.google.com/");                                   // Redirect to success page
                         return Redirect("http://localhost:5173/service/Checkout/success");
                         }
                         else
                         {
-                        _bookingService.UpdateStatusBooking(orderId, "IsDeleted");
+                        _bookingService.UpdateStatusBooking(orderId, PaymentConst.IsDeleted);
                         return Redirect("http://localhost:5173/service/Checkout/fail");
                         }
                     }
             }
-            return BadRequest("Invalid payment.");
+            return BadRequest(PaymentConst.InvalidError);
         }
 
 

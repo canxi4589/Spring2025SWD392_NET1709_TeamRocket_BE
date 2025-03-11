@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HCP.Repository.Constance;
+using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/distance")]
@@ -25,15 +26,15 @@ public class MapController : ControllerBase
             if (distance == null)
             {
                 _logger.LogWarning("Distance could not be calculated for Origin: {Origin}, Destination: {Destination}", originPlaceId, destinationPlaceId);
-                return NotFound(new { message = "Distance not found" });
+                return NotFound(new { message = CommonConst.NotFoundError });
             }
 
             return Ok(new { distanceInKm = distance });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating distance");
-            return StatusCode(500, new { message = "Internal server error" });
+            _logger.LogError(ex, CommonConst.SomethingWrongMessage);
+            return StatusCode(500, new { message = CommonConst.InternalError });
         }
     }
 }

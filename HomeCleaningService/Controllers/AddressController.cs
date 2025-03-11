@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.CustomerService;
@@ -48,7 +49,7 @@ namespace HomeCleaningService.Controllers
                 var list = await _addressService.GetAddressByUserPaging(user, pageIndex, pageSize);
                 return Ok(new AppResponse<GetAddressListDTO>().SetSuccessResponse(list));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, CommonConst.NotFoundError));
         }
 
 
@@ -65,9 +66,9 @@ namespace HomeCleaningService.Controllers
                     var successResponse = new AppResponse<AddressDTO>().SetSuccessResponse(address);
                     return Ok(successResponse);
                 }
-                return BadRequest(new AppResponse<string>().SetErrorResponse("Error", "Failed to create address"));
+                return BadRequest(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, CommonConst.NotFoundError));
         }
         [HttpPut()]
         [Authorize]
@@ -82,9 +83,9 @@ namespace HomeCleaningService.Controllers
                     var successResponse = new AppResponse<AddressDTO>().SetSuccessResponse(address);
                     return Ok(successResponse);
                 }
-                return BadRequest(new AppResponse<string>().SetErrorResponse("Error", "Failed to update address"));
+                return BadRequest(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, CommonConst.NotFoundError));
         }
         [HttpDelete()]
         [Authorize]
@@ -99,9 +100,9 @@ namespace HomeCleaningService.Controllers
                     var successResponse = new AppResponse<bool>().SetSuccessResponse(address);
                     return Ok(successResponse);
                 }
-                return BadRequest(new AppResponse<string>().SetErrorResponse("Error", "Failed to delete address"));
+                return BadRequest(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
 
     }

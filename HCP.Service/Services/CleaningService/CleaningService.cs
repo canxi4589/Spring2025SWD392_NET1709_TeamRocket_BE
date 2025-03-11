@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CleaningServiceDTO;
@@ -370,13 +371,13 @@ namespace HCP.Service.Services.CleaningService1
             var userId = userClaims.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("");
+                throw new UnauthorizedAccessException(CommonConst.UnauthorizeError);
             }
 
             var service = await _unitOfWork.Repository<CleaningService>().FindAsync(s => s.Id == serviceId && s.UserId == userId);
             if (service == null)
             {
-                throw new KeyNotFoundException("");
+                throw new KeyNotFoundException(CleaningServiceConst.ServiceNotFound);
             }
 
             service.ServiceName = dto.ServiceName;

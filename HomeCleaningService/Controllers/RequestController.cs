@@ -21,7 +21,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPut("approve-new-service")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> UpdateServiceStatus([FromBody] ServiceStatusUpdateDto dto)
         {
             var response = new AppResponse<string>();

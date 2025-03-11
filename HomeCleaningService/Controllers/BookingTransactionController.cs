@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
@@ -39,7 +40,7 @@ namespace HomeCleaningService.Controllers
                 var list = await _bookingTransactionService.GetBookingTransactionHistory(user, customerOrNot, pageIndex, pageSize, day, year, month, status);
                 return Ok(new AppResponse<BookingTransactionShowListDTO>().SetSuccessResponse(list));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.NotFoundError));
         }
         [HttpGet("detail")]
         [Authorize]
@@ -54,9 +55,9 @@ namespace HomeCleaningService.Controllers
                     var list = await _bookingTransactionService.GetBookingTransactionHistoryDetail(payment);
                     return Ok(new AppResponse<BookingTransactionDetailShowDTO>().SetSuccessResponse(list));
                 }
-                return NotFound(new AppResponse<string>().SetErrorResponse("Error", "User not found"));
+                return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.NotFoundError));
             }
-            return NotFound(new AppResponse<string>().SetErrorResponse("Error", "Transaction of booking not found"));
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
     }
 }
