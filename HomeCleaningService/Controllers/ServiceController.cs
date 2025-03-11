@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Integrations.BlobStorage;
 using HCP.Service.Services;
@@ -50,7 +51,7 @@ namespace HomeCleaningService.Controllers
             var service = await _cleaningService.GetServiceById(id);
 
             if (service == null)
-                return NotFound(new AppResponse<ServiceDetailDTO>().SetErrorResponse("Error", "Service not found"));
+                return NotFound(new AppResponse<ServiceDetailDTO>().SetErrorResponse(KeyConst.CleaningService, CleaningServiceConst.ServiceNotFound));
 
             return Ok(new AppResponse<ServiceDetailDTO>().SetSuccessResponse(service));
         }
@@ -61,7 +62,7 @@ namespace HomeCleaningService.Controllers
             var service = await _cleaningService.GetServiceByUser(User);
 
             if (service == null)
-                return NotFound(new AppResponse<ServiceDetailWithStatusDTO>().SetErrorResponse("Error", "Service not found"));
+                return NotFound(new AppResponse<ServiceDetailWithStatusDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
 
             return Ok(new AppResponse<List<ServiceDetailWithStatusDTO>>().SetSuccessResponse(service));
         }
@@ -75,7 +76,7 @@ namespace HomeCleaningService.Controllers
             if (createdService == null)
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Cleaning Service", "Failed to create cleaning service.");
+                    .SetErrorResponse(KeyConst.CleaningService, CleaningServiceConst.AddError);
                 return BadRequest(errorResponse);
             }
 
@@ -94,7 +95,7 @@ namespace HomeCleaningService.Controllers
             if (updatedService == null)
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Cleaning Service", "Fail");
+                    .SetErrorResponse(KeyConst.CleaningService, CommonConst.SomethingWrongMessage);
                 return BadRequest(errorResponse);
             }
 
@@ -110,25 +111,25 @@ namespace HomeCleaningService.Controllers
 
             if (files == null || files.Count == 0)
             {
-                return BadRequest(response.SetErrorResponse("Files", "No files uploaded."));
+                return BadRequest(response.SetErrorResponse(KeyConst.File, CommonConst.SomethingWrongMessage));
             }
 
             foreach (var file in files)
             {
                 if (file.Length > 5 * 1024 * 1024)
                 {
-                    return BadRequest(response.SetErrorResponse("FileSize", $"File {file.FileName} exceeds the size limit of 5 MB."));
+                    return BadRequest(response.SetErrorResponse(KeyConst.FileSize, CommonConst.FileHandleError));
                 }
             }
 
             try
             {
                 var sasUrls = await _blobStorageService.UploadFilesAsync(files);
-                return Ok(response.SetSuccessResponse(sasUrls, "Upload", "Files uploaded successfully!"));
+                return Ok(response.SetSuccessResponse(sasUrls, KeyConst.Upload, CommonConst.SuccessTaskMessage));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, response.SetErrorResponse("Exception", ex.Message));
+                return StatusCode(500, response.SetErrorResponse(KeyConst.Exception, ex.Message));
             }
         }
 
@@ -142,6 +143,7 @@ namespace HomeCleaningService.Controllers
             .SetSuccessResponse(list);
             return Ok(successResponse);
         }
+
         [HttpGet("GetAllAdditionals")]
         [Authorize]
         public async Task<IActionResult> GetAllAdditionalServices( Guid serviceId)
@@ -151,6 +153,7 @@ namespace HomeCleaningService.Controllers
             .SetSuccessResponse(list);
             return Ok(successResponse);
         }
+
         [HttpGet("GetCustomerProfileInCheckout")]
         [Authorize]
         public async Task<IActionResult> GetCusProfile()

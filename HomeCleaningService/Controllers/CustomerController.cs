@@ -1,4 +1,5 @@
-﻿using HCP.Service.DTOs.CustomerDTO;
+﻿using HCP.Repository.Constance;
+using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +28,7 @@ namespace HomeCleaningService.Controllers
             if (customer == null)
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Customer", "Customer not found");
+                    .SetErrorResponse(KeyConst.Customer, CustomerConst.NotFoundError);
                 return NotFound(errorResponse);
             }
 
@@ -45,7 +46,7 @@ namespace HomeCleaningService.Controllers
             if (customer == null)
             {
                 var errorResponse = new AppResponse<object>()
-                    .SetErrorResponse("Customer Profile", "Customer Profile not found");
+                    .SetErrorResponse(KeyConst.Customer, CustomerConst.ProfileNotFoundError);
                 return NotFound(errorResponse);
             }
 
@@ -63,19 +64,19 @@ namespace HomeCleaningService.Controllers
             try
             {
                 var updateUser = await _customerService.UpdateCustomerProfile(customer, User);
-                return Ok(response.SetSuccessResponse(updateUser, "Update", "Profile updated successfully"));
+                return Ok(response.SetSuccessResponse(updateUser, KeyConst.Customer, CustomerConst.UpdateSuccess));
             }
             catch (UnauthorizedAccessException)
             {
-                return Unauthorized(response.SetErrorResponse("Authentication", "User not authenticated"));
+                return Unauthorized(response.SetErrorResponse(KeyConst.Unathorized, CommonConst.UnauthorizeError));
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(response.SetErrorResponse("Customer", "User not found"));
+                return NotFound(response.SetErrorResponse(KeyConst.Customer, CustomerConst.NotFoundError));
             }
             catch (Exception ex)
             {
-                return BadRequest(response.SetErrorResponse("Update", ex.Message));
+                return BadRequest(response.SetErrorResponse(KeyConst.Customer, ex.Message));
             }
         }
 

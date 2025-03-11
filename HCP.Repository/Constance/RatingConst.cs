@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace HCP.Repository.Constance
 {
-    public static class ErrorMessageConst
+    public static class RatingConst
     {
-        public const string Error = "Error";
+        //Error
+
+        public const string NotFoundError = "No Ratings Found!";
     }
 }
