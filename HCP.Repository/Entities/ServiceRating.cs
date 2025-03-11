@@ -11,6 +11,7 @@ namespace HCP.Repository.Entities
     {
         public decimal Rating { get; set; }
         public string Review { get; set; }
+        public DateTime RatingDate { get; set; } = DateTime.Now;
         [ForeignKey("User")]
         public string UserId { get; set; }
         [ForeignKey("CleaningService")]

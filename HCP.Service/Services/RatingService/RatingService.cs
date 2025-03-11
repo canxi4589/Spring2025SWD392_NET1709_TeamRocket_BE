@@ -3,7 +3,9 @@ using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
+using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Services.CustomerService;
+using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Bcpg;
@@ -17,7 +19,7 @@ using static HCP.Service.DTOs.RatingDTO.RatingDTO;
 
 namespace HCP.Service.Services.RatingService
 {
-    public class RatingService : IServiceRatingService
+    public class RatingService : IRatingService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
@@ -31,7 +33,12 @@ namespace HCP.Service.Services.RatingService
         public async Task<CreatedRatingResponseDTO> CreateRating(CreateRatingRequestDTO request, ClaimsPrincipal customer)
         {
             var userId = customer.FindFirst("id")?.Value;
+            var service = await _unitOfWork.Repository<CleaningService>()
+                .FindAsync(s => s.Id == request.CleaningServiceId);
+            var booking = await _unitOfWork.Repository<Booking>()
+                .FindAsync(s => s.Id == request.BookingId);
             var user = await _userManager.FindByIdAsync(userId);
+
             if (user == null)
             {
                 throw new Exception(CustomerConst.NotFoundError);
@@ -42,16 +49,17 @@ namespace HCP.Service.Services.RatingService
                 UserId = userId,
                 CleaningServiceId = request.CleaningServiceId,
                 Rating = request.Rating,
-                Review = request.Review
+                Review = request.Review,
+                Status = RatingStatus.Active.ToString(),
+                CleaningService = service,
+                User = user,
+                RatingDate = DateTime.Now
             };
 
             await _unitOfWork.Repository<ServiceRating>().AddAsync(newRating);
             await _unitOfWork.SaveChangesAsync();
 
-            var service = await _unitOfWork.Repository<CleaningService>()
-                .FindAsync(s => s.Id == request.CleaningServiceId);
-
-            if (service != null)
+            if (service != null && booking != null)
             {
                 var allRatings = await _unitOfWork.Repository<ServiceRating>()
                     .GetAll()
@@ -61,6 +69,7 @@ namespace HCP.Service.Services.RatingService
                 service.Rating = allRatings.Average(r => r.Rating);
                 service.RatingCount = allRatings.Count;
 
+                booking.isRating = true;
                 await _unitOfWork.SaveChangesAsync();
             }
 
@@ -72,19 +81,24 @@ namespace HCP.Service.Services.RatingService
                 Rating = newRating.Rating,
                 Review = newRating.Review,
                 CustomerName = user.FullName,
-                CustomerAvatar = user.Avatar
+                CustomerAvatar = user.Avatar,
+                RatingDate = newRating.RatingDate,
+                BookingId = booking.Id,
+                ServiceName = service.ServiceName
             };
         }
 
-        public async Task<RatingResponseDTO> GetRatingsByCustomer(string userId)
+        public async Task<PagingRatingResponseListDTO> GetRatingsByCustomer(ClaimsPrincipal user, int? pageIndex, int? pageSize)
         {
+            var userId = user.FindFirst("id")?.Value;
             var customer = await _userManager.FindByIdAsync(userId);
+
             if (customer == null)
             {
-                return new RatingResponseDTO { RatingCount = 0, Ratings = new List<RatingResponseListDTO>() };
+                return new PagingRatingResponseListDTO();
             }
 
-            var ratings = await _unitOfWork.Repository<ServiceRating>()
+            var ratings = _unitOfWork.Repository<ServiceRating>()
                 .GetAll()
                 .Where(r => r.UserId == userId)
                 .Select(r => new RatingResponseListDTO
@@ -92,20 +106,37 @@ namespace HCP.Service.Services.RatingService
                     Rating = r.Rating,
                     Review = r.Review,
                     CustomerName = customer.FullName,
-                    CustomerAvatar = customer.Avatar
-                })
-                .ToListAsync();
+                    CustomerAvatar = customer.Avatar,
+                    RatingDate = DateTime.Now,
+                    ServiceName = r.CleaningService.ServiceName
+                });
 
-            return new RatingResponseDTO
+            if (pageIndex == null || pageSize == null)
             {
-                RatingCount = ratings.Count,
-                Ratings = ratings
+                var temp1 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, 1, ratings.Count());
+                return new PagingRatingResponseListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, (int)pageIndex, (int)pageSize);
+            return new PagingRatingResponseListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = ratings.Count(),
+                TotalPages = temp2.TotalPages
             };
         }
 
-        public async Task<RatingResponseDTO> GetRatingsByService(Guid serviceId)
+        public async Task<PagingRatingResponseListDTO> GetRatingsByService(Guid serviceId, int? pageIndex, int? pageSize)
         {
-            var ratings = await _unitOfWork.Repository<ServiceRating>()
+            var ratings = _unitOfWork.Repository<ServiceRating>()
                 .GetAll()
                 .Where(r => r.CleaningServiceId == serviceId)
                 .Include(r => r.User)
@@ -114,36 +145,84 @@ namespace HCP.Service.Services.RatingService
                     Rating = r.Rating,
                     Review = r.Review,
                     CustomerName = r.User.FullName,
-                    CustomerAvatar = r.User.Avatar
-                })
-                .ToListAsync();
+                    CustomerAvatar = r.User.Avatar,
+                    RatingDate = DateTime.Now,
+                    ServiceName = r.CleaningService.ServiceName
+                });
 
-            return new RatingResponseDTO
+            var allRatings = await _unitOfWork.Repository<ServiceRating>()
+                    .GetAll()
+                    .Where(r => r.CleaningServiceId == serviceId)
+                    .ToListAsync();
+            
+            if (pageIndex == null || pageSize == null)
             {
-                RatingCount = ratings.Count,
-                Ratings = ratings
+                var temp1 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, 1, ratings.Count());
+                return new PagingRatingResponseListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages,
+                    RatingAvg = allRatings.Average(r => r.Rating)
+                };
+            }
+            var temp2 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, (int)pageIndex, (int)pageSize);
+            return new PagingRatingResponseListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = ratings.Count(),
+                TotalPages = temp2.TotalPages,
+                RatingAvg = allRatings.Average(r => r.Rating)
             };
         }
 
-        public async Task<RatingResponseDTO> SortRatings(Guid serviceId, decimal minRating, decimal maxRating)
+        public async Task<PagingRatingResponseListDTO> SortRatings(Guid serviceId, decimal rate, int? pageIndex, int? pageSize)
         {
-            var ratings = await _unitOfWork.Repository<ServiceRating>()
+            var ratings = _unitOfWork.Repository<ServiceRating>()
                 .GetAll()
-                .Where(r => r.CleaningServiceId == serviceId && r.Rating >= minRating && r.Rating <= maxRating)
+                .Where(r => r.CleaningServiceId == serviceId && r.Rating == rate)
                 .Include(r => r.User)
                 .Select(r => new RatingResponseListDTO
                 {
                     Rating = r.Rating,
                     Review = r.Review,
                     CustomerName = r.User.FullName,
-                    CustomerAvatar = r.User.Avatar
-                })
-                .ToListAsync();
+                    CustomerAvatar = r.User.Avatar,
+                    RatingDate = DateTime.Now,
+                    ServiceName = r.CleaningService.ServiceName
+                });
 
-            return new RatingResponseDTO
+            var allRatings = await _unitOfWork.Repository<ServiceRating>()
+                    .GetAll()
+                    .Where(r => r.CleaningServiceId == serviceId)
+                    .ToListAsync();
+
+            if (pageIndex == null || pageSize == null)
             {
-                RatingCount = ratings.Count,
-                Ratings = ratings
+                var temp1 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, 1, ratings.Count());
+                return new PagingRatingResponseListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages,
+                    RatingAvg = allRatings.Average(r => r.Rating)
+                };
+            }
+            var temp2 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, (int)pageIndex, (int)pageSize);
+            return new PagingRatingResponseListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = ratings.Count(),
+                TotalPages = temp2.TotalPages,
+                RatingAvg = allRatings.Average(r => r.Rating)
             };
         }
 

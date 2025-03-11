@@ -16,9 +16,9 @@ namespace HomeCleaningService.Controllers
     [ApiController]
     public class RatingController : ControllerBase
     {
-        private readonly IServiceRatingService _ratingService;
+        private readonly IRatingService _ratingService;
 
-        public RatingController(IServiceRatingService ratingService)
+        public RatingController(IRatingService ratingService)
         {
             _ratingService = ratingService;
         }
@@ -41,37 +41,37 @@ namespace HomeCleaningService.Controllers
             }
         }
 
-        [HttpGet("customer/{userId}")]
-        public async Task<IActionResult> GetRatingsByCustomer(string userId)
+        [HttpGet("customer")]
+        public async Task<IActionResult> GetRatingsByCustomer(int? pageIndex, int? pageSize)
         {
-            var result = await _ratingService.GetRatingsByCustomer(userId);
+            var result = await _ratingService.GetRatingsByCustomer(User, pageIndex, pageSize);
 
-            if (result.RatingCount == 0)
-                return NotFound(new AppResponse<RatingResponseDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
+            //if (result.TotalCount == 0)
+            //    return NotFound(new AppResponse<PagingRatingResponseListDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
 
-            return Ok(new AppResponse<RatingResponseDTO>().SetSuccessResponse(result));
+            return Ok(new AppResponse<PagingRatingResponseListDTO>().SetSuccessResponse(result));
         }
 
         [HttpGet("service/{serviceId}")]
-        public async Task<IActionResult> GetRatingsByService(Guid serviceId)
+        public async Task<IActionResult> GetRatingsByService(Guid serviceId, int? pageIndex, int? pageSize)
         {
-            var result = await _ratingService.GetRatingsByService(serviceId);
+            var result = await _ratingService.GetRatingsByService(serviceId, pageIndex, pageSize);
 
-            if (result.RatingCount == 0)
-                return NotFound(new AppResponse<RatingResponseDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
+            //if (result.TotalCount == 0)
+            //    return NotFound(new AppResponse<PagingRatingResponseListDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
 
-            return Ok(new AppResponse<RatingResponseDTO>().SetSuccessResponse(result));
+            return Ok(new AppResponse<PagingRatingResponseListDTO>().SetSuccessResponse(result));
         }
 
-        [HttpGet("service/{serviceId}/sort")]
-        public async Task<IActionResult> SortRatings(Guid serviceId, [FromQuery] decimal minRating, [FromQuery] decimal maxRating)
+        [HttpGet("service/{serviceId}/filter")]
+        public async Task<IActionResult> FilterRatings(Guid serviceId, decimal rate, int? pageIndex, int? pageSize)
         {
-            var result = await _ratingService.SortRatings(serviceId, minRating, maxRating);
+            var result = await _ratingService.SortRatings(serviceId, rate,pageIndex, pageSize);
 
-            if (result.RatingCount == 0)
-                return NotFound(new AppResponse<RatingResponseDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
+            //if (result.TotalCount == 0)
+            //    return NotFound(new AppResponse<PagingRatingResponseListDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
 
-            return Ok(new AppResponse<RatingResponseDTO>().SetSuccessResponse(result));
+            return Ok(new AppResponse<PagingRatingResponseListDTO>().SetSuccessResponse(result));
         }
     }
 }
