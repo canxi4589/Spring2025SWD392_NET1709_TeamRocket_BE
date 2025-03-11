@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HCP.Service.DTOs.BookingDTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,9 +28,17 @@ namespace HCP.Service.DTOs.AdminManagementDTO
             public double Duration { get; set; }
             public string HousekeeperId { get; set; }
             public string HousekeeperName { get; set; }
-            public string StaffId { get; set; }
-            public string StaffName { get; set; }
+            public string? StaffId { get; set; }
+            public string? StaffName { get; set; }
             public string FirstImgLinkUrl { get; set; }
+        }
+        public class ServiceAdminShowListDTO
+        {
+            public List<ServiceAdminShowDTO> Items { get; set; }
+            public int totalCount { get; set; }
+            public int totalPages { get; set; }
+            public bool hasNext { get; set; }
+            public bool hasPrevious { get; set; }
         }
     }
 }

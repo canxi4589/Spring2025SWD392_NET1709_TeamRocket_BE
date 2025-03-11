@@ -181,6 +181,7 @@ namespace HCP.Service.Services.WalletService
             var transact = await _unitOfWork.Repository<WalletTransaction>().FindAsync(c => c.Id.Equals(transId));
             if (transact == null) throw new Exception("Transaction not found");
             var user = await _userManager.FindByIdAsync(transact.UserId);
+            if (user == null) throw new Exception(CustomerConst.NotFoundError);
             if (user.Id != transact.UserId)
             {
                 throw new Exception("There something wrong in creating transaction process!");
@@ -235,41 +236,97 @@ namespace HCP.Service.Services.WalletService
                 };
             }
         }
-        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(decimal amount, ClaimsPrincipal userClaims)
+        public async Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user)
         {
-            //var user = await _customerService.GetCustomerAsync(userClaims);
-            //if (user == null) throw new Exception(CustomerConst.NotFoundError);
-            var user = await _userManager.FindByIdAsync("ccc7f4f1-593c-49b4-8228-10375da7754c");
+            Guid id = Guid.NewGuid();
             var wTransaction = new WalletTransaction
             {
-                AfterAmount = (Decimal)user.BalanceWallet + amount,
+                Id = id,
+                AfterAmount = 0,
                 Current = (Decimal)user.BalanceWallet,
                 User = user,
                 UserId = user.Id,
                 Amount = amount,
                 Type = TransactionType.Deposit.ToString(),
-                Status = TransactionStatus.Done.ToString(),
+                Status = TransactionStatus.Pending.ToString(),
                 CreatedDate = DateTime.Now
             };
-            user.BalanceWallet += (double)amount;
-            await _userManager.UpdateAsync(user);
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();
 
             return new WalletTransactionDepositResponseDTO
             {
+                Id = id,
                 Amount = (Double)wTransaction.Amount,
-                Current = user.BalanceWallet,
+                Current = (Double)wTransaction.Current,
                 AfterAmount = (Double)wTransaction.AfterAmount,
                 Type = wTransaction.Type,
                 UserId = user.Id,
                 FullName = user.FullName,
                 Mail = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Status = TransactionStatus.Done.ToString(),
-                CreatedDate = DateTime.Now,
-                Description = "Deposit success!"
+                Status = wTransaction.Status,
+                CreatedDate = wTransaction.CreatedDate,
+                Description = "Deposit pending!"
             };
+        }
+        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot)
+        {
+            if (successOrNot)
+            {
+                var wTransaction = await _unitOfWork.Repository<WalletTransaction>().FindAsync(c => c.Id.Equals(depoTrans));
+                if (wTransaction == null) throw new Exception(TransactionConst.NotFoundError);
+                var user = await _userManager.FindByIdAsync(wTransaction.UserId);
+                if (user == null) throw new Exception(CustomerConst.NotFoundError);
+                wTransaction.AfterAmount = (Decimal)user.BalanceWallet + wTransaction.Amount;
+                wTransaction.Current = (Decimal)user.BalanceWallet;
+                wTransaction.Status = TransactionStatus.Done.ToString();
+                user.BalanceWallet += (double)wTransaction.Amount;
+                await _userManager.UpdateAsync(user);
+                _unitOfWork.Repository<WalletTransaction>().Update(wTransaction);
+                await _unitOfWork.SaveChangesAsync();
+
+                return new WalletTransactionDepositResponseDTO
+                {
+                    Id = wTransaction.Id,
+                    Amount = (Double)wTransaction.Amount,
+                    Current = (Double)wTransaction.Current,
+                    AfterAmount = (Double)wTransaction.AfterAmount,
+                    Type = wTransaction.Type,
+                    UserId = user.Id,
+                    FullName = user.FullName,
+                    Mail = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    Status = wTransaction.Status,
+                    CreatedDate = wTransaction.CreatedDate,
+                    Description = "Deposit success!"
+                };
+            }
+            else
+            {
+                var wTransaction = await _unitOfWork.Repository<WalletTransaction>().FindAsync(c => c.Id.Equals(depoTrans));
+                if (wTransaction == null) throw new Exception(TransactionConst.NotFoundError);
+                var user = wTransaction.User;
+                wTransaction.AfterAmount = (Decimal)user.BalanceWallet;
+                wTransaction.Current = (Decimal)user.BalanceWallet;
+                wTransaction.Status = TransactionStatus.Fail.ToString();
+                await _unitOfWork.SaveChangesAsync();
+                return new WalletTransactionDepositResponseDTO
+                {
+                    Id = wTransaction.Id,
+                    Amount = (Double)wTransaction.Amount,
+                    Current = (Double)wTransaction.Current,
+                    AfterAmount = (Double)wTransaction.AfterAmount,
+                    Type = wTransaction.Type,
+                    UserId = user.Id,
+                    FullName = user.FullName,
+                    Mail = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    Status = wTransaction.Status,
+                    CreatedDate = wTransaction.CreatedDate,
+                    Description = "Deposit failed!"
+                };
+            }
         }
 
         public async Task<double> getUserBalance(AppUser user)

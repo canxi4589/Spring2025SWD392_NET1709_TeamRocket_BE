@@ -58,12 +58,12 @@ namespace HCP.Service.Integrations.Vnpay
             return paymentUrl;
 
         }
-        public string CreateDepositPaymentUrl(int amount, string returnUrl)
+        public string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl)
         {
             returnUrl = "https://localhost:7143/api/Payment/PaymentDepositReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
-            var AmountInUsd = Convert.ToDouble(amount, CultureInfo.InvariantCulture);
+            var AmountInUsd = Convert.ToDouble(walletTrans.Amount, CultureInfo.InvariantCulture);
             double amountInVnd = Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
 
             var vnPay = new VnPayLibrary();
@@ -73,11 +73,11 @@ namespace HCP.Service.Integrations.Vnpay
             vnPay.AddRequestData("vnp_CurrCode", "VND");
             vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
             vnPay.AddRequestData("vnp_Locale", "vn");
-            vnPay.AddRequestData("vnp_OrderInfo", AmountInUsd.ToString());
+            vnPay.AddRequestData("vnp_OrderInfo", $"Xu ly nap tien: {walletTrans.Id}");
             vnPay.AddRequestData("vnp_OrderType", "deposit");
             vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
             vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-            vnPay.AddRequestData("vnp_TxnRef", Guid.NewGuid().ToString()); // Unique transaction reference
+            vnPay.AddRequestData("vnp_TxnRef", walletTrans.Id.ToString());
             vnPay.AddRequestData("vnp_Version", "2.1.0");
 
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);

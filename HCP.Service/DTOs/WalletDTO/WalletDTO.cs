@@ -25,6 +25,7 @@ namespace HCP.Service.DTOs.WalletDTO
     }
     public class WalletTransactionDepositResponseDTO
     {
+        public Guid Id { get; set; }
         public double Amount { get; set; }
         public double Current { get; set; }
         public double AfterAmount { get; set; }

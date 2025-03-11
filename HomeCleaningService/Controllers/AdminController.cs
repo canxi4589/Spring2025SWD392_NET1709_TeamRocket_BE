@@ -22,15 +22,17 @@ namespace HomeCleaningService.Controllers
         private readonly IAdminServiceService _userAdminServiceService;
         private readonly IAdminManServiceCategory _adminManServiceCategory;
 
-        public AdminController(UserManager<AppUser> userManager, IAdminManService userAdminManService)
+        public AdminController(UserManager<AppUser> userManager, IAdminManService userAdminManService, IAdminServiceService userAdminServiceService, IAdminManServiceCategory adminManServiceCategory)
         {
             _userManager = userManager;
             _userAdminManService = userAdminManService;
+            _userAdminServiceService = userAdminServiceService;
+            _adminManServiceCategory = adminManServiceCategory;
         }
 
         [HttpGet("user")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> GetUsersByAdmin([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers)
+        public async Task<IActionResult> GetUsersByAdmin([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers)
         {
             var users = await _userAdminManService.GetUsersByAdminCustom(includeStaff, includeCustomers, includeHousekeepers);
             return Ok(new AppResponse<List<UserAdminDTO>>().SetSuccessResponse(users));
@@ -38,14 +40,14 @@ namespace HomeCleaningService.Controllers
 
         [HttpGet("cleaningService")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> GetAllServices()
+        public async Task<IActionResult> GetAllServices(int? pageIndex, int? pageSize)
         {
-            var services = await _userAdminServiceService.GetAllServicesAsync();
-            return Ok(new AppResponse<List<ServiceAdminShowDTO>>().SetSuccessResponse(services));
+            var services = await _userAdminServiceService.GetAllServicesAsync(pageIndex, pageSize);
+            return Ok(new AppResponse<ServiceAdminShowListDTO>().SetSuccessResponse(services));
         }
         [HttpGet("serviceCategory")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> GetAllCategories()
+        public async Task<IActionResult> GetAllCategories()
         {
             var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync();
             return Ok(new AppResponse<List<ServiceCategoryAdminShowDTO>>().SetSuccessResponse(categories));

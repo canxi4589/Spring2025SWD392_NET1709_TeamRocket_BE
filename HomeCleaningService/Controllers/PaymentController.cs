@@ -1,8 +1,11 @@
 ﻿using HCP.Repository.Constance;
 using HCP.Repository.Entities;
+using HCP.Repository.GenericRepository;
+using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
+using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Helpers;
@@ -24,8 +27,10 @@ namespace HomeCleaningService.Controllers
         private readonly IEmailSenderService _emailSenderService;
         private readonly string _vnpHashSecret;
         private readonly IWalletService _walletService;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICustomerService _customerService;
 
-        public PaymentController(UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration, IWalletService walletService)
+        public PaymentController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration, IWalletService walletService, ICustomerService customerService)
         {
             _vnpHashSecret = configuration["VNPay:HashSecret"];
             _userManager = userManager;
@@ -33,6 +38,8 @@ namespace HomeCleaningService.Controllers
             this.ivnpay = ivnpay;
             _emailSenderService = emailSenderService;
             _walletService = walletService;
+            _unitOfWork = unitOfWork;
+            _customerService = customerService;
         }
 
         [HttpPost]
@@ -58,14 +65,21 @@ namespace HomeCleaningService.Controllers
         }
         [HttpPost("CreateDepositPayment")]
         [Authorize]
-        public async Task<IActionResult> CreateDepositPayment(int amount, string paymentMethod = KeyConst.VnPay)
+        public async Task<IActionResult> CreateDepositPaymentAsync(int amount, string paymentMethod = KeyConst.VnPay)
         {
-            var userClaims = User;
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
             try
             {
                 // Generate the VNPay payment URL
                 var returnUrl = "https://your-return-url.com";
-                string paymentUrl = ivnpay.CreateDepositPaymentUrl(amount, returnUrl);
+                var depoTransac = await _walletService.createDepositTransaction(amount, user);
+                var walletTrans = _unitOfWork.Repository<WalletTransaction>().GetById(depoTransac.Id);
+                if (walletTrans == null) throw new Exception(TransactionConst.DepositFail);
+                string paymentUrl = ivnpay.CreateDepositPaymentUrl(walletTrans, returnUrl);
 
                 return Ok(new { url = paymentUrl });
             }
@@ -143,85 +157,85 @@ namespace HomeCleaningService.Controllers
         [HttpGet("PaymentDepositReturn-VNPAY")]
         public async Task<IActionResult> PaymentDepositReturn()
         {
-            var userClaims = User;
             string queryString = Request.QueryString.Value;
-
-            var paymentStatus = Request.Query["vnp_ResponseCode"];
-            if (paymentStatus == "00") //"00" means success
+            //var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
+            var vnp_HashSecret = _vnpHashSecret;
+            // Retrieve the order ID from the query string
+            if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid transactId))
             {
-                string orderInfo = Request.Query["vnp_OrderInfo"];
-
-                decimal usdAmount;
-
-                if (decimal.TryParse(orderInfo, out usdAmount))
+                if (true)
                 {
-                    await _walletService.processDepositTransaction(usdAmount, userClaims);
-                    return Redirect("http://localhost:5173/wallet/deposit/success");
+                    var paymentStatus = Request.Query["vnp_ResponseCode"];
+                    if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
+                    {
+                        await _walletService.processDepositTransaction(transactId, true);
+                        //return Redirect("https://www.google.com/");                                   // Redirect to success page
+                        return Redirect("http://localhost:5173/wallet/deposit/success");
+                    }
+                    else
+                    {
+                        await _walletService.processDepositTransaction(transactId, false);
+                        return Redirect("http://localhost:5173/wallet/deposit/fail");
+                    }
                 }
-
-                return BadRequest("Invalid amount format in order info.");
             }
-            else
-            {
-                return Redirect("http://localhost:5173/wallet/deposit/fail");
-            }
+            return BadRequest(PaymentConst.InvalidError);
         }
 
+            //[HttpPost("CreateBooking")]
+            //public Task<IActionResult> CreateBooking([FromBody] BookingDTO bookingDto, string paymentType)
+            //{
+            //    if (bookingDto == null || bookingDto.TotalPrice <= 0)
+            //    {
+            //        return BadRequest("Invalid booking data.");
+            //    }
 
-        //[HttpPost("CreateBooking")]
-        //public Task<IActionResult> CreateBooking([FromBody] BookingDTO bookingDto, string paymentType)
-        //{
-        //    if (bookingDto == null || bookingDto.TotalPrice <= 0)
-        //    {
-        //        return BadRequest("Invalid booking data.");
-        //    }
+            //    try
+            //    {
+            //        var bookingId = await _bookingService.CreateBooking(bookingDto);
+            //        var booking = await _unitOfWork.Repository<Booking>().FindAsync(b => b.Id == bookingId);
 
-        //    try
-        //    {
-        //        var bookingId = await _bookingService.CreateBooking(bookingDto);
-        //        var booking = await _unitOfWork.Repository<Booking>().FindAsync(b => b.Id == bookingId);
+            //        if (booking == null)
+            //        {
+            //            return StatusCode(500, "Failed to create booking.");
+            //        }
+            //        if (paymentType == "Wallet")
+            //        {
+            //            var wallet = await _walletService.GetWalletByCustomerIdAsync(booking.CustomerId);
+            //            if (wallet == null || wallet.Balance < booking.TotalPrice)
+            //            {
+            //                return BadRequest("Insufficient wallet balance.");
+            //            }
 
-        //        if (booking == null)
-        //        {
-        //            return StatusCode(500, "Failed to create booking.");
-        //        }
-        //        if (paymentType == "Wallet")
-        //        {
-        //            var wallet = await _walletService.GetWalletByCustomerIdAsync(booking.CustomerId);
-        //            if (wallet == null || wallet.Balance < booking.TotalPrice)
-        //            {
-        //                return BadRequest("Insufficient wallet balance.");
-        //            }
+            //            // Deduct balance & update wallet
+            //            wallet.Balance -= booking.TotalPrice;
+            //            await _walletService.UpdateWalletAsync(wallet);
 
-        //            // Deduct balance & update wallet
-        //            wallet.Balance -= booking.TotalPrice;
-        //            await _walletService.UpdateWalletAsync(wallet);
+            //            // Mark booking as paid
+            //            booking.Status = "Paid";
+            //            booking.CompletedAt = DateTime.UtcNow;
+            //            await _unitOfWork.Repository<Booking>().UpdateAsync(booking);
+            //            await _unitOfWork.SaveChangesAsync();
 
-        //            // Mark booking as paid
-        //            booking.Status = "Paid";
-        //            booking.CompletedAt = DateTime.UtcNow;
-        //            await _unitOfWork.Repository<Booking>().UpdateAsync(booking);
-        //            await _unitOfWork.SaveChangesAsync();
+            //            return Ok(new { message = "Booking successfully paid with wallet.", bookingId });
+            //        }
+            //        else if (paymentType == "VNPay")
+            //        {
+            //            var returnUrl = "https://cosmodiamond.xyz/payment-return";
+            //            string paymentUrl = _vnPayService.CreatePayment(booking, returnUrl);
 
-        //            return Ok(new { message = "Booking successfully paid with wallet.", bookingId });
-        //        }
-        //        else if (paymentType == "VNPay")
-        //        {
-        //            var returnUrl = "https://cosmodiamond.xyz/payment-return";
-        //            string paymentUrl = _vnPayService.CreatePayment(booking, returnUrl);
+            //            return Ok(new { url = paymentUrl, bookingId });
+            //        }
+            //        else
+            //        {
+            //            return BadRequest("Invalid payment type.");
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        return StatusCode(500, new { error = ex.Message });
+            //    }
+            //}
 
-        //            return Ok(new { url = paymentUrl, bookingId });
-        //        }
-        //        else
-        //        {
-        //            return BadRequest("Invalid payment type.");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { error = ex.Message });
-        //    }
-        //}
-
-    }
+        }
 }
