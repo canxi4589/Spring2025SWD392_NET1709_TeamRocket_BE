@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -45,6 +46,7 @@ namespace HCP.Service.DTOs.RatingDTO
             public Guid BookingId { get; set; }
 
             [JsonPropertyName("rating")]
+            [JsonConverter(typeof(SingleDecimalPlaceConverter))]
             public decimal Rating { get; set; }
 
             [JsonPropertyName("review")]
@@ -58,17 +60,6 @@ namespace HCP.Service.DTOs.RatingDTO
 
             [JsonPropertyName("customer-avatar")]
             public string CustomerAvatar { get; set; }
-        }
-
-        public class RatingResponseDTO
-        {
-            [JsonPropertyName("rating-count")]
-            public int RatingCount { get; set; }
-
-            //public decimal RatingAvg
-
-            [JsonPropertyName("ratings")]
-            public List<RatingResponseListDTO> Ratings { get; set; }
         }
 
         public class RatingResponseListDTO
@@ -98,6 +89,7 @@ namespace HCP.Service.DTOs.RatingDTO
             public List<RatingResponseListDTO> Items { get; set; }
 
             [JsonPropertyName("rating-average")]
+            [JsonConverter(typeof(SingleDecimalPlaceConverter))]
             public decimal RatingAvg { get; set; }
 
             [JsonPropertyName("total-count")]
@@ -111,6 +103,19 @@ namespace HCP.Service.DTOs.RatingDTO
 
             [JsonPropertyName("has-previous")]
             public bool HasPrevious { get; set; }
+        }
+
+        public class SingleDecimalPlaceConverter : JsonConverter<decimal>
+        {
+            public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                return reader.GetDecimal();
+            }
+
+            public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options)
+            {
+                writer.WriteNumberValue(Math.Round(value, 1));
+            }
         }
     }
 }
