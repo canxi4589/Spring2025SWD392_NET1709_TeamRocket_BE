@@ -3,8 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static HCP.Service.DTOs.RatingDTO.RatingDTO;
 
 namespace HCP.Service.DTOs.CleaningServiceDTO
 {
@@ -93,8 +95,57 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public List<string> steps { get; set; }
         public List<AdditionalServicedDTO> additionalServices { get; set; }
         public housekeeperDetailDTO housekeeper {  get; set; }
-
      }
+    
+    public class ServiceOverviewDTO
+    {
+        [JsonPropertyName("service-id")]
+        public Guid Id { get; set; }
+
+        [JsonPropertyName("service-name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("service-status")]
+        public string Status { get; set; }
+
+        [JsonPropertyName("number-of-booking")]
+        public int NumOfBooking {  get; set; }
+
+        [JsonPropertyName("service-address")]
+        public string AddressLine { get;set; }
+
+        [JsonPropertyName("rating")]
+        [JsonConverter(typeof(SingleDecimalPlaceConverter))]
+        public decimal Rating {  get; set; }
+
+        [JsonPropertyName("number-of-rating")]
+        public int NumOfRatings {  get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName("images")]
+        public List<ImgDTO> Images { get; set; }
+    }
+
+    public class ServiceOverviewListDTO
+    {
+        [JsonPropertyName("service-details")]
+        public List<ServiceOverviewDTO> Items { get; set; }
+
+        [JsonPropertyName("total-count")]
+        public int TotalCount { get; set; }
+
+        [JsonPropertyName("total-page")]
+        public int TotalPages { get; set; }
+
+        [JsonPropertyName("has-next")]
+        public bool HasNext { get; set; }
+
+        [JsonPropertyName("has-previous")]
+        public bool HasPrevious { get; set; }
+    }
+
 
     public class ServiceStatusUpdateDto
     {
@@ -120,5 +171,18 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public Guid serviceId {  get; set; }
         public DateTime targetDate {  get; set; }
         public string dayOfWeek {  get; set; }
+    }
+
+    public class SingleDecimalPlaceConverter : JsonConverter<decimal>
+    {
+        public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return reader.GetDecimal();
+        }
+
+        public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options)
+        {
+            writer.WriteNumberValue(Math.Round(value, 1));
+        }
     }
 }

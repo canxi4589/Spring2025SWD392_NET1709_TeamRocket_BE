@@ -67,7 +67,20 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<List<ServiceDetailWithStatusDTO>>().SetSuccessResponse(service));
         }
         
+        [HttpGet("user/filter")]
+        [Authorize]
+        public async Task<IActionResult> GetServiceByUser(string? status, int? pageIndex, int? pageSize)
+        {
+            var service = await _cleaningService.GetServiceByUserFilter(status, User, pageIndex, pageSize);
+
+            if (service == null)
+                return NotFound(new AppResponse<ServiceOverviewListDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
+
+            return Ok(new AppResponse<ServiceOverviewListDTO>().SetSuccessResponse(service));
+        }
+        
         [HttpGet("detail/{id}")]
+        [Authorize]
         public async Task<IActionResult> GetServiceDetail(Guid id)
         {
             var service = await _cleaningService.GetCleaningServiceDetailAsync(id, User);

@@ -14,6 +14,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static HCP.Service.DTOs.RatingDTO.RatingDTO;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HCP.Service.Services.CleaningService1
 {
@@ -257,6 +260,58 @@ namespace HCP.Service.Services.CleaningService1
                     }
                     : null
             }).ToList();
+        }
+        
+        public async Task<ServiceOverviewListDTO> GetServiceByUserFilter(string? status, ClaimsPrincipal userClaims, int? pageIndex, int? pageSize)
+        {
+            var userId = userClaims.FindFirst("id")?.Value;
+
+            var services = _unitOfWork.Repository<CleaningService>()
+                .GetAll()
+                .Where(cs => cs.UserId == userId)
+                .Include(cs => cs.ServiceImages)
+                .Select(cs => new ServiceOverviewDTO
+                {
+                    AddressLine = cs.AddressLine,
+                    Description = cs.Description,
+                    Id = cs.Id,
+                    Images = cs.ServiceImages.Select(si => new ImgDTO { id = si.Id , url = si.LinkUrl}).ToList(),
+                    Name = cs.ServiceName,
+                    NumOfBooking = cs.Bookings.Count(),
+                    NumOfRatings = cs.RatingCount,
+                    Rating = cs.Rating,
+                    Status = cs.Status
+                });
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                services = services.Where(c => c.Status == status);
+            }
+
+            if (services == null || !services.Any())
+                return null;
+
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = await PaginatedList<ServiceOverviewDTO>.CreateAsync(services, 1, services.Count());
+                return new ServiceOverviewListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = await PaginatedList<ServiceOverviewDTO>.CreateAsync(services, (int)pageIndex, (int)pageSize);
+            return new ServiceOverviewListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = services.Count(),
+                TotalPages = temp2.TotalPages
+            };
         }
 
         public async Task<CreateCleaningServiceDTO?> CreateCleaningServiceAsync(CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims)
