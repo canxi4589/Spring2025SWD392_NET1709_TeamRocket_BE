@@ -70,7 +70,8 @@ namespace HCP.Service.Services.BookingService
                 Location = c.AddressLine + ", " + c.District + ", " + c.City,
                 ServiceName = c.CleaningService.ServiceName,
                 CleaningServiceDuration = c.CleaningService.Duration,
-                isRating = c.isRating
+                isRating = c.isRating,
+                CleaningServiceId = c.CleaningServiceId
             });
             if (pageIndex == null || pageSize == null)
             {
@@ -141,7 +142,8 @@ namespace HCP.Service.Services.BookingService
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
                 PaymentStatus = firstPayment?.Status ?? "Not found",
                 CleaningServiceDuration = booking.CleaningService.Duration,
-                isRating = booking.isRating
+                isRating = booking.isRating,
+                CleaningServiceId = booking.CleaningService.Id
             };
         }
         public async Task<CheckoutResponseDTO> GetCheckoutInfo(CheckoutRequestDTO request, ClaimsPrincipal userClaims)

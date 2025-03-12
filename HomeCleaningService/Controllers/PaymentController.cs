@@ -1,6 +1,5 @@
 ﻿using HCP.Repository.Constance;
 using HCP.Repository.Entities;
-using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Integrations.Vnpay;
@@ -10,8 +9,6 @@ using HCP.Service.Services.EmailService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -182,60 +179,60 @@ namespace HomeCleaningService.Controllers
             return BadRequest(PaymentConst.InvalidError);
         }
 
-            //[HttpPost("CreateBooking")]
-            //public Task<IActionResult> CreateBooking([FromBody] BookingDTO bookingDto, string paymentType)
-            //{
-            //    if (bookingDto == null || bookingDto.TotalPrice <= 0)
-            //    {
-            //        return BadRequest("Invalid booking data.");
-            //    }
+        //[HttpPost("CreateBooking")]
+        //public Task<IActionResult> CreateBooking([FromBody] BookingDTO bookingDto, string paymentType)
+        //{
+        //    if (bookingDto == null || bookingDto.TotalPrice <= 0)
+        //    {
+        //        return BadRequest("Invalid booking data.");
+        //    }
 
-            //    try
-            //    {
-            //        var bookingId = await _bookingService.CreateBooking(bookingDto);
-            //        var booking = await _unitOfWork.Repository<Booking>().FindAsync(b => b.Id == bookingId);
+        //    try
+        //    {
+        //        var bookingId = await _bookingService.CreateBooking(bookingDto);
+        //        var booking = await _unitOfWork.Repository<Booking>().FindAsync(b => b.Id == bookingId);
 
-            //        if (booking == null)
-            //        {
-            //            return StatusCode(500, "Failed to create booking.");
-            //        }
-            //        if (paymentType == "Wallet")
-            //        {
-            //            var wallet = await _walletService.GetWalletByCustomerIdAsync(booking.CustomerId);
-            //            if (wallet == null || wallet.Balance < booking.TotalPrice)
-            //            {
-            //                return BadRequest("Insufficient wallet balance.");
-            //            }
+        //        if (booking == null)
+        //        {
+        //            return StatusCode(500, "Failed to create booking.");
+        //        }
+        //        if (paymentType == "Wallet")
+        //        {
+        //            var wallet = await _walletService.GetWalletByCustomerIdAsync(booking.CustomerId);
+        //            if (wallet == null || wallet.Balance < booking.TotalPrice)
+        //            {
+        //                return BadRequest("Insufficient wallet balance.");
+        //            }
 
-            //            // Deduct balance & update wallet
-            //            wallet.Balance -= booking.TotalPrice;
-            //            await _walletService.UpdateWalletAsync(wallet);
+        //            // Deduct balance & update wallet
+        //            wallet.Balance -= booking.TotalPrice;
+        //            await _walletService.UpdateWalletAsync(wallet);
 
-            //            // Mark booking as paid
-            //            booking.Status = "Paid";
-            //            booking.CompletedAt = DateTime.UtcNow;
-            //            await _unitOfWork.Repository<Booking>().UpdateAsync(booking);
-            //            await _unitOfWork.SaveChangesAsync();
+        //            // Mark booking as paid
+        //            booking.Status = "Paid";
+        //            booking.CompletedAt = DateTime.UtcNow;
+        //            await _unitOfWork.Repository<Booking>().UpdateAsync(booking);
+        //            await _unitOfWork.SaveChangesAsync();
 
-            //            return Ok(new { message = "Booking successfully paid with wallet.", bookingId });
-            //        }
-            //        else if (paymentType == "VNPay")
-            //        {
-            //            var returnUrl = "https://cosmodiamond.xyz/payment-return";
-            //            string paymentUrl = _vnPayService.CreatePayment(booking, returnUrl);
+        //            return Ok(new { message = "Booking successfully paid with wallet.", bookingId });
+        //        }
+        //        else if (paymentType == "VNPay")
+        //        {
+        //            var returnUrl = "https://cosmodiamond.xyz/payment-return";
+        //            string paymentUrl = _vnPayService.CreatePayment(booking, returnUrl);
 
-            //            return Ok(new { url = paymentUrl, bookingId });
-            //        }
-            //        else
-            //        {
-            //            return BadRequest("Invalid payment type.");
-            //        }
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return StatusCode(500, new { error = ex.Message });
-            //    }
-            //}
+        //            return Ok(new { url = paymentUrl, bookingId });
+        //        }
+        //        else
+        //        {
+        //            return BadRequest("Invalid payment type.");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { error = ex.Message });
+        //    }
+        //}
 
-        }
+    }
 }

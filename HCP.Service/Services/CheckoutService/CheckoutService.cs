@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CheckoutDTO;
@@ -25,7 +26,7 @@ namespace HCP.Service.Services.CheckoutService
                 var userId = user.FindFirst("id")?.Value;
                 if (string.IsNullOrEmpty(userId))
                 {
-                    throw new Exception("User ID not found in claims.");
+                    throw new Exception(CustomerConst.NotFoundError);
                 }
 
                 var checkoutAddress = _unitOfWork.Repository<Address>().GetById(requestDTO.AddressId);
@@ -34,7 +35,7 @@ namespace HCP.Service.Services.CheckoutService
 
                 if (checkoutService == null || checkoutAddress == null || checkoutTimeSlot == null)
                 {
-                    throw new Exception("Invalid Service or Address.");
+                    throw new Exception(CommonConst.NotFoundError);
                 }
 
                 var additionalPrice = 0.0;
@@ -143,7 +144,7 @@ namespace HCP.Service.Services.CheckoutService
             catch (DbUpdateException dbEx)
             {
                 Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
-                throw new Exception("Database error occurred.");
+                throw new Exception(CommonConst.DatabaseError);
             }
             catch (Exception ex)
             {
