@@ -83,12 +83,12 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> GetServiceDetail(Guid id)
         {
-            var service = await _cleaningService.GetCleaningServiceDetailAsync(id, User);
+            var service = await _cleaningService.GethousekeeperCleaningServiceDetailAsync(id, User);
 
             if (service == null)
-                return NotFound(new AppResponse<CreateCleaningServiceDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
+                return NotFound(new AppResponse<HousekeeperServiceDetailDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
 
-            return Ok(new AppResponse<CreateCleaningServiceDTO>().SetSuccessResponse(service));
+            return Ok(new AppResponse<HousekeeperServiceDetailDTO>().SetSuccessResponse(service));
         }
 
         [HttpPost()]

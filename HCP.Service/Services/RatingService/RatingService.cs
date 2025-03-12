@@ -5,6 +5,7 @@ using HCP.Repository.Interfaces;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MimeKit.Cryptography;
 using System.Security.Claims;
 using static HCP.Service.DTOs.RatingDTO.RatingDTO;
 
@@ -214,6 +215,27 @@ namespace HCP.Service.Services.RatingService
                 TotalCount = ratings.Count(),
                 TotalPages = temp2.TotalPages,
                 RatingAvg = allRatings.Any() ? allRatings.Average(r => r.Rating) : 0
+            };
+        }
+
+        public async Task<HousekeperRatingDTO> GetHousekeeperRatingAsync (ClaimsPrincipal user)
+        {
+            var userId = user.FindFirst("id")?.Value;
+            var housekeeper = await _userManager.FindByIdAsync(userId);
+
+            var services = await _unitOfWork.Repository<CleaningService>()
+                    .GetAll()
+                    .Where(r => r.UserId == userId)
+                    .ToListAsync();
+
+            List<CleaningService> housekeeperCleaningServices = services.Where(s => s.UserId.Equals(userId)).ToList();
+            return new HousekeperRatingDTO
+            {
+                CustomerAvatar = housekeeper.Avatar,
+                HousekeeperId = housekeeper.Id,
+                HousekeeperName = housekeeper.FullName,
+                Rating = housekeeperCleaningServices.Any() ? housekeeperCleaningServices.Average(s => s.Rating) : 0,
+                TotalRating = housekeeperCleaningServices.Any() ? housekeeperCleaningServices.Sum(s => s.RatingCount) : 0
             };
         }
 
