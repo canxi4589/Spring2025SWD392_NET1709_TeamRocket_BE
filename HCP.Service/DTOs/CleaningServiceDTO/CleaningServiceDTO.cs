@@ -47,7 +47,7 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public string name { get; set; }
         public string review { get; set; }
         public string avatar { get; set; }
-        public string memberSince { get; set; }
+        public string? memberSince { get; set; }
         public string address {  get; set; }
         public string email {  get; set; }
         public string mobile { get; set; }  

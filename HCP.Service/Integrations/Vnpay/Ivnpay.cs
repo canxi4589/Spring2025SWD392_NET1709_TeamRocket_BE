@@ -12,6 +12,9 @@ namespace HCP.Service.Integrations.Vnpay
     {
         string CreatePaymentUrl(Booking order, string returnUrl);
         string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl);
+
+        string CreatePaymentUrl(Booking order);
+        string CreateDepositPaymentUrl(int amount, string returnUrl);
         bool ValidateSignature(string queryString, string vnp_HashSecret);
         Task<HttpResponseMessage> SendRefundRequestAsync(VnpayRefundRequest request, string url);
         string GenerateSecureHash(VnpayRefundRequest request, string secretKey);

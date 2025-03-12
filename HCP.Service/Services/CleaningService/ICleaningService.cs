@@ -1,5 +1,6 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.DTOs.FilterDTO;
 using HCP.Service.Services.ListService;
 using System.Security.Claims;
 
@@ -20,5 +21,16 @@ namespace HCP.Service.Services.CleaningService1
         Task<CreateCleaningServiceDTO?> UpdateCleaningServiceAsync(Guid serviceId, CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims);
         Task<HousekeeperServiceDetailDTO?> GethousekeeperCleaningServiceDetailAsync(Guid serviceId, ClaimsPrincipal userClaims);
         Task<ServiceOverviewListDTO> GetServiceByUserFilter(string? status, ClaimsPrincipal userClaims, int? pageIndex, int? pageSize);
+        Task<CleaningServiceListDTO> GetAllServiceItems(
+            string? userPlaceId,
+            double? maxDistanceKm,
+            int? pageIndex,
+            int? pageSize,
+            List<Guid>? categoryIds = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            List<decimal>? ratings = null,
+            string? search = null);
+        Task<ServiceFilterOptionsDTO> GetFilterOptionsAsync();
     }
 }
