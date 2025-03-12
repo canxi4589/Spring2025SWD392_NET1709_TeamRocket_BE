@@ -8,6 +8,6 @@ namespace HCP.Repository.Enums
 {
     public enum BookingStatus
     {
-        Canceled, OnGoing, Finished, Refunded
+        Canceled, OnGoing, Finished, Refunded, Completed
     }
 }

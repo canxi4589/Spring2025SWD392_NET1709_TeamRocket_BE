@@ -33,14 +33,15 @@ namespace HCP.Service.Services.BookingService
         public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
             var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Customer == user).Include(c => c.CleaningService).OrderByDescending(c => c.PreferDateStart);
+            if (day.HasValue && month.HasValue && year.HasValue)
+            {
+                //var targetDay = new DateTime(day.Value, year.Value, month.
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList
+                    .Where(c => (c.PreferDateStart.Day == day && c.PreferDateStart.Month == month && c.PreferDateStart.Year == year));
+            }
             if (status != null)
             {
                 if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
-                if (day.HasValue && month.HasValue && year.HasValue)
-                {
-                    var targetDate = new DateTime(year.Value, month.Value, day.Value);
-                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.PreferDateStart.Date == targetDate);
-                }
                 if (status.Equals("Ongoing"))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnGoing.ToString());
@@ -56,6 +57,10 @@ namespace HCP.Service.Services.BookingService
                 if (status.Equals("Refunded"))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
+                }
+                if (status.Equals("Completed"))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Completed.ToString());
                 }
             }
             var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
@@ -194,7 +199,7 @@ namespace HCP.Service.Services.BookingService
             if (timeSlot == null)
                 throw new Exception("Time slot not found");
 
-            bool isWalletChoosable =(decimal) customer.BalanceWallet >= totalPrice;
+            bool isWalletChoosable = (decimal)customer.BalanceWallet >= totalPrice;
 
             var paymentMethods = new List<PaymentMethodDTO>
     {
@@ -218,7 +223,7 @@ namespace HCP.Service.Services.BookingService
                 AddidionalPrice = additionalPrice,
                 TotalPrice = totalPrice,
                 TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes(totalAdditionalDuration+30),
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes(totalAdditionalDuration + 30),
                 BookingAdditionalDTOs = bookingAdditionals.Select(ba => new BookingAdditionalDTO
                 {
                     AdditionalId = ba.Id,
@@ -345,7 +350,7 @@ namespace HCP.Service.Services.BookingService
                 CleaningServiceId = service.Id,
                 PreferDateStart = dto.StartDate,
                 TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration+30),
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
                 CreatedDate = DateTime.UtcNow,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
