@@ -19,5 +19,6 @@ namespace HCP.Service.Services.CleaningService1
         Task<List<AdditionalServicedDTO>> GetAllAdditonalServicesById(Guid serviceId);
         Task<CreateCleaningServiceDTO?> UpdateCleaningServiceAsync(Guid serviceId, CreateCleaningServiceDTO dto, ClaimsPrincipal userClaims);
         Task<CreateCleaningServiceDTO?> GetCleaningServiceDetailAsync(Guid serviceId, ClaimsPrincipal userClaims);
+        Task<ServiceOverviewListDTO> GetServiceByUserFilter(string? status, ClaimsPrincipal userClaims, int? pageIndex, int? pageSize);
     }
 }
