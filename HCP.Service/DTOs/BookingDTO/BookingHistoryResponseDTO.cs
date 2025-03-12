@@ -20,6 +20,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public string ServiceName { get; set; }
         public double CleaningServiceDuration { get; set; }
         public Guid BookingId { get; set; }
+        public bool isRating { get; set; }
     }
     public class BookingHistoryResponseListDTO
     {
@@ -51,6 +52,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public string CustomerName { get; set; }
         public string CustomerMail { get; set; }
         public string CustomerPhoneNumber { get; set; }
+        public bool isRating {  get; set; }
     }
     public class BookingTransactionShowDTO
     {

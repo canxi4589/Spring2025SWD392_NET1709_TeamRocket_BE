@@ -31,8 +31,8 @@ namespace HomeCleaningService.Controllers
         private readonly ICustomerService _customerService;
 
         public PaymentController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration, IWalletService walletService, ICustomerService customerService)
+
         {
-            _vnpHashSecret = configuration["VNPay:HashSecret"];
             _userManager = userManager;
             _bookingService = bookingService;
             this.ivnpay = ivnpay;

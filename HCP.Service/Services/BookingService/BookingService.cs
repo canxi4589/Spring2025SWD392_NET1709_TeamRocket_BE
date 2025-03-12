@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
@@ -68,7 +69,8 @@ namespace HCP.Service.Services.BookingService
                 Note = c.Note,
                 Location = c.AddressLine + ", " + c.District + ", " + c.City,
                 ServiceName = c.CleaningService.ServiceName,
-                CleaningServiceDuration = c.CleaningService.Duration
+                CleaningServiceDuration = c.CleaningService.Duration,
+                isRating = c.isRating
             });
             if (pageIndex == null || pageSize == null)
             {
@@ -138,7 +140,8 @@ namespace HCP.Service.Services.BookingService
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
                 PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
                 PaymentStatus = firstPayment?.Status ?? "Not found",
-                CleaningServiceDuration = booking.CleaningService.Duration
+                CleaningServiceDuration = booking.CleaningService.Duration,
+                isRating = booking.isRating
             };
         }
         public async Task<CheckoutResponseDTO> GetCheckoutInfo(CheckoutRequestDTO request, ClaimsPrincipal userClaims)
@@ -146,22 +149,22 @@ namespace HCP.Service.Services.BookingService
             var userId = userClaims.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User not authenticated");
+                throw new UnauthorizedAccessException(CommonConst.UnauthorizeError);
             }
 
             var customer = await userManager.FindByIdAsync(userId);
             if (customer == null)
             {
-                throw new KeyNotFoundException("User not found");
+                throw new KeyNotFoundException(CustomerConst.NotFoundError);
             }
 
             var service = await _unitOfWork.Repository<CleaningService>().GetEntityByIdAsync(request.ServiceId);
             if (service == null)
-                throw new Exception("Service not found");
+                throw new Exception(CleaningServiceConst.ServiceNotFound);
 
             var address = await _unitOfWork.Repository<Address>().GetEntityByIdAsync(request.AddressId);
             if (address == null)
-                throw new Exception("Address not found");
+                throw new Exception(CommonConst.NotFoundError);
 
             var bookingAdditionals = await _unitOfWork.Repository<AdditionalService>().ListAsync(
                 ba => request.BookingAdditionalIds.Contains(ba.Id), orderBy: ba => ba.OrderBy(c => c.Id)
@@ -171,7 +174,7 @@ namespace HCP.Service.Services.BookingService
             double totalAdditionalDuration = bookingAdditionals.Sum(ba => ba.Duration ?? 0);
 
             double? distance = await _goongDistanceService.GetDistanceAsync(address.PlaceId, service.PlaceId);
-            if (distance == null) throw new Exception("Failed to calculate distance");
+            if (distance == null) throw new Exception(CommonConst.SomethingWrongMessage);
 
             var pricingRule = await _unitOfWork.Repository<DistancePricingRule>().GetEntityAsync(
                 rule => rule.CleaningServiceId == service.Id &&
@@ -193,8 +196,8 @@ namespace HCP.Service.Services.BookingService
 
             var paymentMethods = new List<PaymentMethodDTO>
     {
-        new PaymentMethodDTO { Name = "Wallet", IsChoosable = isWalletChoosable },
-        new PaymentMethodDTO { Name = "VNPay", IsChoosable = true }
+        new PaymentMethodDTO { Name = KeyConst.Wallet, IsChoosable = isWalletChoosable },
+        new PaymentMethodDTO { Name = KeyConst.VNPay, IsChoosable = true }
     };
 
             var response = new CheckoutResponseDTO

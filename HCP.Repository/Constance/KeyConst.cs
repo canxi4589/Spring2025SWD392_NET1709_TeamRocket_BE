@@ -27,5 +27,8 @@ namespace HCP.Repository.Constance
 
         //others
         public const string VnPay = "Vnpay";
+        public const string VNPay = "VNPay";
+        public const string Wallet = "Wallet";
+
     }
 }
