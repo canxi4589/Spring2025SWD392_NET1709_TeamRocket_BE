@@ -115,12 +115,12 @@ namespace HCP.Service.Services.BookingService
             var booking = bookings.FirstOrDefault();
             if (booking == null)
             {
-                throw new Exception("Booking not found");
+                throw new Exception(CommonConst.NotFoundError);
             }
             //var list = _unitOfWork.Repository<Booking>().GetAll().Where(c => c.Id == booking.Id).Include(c => c.CleaningService).Include(c => c.Payments).ToList();
             var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == booking.Id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
-            var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? "Unknown Service").ToList();
+            var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? KeyConst.Unknown).ToList();
             var firstPayment = booking.Payments.FirstOrDefault();
             var customer = await userManager.FindByIdAsync(booking.CustomerId);
             var housekeeper = await userManager.FindByIdAsync(booking.CleaningService.UserId);
@@ -144,8 +144,8 @@ namespace HCP.Service.Services.BookingService
                 CustomerMail = customer.Email,
                 CustomerPhoneNumber = customer.PhoneNumber,
                 PaymentDate = firstPayment?.PaymentDate ?? DateTime.MinValue,
-                PaymentMethod = firstPayment?.PaymentMethod ?? "Unknown",
-                PaymentStatus = firstPayment?.Status ?? "Not found",
+                PaymentMethod = firstPayment?.PaymentMethod ?? KeyConst.Unknown,
+                PaymentStatus = firstPayment?.Status ?? CommonConst.NotFoundError,
                 CleaningServiceDuration = booking.CleaningService.Duration,
                 isRating = booking.isRating,
                 CleaningServiceId = booking.CleaningService.Id

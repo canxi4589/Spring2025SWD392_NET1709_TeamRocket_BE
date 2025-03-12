@@ -99,26 +99,26 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
     
     public class ServiceOverviewDTO
     {
-        [JsonPropertyName("service-id")]
+        [JsonPropertyName("service_id")]
         public Guid Id { get; set; }
 
-        [JsonPropertyName("service-name")]
+        [JsonPropertyName("service_name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("service-status")]
+        [JsonPropertyName("service_status")]
         public string Status { get; set; }
 
-        [JsonPropertyName("number-of-booking")]
+        [JsonPropertyName("number_of_booking")]
         public int NumOfBooking {  get; set; }
 
-        [JsonPropertyName("service-address")]
+        [JsonPropertyName("service_address")]
         public string AddressLine { get;set; }
 
         [JsonPropertyName("rating")]
         [JsonConverter(typeof(SingleDecimalPlaceConverter))]
         public decimal Rating {  get; set; }
 
-        [JsonPropertyName("number-of-rating")]
+        [JsonPropertyName("number_of_rating")]
         public int NumOfRatings {  get; set; }
 
         [JsonPropertyName("description")]
@@ -130,19 +130,19 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
 
     public class ServiceOverviewListDTO
     {
-        [JsonPropertyName("service-details")]
+        [JsonPropertyName("service_details")]
         public List<ServiceOverviewDTO> Items { get; set; }
 
-        [JsonPropertyName("total-count")]
+        [JsonPropertyName("total_count")]
         public int TotalCount { get; set; }
 
-        [JsonPropertyName("total-page")]
+        [JsonPropertyName("total_page")]
         public int TotalPages { get; set; }
 
-        [JsonPropertyName("has-next")]
+        [JsonPropertyName("has_next")]
         public bool HasNext { get; set; }
 
-        [JsonPropertyName("has-previous")]
+        [JsonPropertyName("has_previous")]
         public bool HasPrevious { get; set; }
     }
 
