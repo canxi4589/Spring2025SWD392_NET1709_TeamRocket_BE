@@ -15,6 +15,6 @@ namespace HCP.Service.Services.RatingService
         Task<PagingRatingResponseListDTO> GetRatingsByCustomer(ClaimsPrincipal user, int? pageIndex, int? pageSize);
         Task<PagingRatingResponseListDTO> GetRatingsByService(Guid serviceId, int? pageIndex, int? pageSize);
         Task<PagingRatingResponseListDTO> SortRatings(Guid serviceId, decimal rate, int? pageIndex, int? pageSize);
-        Task<HousekeperRatingDTO> GetHousekeeperRatingAsync(ClaimsPrincipal user);
+        Task<HousekeperRatingDTO> GetHousekeeperRatingAsync(string userId);
     }
 }

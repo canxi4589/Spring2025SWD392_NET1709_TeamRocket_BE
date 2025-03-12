@@ -75,10 +75,10 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<PagingRatingResponseListDTO>().SetSuccessResponse(result));
         }
 
-        [HttpGet("housekeeper")]
-        public async Task<IActionResult> GetHousekeeperRating()
+        [HttpGet("housekeeper/{housekeeperId}")]
+        public async Task<IActionResult> GetHousekeeperRating(string housekeeperId)
         {
-            var result = await _ratingService.GetHousekeeperRatingAsync(User);
+            var result = await _ratingService.GetHousekeeperRatingAsync(housekeeperId);
            
             if(User == null)
             {

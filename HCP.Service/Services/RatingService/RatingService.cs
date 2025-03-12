@@ -218,9 +218,8 @@ namespace HCP.Service.Services.RatingService
             };
         }
 
-        public async Task<HousekeperRatingDTO> GetHousekeeperRatingAsync (ClaimsPrincipal user)
+        public async Task<HousekeperRatingDTO> GetHousekeeperRatingAsync (string userId)
         {
-            var userId = user.FindFirst("id")?.Value;
             var housekeeper = await _userManager.FindByIdAsync(userId);
 
             var services = await _unitOfWork.Repository<CleaningService>()
