@@ -526,7 +526,7 @@ namespace HCP.Service.Services.CleaningService1
             return dto;
         }
 
-        public async Task<CreateCleaningServiceDTO?> GetCleaningServiceDetailAsync(Guid serviceId, ClaimsPrincipal userClaims)
+        public async Task<HousekeeperServiceDetailDTO?> GethousekeeperCleaningServiceDetailAsync(Guid serviceId, ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -546,45 +546,45 @@ namespace HCP.Service.Services.CleaningService1
             var serviceTimeSlots = await _unitOfWork.Repository<ServiceTimeSlot>().FindAllAsync(t => t.ServiceId == serviceId);
             var serviceDistanceRules = await _unitOfWork.Repository<DistancePricingRule>().FindAllAsync(d => d.CleaningServiceId == serviceId);
 
-            return new CreateCleaningServiceDTO
+            return new HousekeeperServiceDetailDTO
             {
                 ServiceName = service.ServiceName,
                 CategoryId = service.CategoryId,
                 Description = service.Description,
-                Price = service.Price,
+                Price = service.Price.ToString(),
                 City = service.City,
                 District = service.District,
                 PlaceId = service.PlaceId,
                 AddressLine = service.AddressLine,
-                Duration = service.Duration,
-                AdditionalServices = additionalServices.Select(a => new HCP.Service.DTOs.CleaningServiceDTO.AdditionalServiceDTO
+                Duration = service.Duration.ToString(),
+                AdditionalServices = additionalServices.Select(a => new HousekeeperServiceDetailAdditionalServiceDTO
                 {
                     Name = a.Name,
-                    Amount = a.Amount,
+                    Amount = a.Amount.ToString(),
                     Url = a.Url,
                     Description = a.Description,
-                    Duration = a.Duration ?? new()
+                    Duration = a.Duration.ToString()
                 }).ToList(),
-                ServiceImages = serviceImages.Select(i => new HCP.Service.DTOs.CleaningServiceDTO.ServiceImgDTO
+                ServiceImages = serviceImages.Select(i => new HousekeeperServiceDetailImgDTO
                 {
                     LinkUrl = i.LinkUrl
                 }).ToList(),
-                ServiceSteps = serviceSteps.Select(s => new HCP.Service.DTOs.CleaningServiceDTO.ServiceStepsDTO
+                ServiceSteps = serviceSteps.Select(s => new HousekeeperServiceDetailStepsDTO
                 {
                     StepOrder = s.StepOrder,
                     StepDescription = s.StepDescription
                 }).ToList(),
-                ServiceTimeSlots = serviceTimeSlots.Select(t => new HCP.Service.DTOs.CleaningServiceDTO.ServiceTimeSlotDTO
+                ServiceTimeSlots = serviceTimeSlots.Select(t => new HousekeeperServiceDetailTimeSlotDTO
                 {
                     StartTime = t.StartTime,
                     DayOfWeek = t.DayOfWeek
                 }).ToList(),
-                ServiceDistanceRule = serviceDistanceRules.Select(d => new HCP.Service.DTOs.CleaningServiceDTO.DistanceRuleDTO
+                ServiceDistanceRule = serviceDistanceRules.Select(d => new HousekeeperServiceDetailDistanceRuleDTO
                 {
-                    MinDistance = d.MinDistance,
-                    MaxDistance = d.MaxDistance,
-                    BaseFee = d.BaseFee,
-                    ExtraPerKm = d.ExtraPerKm
+                    MinDistance = d.MinDistance.ToString(),
+                    MaxDistance = d.MaxDistance.ToString(),
+                    BaseFee = d.BaseFee.ToString(),
+                    ExtraPerKm = d.ExtraPerKm.ToString()
                 }).ToList()
             };
         }

@@ -105,6 +105,25 @@ namespace HCP.Service.DTOs.RatingDTO
             public bool HasPrevious { get; set; }
         }
 
+        public class HousekeperRatingDTO
+        {
+            [JsonPropertyName("housekeeper-id")]
+            public string HousekeeperId { get; set; }
+            
+            [JsonPropertyName("housekeeper-name")]
+            public string HousekeeperName { get; set; }
+
+            [JsonPropertyName("housekeeper-avatar")]
+            public string CustomerAvatar { get; set; }
+
+            [JsonPropertyName("rating")]
+            [JsonConverter(typeof(SingleDecimalPlaceConverter))]
+            public decimal Rating { get; set; }
+
+            [JsonPropertyName("total-rating")]
+            public decimal TotalRating { get; set; }
+        }
+
         public class SingleDecimalPlaceConverter : JsonConverter<decimal>
         {
             public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

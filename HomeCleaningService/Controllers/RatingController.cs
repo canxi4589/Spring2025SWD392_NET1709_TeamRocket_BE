@@ -9,6 +9,7 @@ using System;
 using System.Threading.Tasks;
 using HomeCleaningService.Helpers;
 using static HCP.Service.DTOs.RatingDTO.RatingDTO;
+using Azure;
 
 namespace HomeCleaningService.Controllers
 {
@@ -72,6 +73,19 @@ namespace HomeCleaningService.Controllers
             //    return NotFound(new AppResponse<PagingRatingResponseListDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
 
             return Ok(new AppResponse<PagingRatingResponseListDTO>().SetSuccessResponse(result));
+        }
+
+        [HttpGet("housekeeper/{housekeeperId}")]
+        public async Task<IActionResult> GetHousekeeperRating(string housekeeperId)
+        {
+            var result = await _ratingService.GetHousekeeperRatingAsync(housekeeperId);
+           
+            if(User == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new AppResponse<HousekeperRatingDTO>().SetSuccessResponse(result));
         }
     }
 }
