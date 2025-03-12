@@ -1,20 +1,11 @@
 ﻿using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
-using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Bcpg;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using static HCP.Service.DTOs.RatingDTO.RatingDTO;
 
 namespace HCP.Service.Services.RatingService
@@ -154,7 +145,7 @@ namespace HCP.Service.Services.RatingService
                     .GetAll()
                     .Where(r => r.CleaningServiceId == serviceId)
                     .ToListAsync();
-            
+
             if (pageIndex == null || pageSize == null)
             {
                 var temp1 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, 1, ratings.Count());
