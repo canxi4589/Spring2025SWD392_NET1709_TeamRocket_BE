@@ -1,6 +1,7 @@
 ﻿using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.DTOs.FilterDTO;
 using HCP.Service.Integrations.BlobStorage;
 using HCP.Service.Services;
 using HCP.Service.Services.CleaningService1;
@@ -35,15 +36,33 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<List<CategoryDTO>>()
             .SetSuccessResponse(list));
         }
-        
-        [HttpGet()]
-        public async Task<IActionResult> getAllServices1(int? pageIndex, int? pageSize)
-        {
 
-            var list = await _cleaningService.GetAllServiceItems(pageIndex,pageSize);
+        [HttpPost("get-all-services")]
+        public async Task<IActionResult> GetAllServices([FromBody] ServiceFilterRequest request)
+        {
+            var services = await _cleaningService.GetAllServiceItems(
+                request.UserPlaceId,
+                request.MaxDistanceKm,
+                request.PageIndex,
+                request.PageSize,
+                request.CategoryIds,
+                request.MinPrice,
+                request.MaxPrice,
+                request.Ratings,
+                request.Search
+            );
+
             return Ok(new AppResponse<CleaningServiceListDTO>()
-            .SetSuccessResponse(list));
+                .SetSuccessResponse(services));
         }
+
+        [HttpGet("filter-options")]
+        public async Task<IActionResult> GetFilterOptions()
+        {
+            var filterOptions = await _cleaningService.GetFilterOptionsAsync();
+            return Ok(new AppResponse<ServiceFilterOptionsDTO>().SetSuccessResponse(filterOptions));
+        }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetServiceById(Guid id)

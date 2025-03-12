@@ -6,6 +6,7 @@ using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
+using HCP.Service.Services.TemporaryService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -21,13 +22,16 @@ namespace HomeCleaningService.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IBookingService _bookingService;
         private readonly ICustomerService _customerService;
+        private readonly ITemporaryStorage _temporaryStorage;
 
-        public BookingController(IUnitOfWork unitOfWork, IBookingService bookingService, ICustomerService customerService)
+        public BookingController(IUnitOfWork unitOfWork, IBookingService bookingService, ICustomerService customerService, ITemporaryStorage temporaryStorage)
         {
             _unitOfWork = unitOfWork;
             _bookingService = bookingService;
             _customerService = customerService;
+            _temporaryStorage = temporaryStorage;
         }
+
 
         [HttpGet("bookingHistory")]
         [Authorize]

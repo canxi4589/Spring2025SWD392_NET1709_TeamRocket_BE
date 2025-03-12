@@ -3,8 +3,14 @@ using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CleaningServiceDTO;
+ 
 using HCP.Service.DTOs.RequestDTO;
+
+using HCP.Service.DTOs.FilterDTO;
+
 using HCP.Service.Services.ListService;
+using HCP.Service.Services.RatingService;
+using MailKit.Search;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.EntityFrameworkCore;
@@ -24,12 +30,15 @@ namespace HCP.Service.Services.CleaningService1
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IRatingService ratingService;
+        private readonly IGoongDistanceService goongDistanceService;
 
-
-        public CleaningService1(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+        public CleaningService1(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IRatingService ratingService, IGoongDistanceService goongDistanceService)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+            this.ratingService = ratingService;
+            this.goongDistanceService = goongDistanceService;
         }
 
         public async Task<List<CategoryDTO>> GetAllCategories()
@@ -60,7 +69,7 @@ namespace HCP.Service.Services.CleaningService1
         }
         public async Task<CleaningServiceListDTO> GetAllServiceItems(int? pageIndex, int? pageSize)
         {
-            var list = _unitOfWork.Repository<CleaningService>().GetAll().Include(c => c.Category).Include(c => c.ServiceImages);
+            var list = _unitOfWork.Repository<CleaningService>().GetAll().Where(c => c.Status == ServiceStatus.Active.ToString()).Include(c => c.Category).Include(c => c.ServiceImages);
             var list1 = list.Select(c => new CleaningServiceItemDTO
             {
                 id = c.Id,
@@ -71,7 +80,7 @@ namespace HCP.Service.Services.CleaningService1
                 location = c.AddressLine,
                 CategoryName = c.Category.CategoryName,
                 Url = c.ServiceImages.FirstOrDefault().LinkUrl,
-                
+
             });
             if (pageIndex == null || pageSize == null)
             {
@@ -110,6 +119,120 @@ namespace HCP.Service.Services.CleaningService1
 
             return await PaginatedList<CategoryDTO>.CreateAsync(categoryList, pageIndex, pageSize);
         }
+        public async Task<CleaningServiceListDTO> GetAllServiceItems(
+            string? userPlaceId,
+            double? maxDistanceKm,
+            int? pageIndex,
+            int? pageSize,
+            List<Guid>? categoryIds = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            List<decimal>? ratings = null,
+            string? search = null)
+        {
+            var serviceRepo = _unitOfWork.Repository<CleaningService>();
+
+            var servicesQuery = await serviceRepo.ListAsync(
+            filter: s =>
+                s.Status == ServiceStatus.Active.ToString() &&
+                (string.IsNullOrEmpty(search) || s.ServiceName.Contains(search)) && 
+                (categoryIds == null || !categoryIds.Any() || categoryIds.Contains(s.CategoryId)) &&
+                (!minPrice.HasValue || s.Price >= minPrice.Value) &&
+                (!maxPrice.HasValue || s.Price <= maxPrice.Value) &&
+                (ratings == null || !ratings.Any() ||
+                 ratings.Any(r => (r == 5 && s.Rating == 5) || (s.Rating >= r && s.Rating < r + 1))),
+                includeProperties: q => q.Include(s => s.Category).Include(s => s.ServiceImages).Include(s => s.ServiceRatings)
+            );
+
+            var filteredServices = servicesQuery.ToList();
+
+            if (!string.IsNullOrEmpty(userPlaceId) && maxDistanceKm.HasValue)
+            {
+                filteredServices = await goongDistanceService.GetServicesWithinDistanceAsync(userPlaceId, maxDistanceKm.Value, filteredServices);
+            }
+
+            var serviceDTOs = filteredServices.Select(c => new CleaningServiceItemDTO
+            {
+                id = c.Id,
+                name = c.ServiceName,
+                category = c.Category.CategoryName,
+                overallRating = c.Rating,
+                price = c.Price,
+                location = c.AddressLine,
+                CategoryName = c.Category.CategoryName,
+                Url = c.ServiceImages.FirstOrDefault()?.LinkUrl
+            });
+
+            return await PaginateResults(serviceDTOs, pageIndex, pageSize);
+        }
+        public async Task<ServiceFilterOptionsDTO> GetFilterOptionsAsync()
+        {
+            var serviceRepo = _unitOfWork.Repository<CleaningService>();
+
+            var services = await serviceRepo.ListAsync(
+                filter: s => s.Status == ServiceStatus.Active.ToString(),
+                includeProperties: s => s.Include(c => c.Category).Include(c => c.ServiceRatings)
+             );
+
+            var categories = services
+                .Select(s => new { s.Category.Id, s.Category.CategoryName })
+                .Distinct()
+                .Select(c => new CategoryFilterDTO { Id = c.Id, Name = c.CategoryName })
+                .ToList();
+
+            var minPrice = services.Min(s => s.Price);
+            var maxPrice = services.Max(s => s.Price);
+
+            var ratingOptions = new List<RatingFilterDTO>
+            {
+                new RatingFilterDTO { Range = 1, Count = services.Count(s => s.Rating >= 1 && s.Rating < 2) },
+                new RatingFilterDTO { Range = 2, Count = services.Count(s => s.Rating >= 2 && s.Rating < 3) },
+                new RatingFilterDTO { Range = 3, Count = services.Count(s => s.Rating >= 3 && s.Rating < 4) },
+                new RatingFilterDTO { Range = 4, Count = services.Count(s => s.Rating >= 4 && s.Rating < 5) },
+                new RatingFilterDTO { Range = 5, Count = services.Count(s => s.Rating == 5) }
+            };
+
+            return new ServiceFilterOptionsDTO
+            {
+                Categories = categories,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                RatingOptions = ratingOptions
+            };
+        }
+
+        private async Task<CleaningServiceListDTO> PaginateResults(IEnumerable<CleaningServiceItemDTO> serviceDTOs, int? pageIndex, int? pageSize)
+        {
+            int totalCount =  serviceDTOs.Count();
+
+            if (!pageIndex.HasValue || !pageSize.HasValue || totalCount == 0)
+            {
+                serviceDTOs.AsQueryable();
+                return new CleaningServiceListDTO
+                {
+                    Items = serviceDTOs.ToList(),
+                    hasNext = false,
+                    hasPrevious = false,
+                    totalCount = totalCount,
+                    totalPages = 1
+                };
+            }
+
+            var paginatedItems =  serviceDTOs
+                .Skip((pageIndex.Value - 1) * pageSize.Value)
+                .Take(pageSize.Value)
+                .ToList();
+
+            return new CleaningServiceListDTO
+            {
+                Items = paginatedItems,
+                hasNext = (pageIndex.Value * pageSize.Value) < totalCount,
+                hasPrevious = pageIndex.Value > 1,
+                totalCount = totalCount,
+                totalPages = (int)Math.Ceiling((double)totalCount / pageSize.Value)
+            };
+        }
+
         public async Task<ServiceDetailDTO> GetServiceById(Guid serviceId)
         {
             var services = await _unitOfWork.Repository<CleaningService>().ListAsync(
@@ -126,6 +249,7 @@ namespace HCP.Service.Services.CleaningService1
             var service = services.FirstOrDefault();
             if (service == null)
                 return null!;
+            var rating = await ratingService.GetRatingsByService(serviceId, 1, 1);
             var user = await _userManager.FindByIdAsync(service.UserId);
             var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == user.Id && c.IsDefault) ?? new Address();
             var service1 = await _unitOfWork.Repository<CleaningService>().ListAsync(filter: c => c.UserId == user.Id,
@@ -158,11 +282,8 @@ namespace HCP.Service.Services.CleaningService1
                      {
                          id = service.User.Id,
                          name = service.User.FullName,
-                         //review = service.User.ServiceRatings.Any() ?
-                         //         service.User.ServiceRatings.Average(r => r.Rating).ToString("0.0") : "No reviews",
-                         review = "No Reviews",
+                         review = rating.TotalCount > 0 ? rating.RatingAvg + " (" + rating.TotalCount + ")" : "No Review",
                          avatar = service.User.Avatar,
-                         memberSince = /*service.User..ToString("yyyy-MM-dd")*/"2025-03-12",
                          address = address.City != null && address.District != null ? $"{address.City}, {address.District},{address.AddressLine1}" : string.Empty,
                          email = service.User.Email,
                          mobile = service.User.PhoneNumber,
@@ -179,7 +300,7 @@ namespace HCP.Service.Services.CleaningService1
 
             var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(
                 filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart == targetDate,
-                orderBy: b => b.OrderBy(c => c.TimeStart) 
+                orderBy: b => b.OrderBy(c => c.TimeStart)
             );
 
             var availableSlots = new List<ServiceTimeSlotDTO1>();
@@ -187,7 +308,7 @@ namespace HCP.Service.Services.CleaningService1
             foreach (var slot in slots)
             {
                 bool isAvailable = !bookedSlots.Any(b =>
-                    b.TimeStart < slot.EndTime && b.TimeEnd > slot.StartTime 
+                    b.TimeStart < slot.EndTime && b.TimeEnd > slot.StartTime
                 );
 
                 if (isAvailable)
