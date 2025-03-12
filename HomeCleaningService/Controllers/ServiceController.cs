@@ -66,6 +66,17 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<List<ServiceDetailWithStatusDTO>>().SetSuccessResponse(service));
         }
+        
+        [HttpGet("detail/{id}")]
+        public async Task<IActionResult> GetServiceDetail(Guid id)
+        {
+            var service = await _cleaningService.GetCleaningServiceDetailAsync(id, User);
+
+            if (service == null)
+                return NotFound(new AppResponse<CreateCleaningServiceDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
+
+            return Ok(new AppResponse<CreateCleaningServiceDTO>().SetSuccessResponse(service));
+        }
 
         [HttpPost()]
         [Authorize]

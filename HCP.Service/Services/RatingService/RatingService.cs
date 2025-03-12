@@ -57,7 +57,7 @@ namespace HCP.Service.Services.RatingService
                     .Where(r => r.CleaningServiceId == request.CleaningServiceId)
                     .ToListAsync();
 
-                service.Rating = allRatings.Average(r => r.Rating);
+                service.Rating = allRatings.Any() ? allRatings.Average(r => r.Rating) : 0;
                 service.RatingCount = allRatings.Count;
 
                 booking.isRating = true;
@@ -121,7 +121,7 @@ namespace HCP.Service.Services.RatingService
                 HasNext = temp2.HasNextPage,
                 HasPrevious = temp2.HasPreviousPage,
                 TotalCount = ratings.Count(),
-                TotalPages = temp2.TotalPages
+                TotalPages = temp2.TotalPages,
             };
         }
 
@@ -156,7 +156,7 @@ namespace HCP.Service.Services.RatingService
                     HasPrevious = temp1.HasPreviousPage,
                     TotalCount = temp1.TotalCount,
                     TotalPages = temp1.TotalPages,
-                    RatingAvg = allRatings.Average(r => r.Rating)
+                    RatingAvg = allRatings.Any() ? allRatings.Average(r => r.Rating) : 0
                 };
             }
             var temp2 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, (int)pageIndex, (int)pageSize);
@@ -167,7 +167,7 @@ namespace HCP.Service.Services.RatingService
                 HasPrevious = temp2.HasPreviousPage,
                 TotalCount = ratings.Count(),
                 TotalPages = temp2.TotalPages,
-                RatingAvg = allRatings.Average(r => r.Rating)
+                RatingAvg = allRatings.Any() ? allRatings.Average(r => r.Rating) : 0
             };
         }
 
@@ -202,7 +202,7 @@ namespace HCP.Service.Services.RatingService
                     HasPrevious = temp1.HasPreviousPage,
                     TotalCount = temp1.TotalCount,
                     TotalPages = temp1.TotalPages,
-                    RatingAvg = allRatings.Average(r => r.Rating)
+                    RatingAvg = allRatings.Any() ? allRatings.Average(r => r.Rating) : 0
                 };
             }
             var temp2 = await PaginatedList<RatingResponseListDTO>.CreateAsync(ratings, (int)pageIndex, (int)pageSize);
@@ -213,7 +213,7 @@ namespace HCP.Service.Services.RatingService
                 HasPrevious = temp2.HasPreviousPage,
                 TotalCount = ratings.Count(),
                 TotalPages = temp2.TotalPages,
-                RatingAvg = allRatings.Average(r => r.Rating)
+                RatingAvg = allRatings.Any() ? allRatings.Average(r => r.Rating) : 0
             };
         }
 

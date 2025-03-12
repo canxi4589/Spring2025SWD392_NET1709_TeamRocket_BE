@@ -3,6 +3,7 @@ using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.DTOs.RequestDTO;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient.DataClassification;
@@ -469,6 +470,70 @@ namespace HCP.Service.Services.CleaningService1
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
             return dto;
         }
+
+        public async Task<CreateCleaningServiceDTO?> GetCleaningServiceDetailAsync(Guid serviceId, ClaimsPrincipal userClaims)
+        {
+            var userId = userClaims.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException(CommonConst.UnauthorizeError);
+            }
+
+            var service = await _unitOfWork.Repository<CleaningService>().FindAsync(s => s.Id == serviceId && s.UserId == userId);
+            if (service == null)
+            {
+                throw new KeyNotFoundException(CleaningServiceConst.ServiceNotFound);
+            }
+
+            var additionalServices = await _unitOfWork.Repository<AdditionalService>().FindAllAsync(a => a.CleaningServiceId == serviceId);
+            var serviceImages = await _unitOfWork.Repository<ServiceImg>().FindAllAsync(i => i.CleaningServiceId == serviceId);
+            var serviceSteps = await _unitOfWork.Repository<ServiceSteps>().FindAllAsync(s => s.ServiceId == serviceId);
+            var serviceTimeSlots = await _unitOfWork.Repository<ServiceTimeSlot>().FindAllAsync(t => t.ServiceId == serviceId);
+            var serviceDistanceRules = await _unitOfWork.Repository<DistancePricingRule>().FindAllAsync(d => d.CleaningServiceId == serviceId);
+
+            return new CreateCleaningServiceDTO
+            {
+                ServiceName = service.ServiceName,
+                CategoryId = service.CategoryId,
+                Description = service.Description,
+                Price = service.Price,
+                City = service.City,
+                District = service.District,
+                PlaceId = service.PlaceId,
+                AddressLine = service.AddressLine,
+                Duration = service.Duration,
+                AdditionalServices = additionalServices.Select(a => new HCP.Service.DTOs.CleaningServiceDTO.AdditionalServiceDTO
+                {
+                    Name = a.Name,
+                    Amount = a.Amount,
+                    Url = a.Url,
+                    Description = a.Description,
+                    Duration = a.Duration ?? new()
+                }).ToList(),
+                ServiceImages = serviceImages.Select(i => new HCP.Service.DTOs.CleaningServiceDTO.ServiceImgDTO
+                {
+                    LinkUrl = i.LinkUrl
+                }).ToList(),
+                ServiceSteps = serviceSteps.Select(s => new HCP.Service.DTOs.CleaningServiceDTO.ServiceStepsDTO
+                {
+                    StepOrder = s.StepOrder,
+                    StepDescription = s.StepDescription
+                }).ToList(),
+                ServiceTimeSlots = serviceTimeSlots.Select(t => new HCP.Service.DTOs.CleaningServiceDTO.ServiceTimeSlotDTO
+                {
+                    StartTime = t.StartTime,
+                    DayOfWeek = t.DayOfWeek
+                }).ToList(),
+                ServiceDistanceRule = serviceDistanceRules.Select(d => new HCP.Service.DTOs.CleaningServiceDTO.DistanceRuleDTO
+                {
+                    MinDistance = d.MinDistance,
+                    MaxDistance = d.MaxDistance,
+                    BaseFee = d.BaseFee,
+                    ExtraPerKm = d.ExtraPerKm
+                }).ToList()
+            };
+        }
+
 
         public async Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime)
         {
