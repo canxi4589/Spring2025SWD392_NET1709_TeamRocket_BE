@@ -22,8 +22,9 @@ namespace HCP.Repository.Constance
         //error
         public const string Exception = "Exception";
         public const string Error = "Error";
-        public const string Unathorized = "Error";
-        public const string NotFound = "Error";
+        public const string Unathorized = "Unauthorized";
+        public const string NotFound = "Not Found";
+        public const string Unknown = "Unknown";
 
         //others
         public const string VnPay = "Vnpay";
