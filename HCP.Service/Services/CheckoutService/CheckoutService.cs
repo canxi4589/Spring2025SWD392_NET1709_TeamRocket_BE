@@ -13,11 +13,13 @@ namespace HCP.Service.Services.CheckoutService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IGoongDistanceService _goongDistanceService;
 
-        public CheckoutService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+        public CheckoutService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IGoongDistanceService goongDistanceService)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+            _goongDistanceService = goongDistanceService;
         }
         public async Task<CheckoutResponseDTO1> CreateCheckout(CheckoutRequestDTO1 requestDTO, ClaimsPrincipal user)
         {
@@ -29,22 +31,43 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception(CustomerConst.NotFoundError);
                 }
 
-                var checkoutAddress = _unitOfWork.Repository<Address>().GetById(requestDTO.AddressId);
-                var checkoutService = _unitOfWork.Repository<CleaningService>().GetById(requestDTO.ServiceId);
-                var checkoutTimeSlot = _unitOfWork.Repository<ServiceTimeSlot>().GetById(requestDTO.ServiceTimeSlotId);
+                var checkoutAddress = await _unitOfWork.Repository<Address>().GetEntityByIdAsync(requestDTO.AddressId);
+                var checkoutService = await _unitOfWork.Repository<CleaningService>().GetEntityByIdAsync(requestDTO.ServiceId);
+                var checkoutTimeSlot = await _unitOfWork.Repository<ServiceTimeSlot>().GetEntityByIdAsync(requestDTO.ServiceTimeSlotId);
 
                 if (checkoutService == null || checkoutAddress == null || checkoutTimeSlot == null)
                 {
                     throw new Exception(CommonConst.NotFoundError);
                 }
 
-                var additionalPrice = 0.0;
+                var customer = await _userManager.FindByIdAsync(userId);
+                if (customer == null)
+                {
+                    throw new Exception(CustomerConst.NotFoundError);
+                }
+
+                double? distance = await _goongDistanceService.GetDistanceAsync(checkoutAddress.PlaceId, checkoutService.PlaceId);
+                if (distance == null) throw new Exception(CommonConst.SomethingWrongMessage);
+
+                var pricingRule = await _unitOfWork.Repository<DistancePricingRule>().GetEntityAsync(
+                    rule => rule.CleaningServiceId == checkoutService.Id &&
+                            rule.MinDistance <= distance &&
+                            rule.MaxDistance >= distance &&
+                            rule.IsActive
+                );
+                if (pricingRule == null)
+                {
+                    throw new Exception("Service is not available for this distance");
+                }
+
+                var distancePrice = pricingRule.BaseFee;
+                decimal additionalPrice = 0;
 
                 var checkout = new Checkout()
                 {
                     AddressId = requestDTO.AddressId,
                     AddressLine = checkoutAddress.AddressLine1,
-                    AdditionalPrice = 0,                             
+                    AdditionalPrice = 0,                                    // Set initially
                     City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
                     ServiceName = checkoutService.ServiceName,
@@ -57,11 +80,11 @@ namespace HCP.Service.Services.CheckoutService
                     ServicePrice = checkoutService.Price,
                     PlaceId = checkoutAddress.PlaceId,
                     Status = CheckoutStatus.Pending.ToString(),
-                    Customer = await _userManager.FindByIdAsync(userId),
+                    Customer = customer,
                     Note = string.Empty,
                     TimeSLotId = requestDTO.ServiceTimeSlotId,
-                    DistancePrice = 0,                                   // Set initially to 0   
-                    TotalPrice = 0,                                     // Set initially to 0                
+                    DistancePrice = distancePrice,
+                    TotalPrice = checkoutService.Price + distancePrice,     // Update later with additional services
                 };
 
                 await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
@@ -73,8 +96,8 @@ namespace HCP.Service.Services.CheckoutService
                 {
                     foreach (var additional in requestDTO.AdditionalServices)
                     {
-                        var additionalServiceEntity = _unitOfWork.Repository<AdditionalService>()
-                            .GetById(additional.AdditionalServiceId);
+                        var additionalServiceEntity = await _unitOfWork.Repository<AdditionalService>()
+                            .GetEntityByIdAsync(additional.AdditionalServiceId);
 
                         if (additionalServiceEntity != null)
                         {
@@ -91,7 +114,7 @@ namespace HCP.Service.Services.CheckoutService
                             };
 
                             additionalServices.Add(checkoutAdditionalService);
-                            additionalPrice += additionalServiceEntity.Amount;
+                            additionalPrice += (decimal)additionalServiceEntity.Amount;
                         }
                     }
                 }
@@ -101,50 +124,54 @@ namespace HCP.Service.Services.CheckoutService
                     await _unitOfWork.Repository<CheckoutAdditionalService>().AddRangeAsync(additionalServices);
                 }
 
-                checkout.AdditionalPrice = (decimal)additionalPrice;
-                //checkout.DistancePrice =                                                                  // them logic
-                checkout.TotalPrice = (decimal)additionalPrice + checkout.ServicePrice;                   //thieu distance price
-                _unitOfWork.Repository<Checkout>().Update(checkout);
+                checkout.AdditionalPrice = additionalPrice;
+                checkout.TotalPrice = checkout.ServicePrice + checkout.DistancePrice + additionalPrice;
 
+                _unitOfWork.Repository<Checkout>().Update(checkout);
                 await _unitOfWork.SaveChangesAsync();
+
+                bool isWalletChoosable = (decimal)customer.BalanceWallet >= checkout.TotalPrice;
+
+                var paymentMethods = new List<PaymentMethodDTO>
+                    {
+                        new PaymentMethodDTO { Name = KeyConst.Wallet, IsChoosable = isWalletChoosable },
+                        new PaymentMethodDTO { Name = KeyConst.VNPay, IsChoosable = true }
+                    };
 
                 return new CheckoutResponseDTO1()
                 {
                     CheckoutId = checkout.Id,
                     CustomerId = userId,
-                    AdditionalPrice = (decimal)additionalPrice,
+                    AdditionalPrice = additionalPrice,
+                    Distance = $"{distance} km",
+                    DistancePrice = checkout.DistancePrice,
+                    TotalPrice = checkout.TotalPrice,
+                    PaymentMethods = paymentMethods,
+                    AddressId = requestDTO.AddressId,
+                    AddressLine = checkout.AddressLine,
+                    BookingDate = checkout.BookingDate,
+                    City = checkout.City,
+                    CleaningServiceId = requestDTO.ServiceId,
+                    CleaningServiceName = checkout.ServiceName,
+                    DateOfWeek = checkout.DayOfWeek,
+                    District = checkout.District,
+                    EndTime = checkout.EndTime,
+                    PlaceId = checkout.PlaceId,
+                    ServicePrice = checkout.ServicePrice,
+                    StartTime = checkout.StartTime,
+                    Status = checkout.Status,
+                    TimeSlotId = checkout.TimeSLotId,
                     AdditionalServices = additionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
                     {
                         AdditionalServiceId = a.AdditionalServiceId,
                         AdditionalServiceName = a.AdditionalServiceName,
-                        Amount = (double)a.Amount,
+                        Amount = a.Amount,
                         IsActive = a.IsActive,
                         Description = a.Description,
                         Duration = a.Duration,
                         Url = a.Url
                     }).ToList(),
-                    AddressId = requestDTO.AddressId,
-                    AddressLine = checkoutAddress.AddressLine1,
-                    City = checkoutAddress.City,
-                    CleaningServiceId = requestDTO.ServiceId,
-                    CleaningServiceName = checkoutService.ServiceName,
-                    District = checkoutAddress.District,
-                    PlaceId = checkoutAddress.PlaceId,
-                    ServicePrice = checkoutService.Price,
-                    Status = CheckoutStatus.Pending.ToString(),
-                    TimeSlotId = requestDTO.ServiceTimeSlotId,
-                    BookingDate = requestDTO.BookingDate,
-                    DateOfWeek = checkoutTimeSlot.DayOfWeek,
-                    EndTime = checkoutTimeSlot.EndTime,
-                    StartTime = checkoutTimeSlot.StartTime,
-                    DistancePrice = checkout.DistancePrice,
-                    TotalPrice = checkout.TotalPrice
                 };
-            }
-            catch (DbUpdateException dbEx)
-            {
-                Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
-                throw new Exception(CommonConst.DatabaseError);
             }
             catch (Exception ex)
             {
@@ -183,16 +210,16 @@ namespace HCP.Service.Services.CheckoutService
                     .ThenInclude(cas => cas.AdditionalService)
                 .ToListAsync();
 
-            return pendingCheckouts.Select(c => new CheckoutResponseDTO1
+            return pendingCheckouts.Select(c => new CheckoutResponseDTO1()
             {
                 CheckoutId = c.Id,
                 CustomerId = c.CustomerId,
                 AdditionalPrice = c.AdditionalPrice,
-                AdditionalServices = c.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
+                AdditionalServices = c.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO()
                 {
                     AdditionalServiceId = a.AdditionalServiceId,
                     AdditionalServiceName = a.AdditionalServiceName,
-                    Amount = (double)a.Amount,
+                    Amount = a.Amount,
                     IsActive = a.IsActive,
                     Url = a.Url,
                     Duration = a.Duration,
@@ -222,46 +249,60 @@ namespace HCP.Service.Services.CheckoutService
             var checkout = await _unitOfWork.Repository<Checkout>()
                                                 .GetAll()
                                                 .Where(c => c.Id == checkoutId)
+                                                .Include(c => c.Customer)
                                                 .Include(c => c.CheckoutAdditionalServices)
                                                     .ThenInclude(cas => cas.AdditionalService)
                                                 .FirstOrDefaultAsync();
 
+            var cleaningService = await _unitOfWork.Repository<CleaningService>().FindAsync(cs => cs.Id == checkout.CleaningServiceId);
             if (checkout == null)
             {
-                return new CheckoutResponseDTO1(); // Return empty list if userId is null
+                return new CheckoutResponseDTO1();
             }
+
+            bool isWalletChoosable = (decimal)checkout.Customer.BalanceWallet >= checkout.TotalPrice;
+
+            var paymentMethods = new List<PaymentMethodDTO>
+                    {
+                        new PaymentMethodDTO { Name = KeyConst.Wallet, IsChoosable = isWalletChoosable },
+                        new PaymentMethodDTO { Name = KeyConst.VNPay, IsChoosable = true }
+                    };
+
+            double? distance = await _goongDistanceService.GetDistanceAsync(checkout.PlaceId, cleaningService.PlaceId);
 
             return new CheckoutResponseDTO1()
             {
-                CheckoutId = checkoutId,
+                CheckoutId = checkout.Id,
                 CustomerId = checkout.CustomerId,
-                AdditionalPrice = (decimal)checkout.AdditionalPrice,
-                AdditionalServices = checkout.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO
+                AdditionalPrice = checkout.AdditionalPrice,
+                AdditionalServices = checkout.CheckoutAdditionalServices.Select(a => new CheckoutAdditionalServiceResponseDTO()
                 {
                     AdditionalServiceId = a.AdditionalServiceId,
                     AdditionalServiceName = a.AdditionalServiceName,
-                    Amount = (double)a.Amount,
+                    Amount = a.Amount,
                     IsActive = a.IsActive,
-                    Description = a.Description,
+                    Url = a.Url,
                     Duration = a.Duration,
-                    Url = a.Url
+                    Description = a.Description,
                 }).ToList(),
                 AddressId = checkout.AddressId,
                 AddressLine = checkout.AddressLine,
                 City = checkout.City,
                 CleaningServiceId = checkout.CleaningServiceId,
                 CleaningServiceName = checkout.ServiceName,
-                District = checkout.District,
-                PlaceId = checkout.PlaceId,
-                ServicePrice = checkout.ServicePrice,
-                Status = CheckoutStatus.Pending.ToString(),
-                TimeSlotId = checkout.TimeSLotId,
-                BookingDate = checkout.BookingDate,
                 DateOfWeek = checkout.DayOfWeek,
                 EndTime = checkout.EndTime,
                 StartTime = checkout.StartTime,
+                TimeSlotId = checkout.TimeSLotId,
+                BookingDate = checkout.BookingDate,
+                District = checkout.District,
+                PlaceId = checkout.PlaceId,
+                ServicePrice = checkout.ServicePrice,
+                Status = checkout.Status,
+                TotalPrice = checkout.TotalPrice,
                 DistancePrice = checkout.DistancePrice,
-                TotalPrice = checkout.TotalPrice
+                Distance = $"{distance} km",
+                PaymentMethods = paymentMethods
             };
         }
     }

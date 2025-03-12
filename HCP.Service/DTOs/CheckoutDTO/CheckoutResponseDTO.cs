@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace HCP.Service.DTOs.CheckoutDTO
 {
@@ -19,7 +16,7 @@ namespace HCP.Service.DTOs.CheckoutDTO
         public Guid CleaningServiceId { get; set; }
 
         [JsonPropertyName("service_name")]
-        public string CleaningServiceName { get; set; } = "This is a really good Cleaning Service Name";
+        public string CleaningServiceName { get; set; }
 
         [JsonPropertyName("status")]
         public string Status { get; set; }
@@ -27,11 +24,20 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("base_service_price")]
         public decimal ServicePrice { get; set; }
 
-        [JsonPropertyName("addtional_price")]
+        [JsonPropertyName("additional_price")]
         public decimal AdditionalPrice { get; set; }
 
+        [JsonPropertyName("distance")]
+        public string Distance { get; set; } // Example: "2.5 km"
+
+        [JsonPropertyName("distance_price")]
+        public decimal DistancePrice { get; set; }
+
+        [JsonPropertyName("total_price")]
+        public decimal TotalPrice { get; set; }
+
         [JsonPropertyName("address_id")]
-        public Guid AddressId {  get; set; }
+        public Guid AddressId { get; set; }
 
         [JsonPropertyName("city")]
         public string City { get; set; }
@@ -60,27 +66,23 @@ namespace HCP.Service.DTOs.CheckoutDTO
         [JsonPropertyName("date_of_week")]
         public string DateOfWeek { get; set; }
 
-        [JsonPropertyName("total_price")]
-        public decimal TotalPrice {  get; set; }
-
-        [JsonPropertyName("distance_price")]
-        public decimal DistancePrice {  get; set; }
-
-        // List of additional services
         [JsonPropertyName("additional_services")]
-        public List<CheckoutAdditionalServiceResponseDTO> AdditionalServices { get; set; } = new ();
+        public List<CheckoutAdditionalServiceResponseDTO> AdditionalServices { get; set; } = new();
+
+        [JsonPropertyName("payment_methods")]
+        public List<PaymentMethodDTO> PaymentMethods { get; set; } = new();
     }
 
     public class CheckoutAdditionalServiceResponseDTO
     {
-        [JsonPropertyName("addtional_service_id")]
+        [JsonPropertyName("additional_service_id")]
         public Guid AdditionalServiceId { get; set; }
 
-        [JsonPropertyName("addtional_service_name")]
-        public string AdditionalServiceName { get; set; } = "This is a cool Name";
-        
-        [JsonPropertyName("additinal_service_price")]
-        public double Amount { get; set; }
+        [JsonPropertyName("additional_service_name")]
+        public string AdditionalServiceName { get; set; }
+
+        [JsonPropertyName("additional_service_price")]
+        public decimal Amount { get; set; }
 
         [JsonPropertyName("status")]
         public bool IsActive { get; set; }
@@ -93,5 +95,14 @@ namespace HCP.Service.DTOs.CheckoutDTO
 
         [JsonPropertyName("duration")]
         public double? Duration { get; set; }
+    }
+
+    public class PaymentMethodDTO
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("is_choosable")]
+        public bool IsChoosable { get; set; }
     }
 }
