@@ -12,10 +12,12 @@ using HCP.Service.Services.EmailService;
 using HCP.Service.Services.RatingService;
 using HCP.Service.Services.RequestService;
 using HCP.Service.Services.AdminManService;
+using HCP.Service.Services.TemporaryService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.Host;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -99,6 +101,16 @@ builder.Services.AddAuthentication(options =>
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 
 builder.Services.AddCors(options =>
 {
@@ -134,6 +146,7 @@ builder.Services.AddScoped<IAdminManService, AdminManService>();
 builder.Services.AddScoped<IAdminServiceService, AdminServiceService>();
 builder.Services.AddScoped<IAdminManServiceCategory, AdminManServiceCategory>();
 builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 
 
@@ -152,7 +165,7 @@ app.UseCors("AllowAnyOrigin");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseSession();
 
 app.MapControllers();
 

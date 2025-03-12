@@ -44,7 +44,7 @@ namespace HCP.Service.Services.CheckoutService
                 {
                     AddressId = requestDTO.AddressId,
                     AddressLine = checkoutAddress.AddressLine1,
-                    AdditionalPrice = 0,                                // Set initially to 0
+                    AdditionalPrice = 0,                             
                     City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
                     ServiceName = checkoutService.ServiceName,

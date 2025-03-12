@@ -6,5 +6,6 @@ namespace HCP.Service.Integrations.BlobStorage
     {
         Task<string> UploadFileAsync(IFormFile file);
         Task<List<string>> UploadFilesAsync(List<IFormFile> files);
+        Task<List<string>> UploadFilesAsyncWithoutSAS(List<IFormFile> files);
     }
 }

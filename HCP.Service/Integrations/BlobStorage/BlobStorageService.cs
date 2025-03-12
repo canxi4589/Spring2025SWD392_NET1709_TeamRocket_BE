@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -66,7 +67,7 @@ namespace HCP.Service.Integrations.BlobStorage
                     BlobContainerName = _containerName,
                     BlobName = blobName,
                     Resource = "b",
-                    ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(5) // 5 min expiration
+                    ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(5) 
                 };
                 sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
@@ -76,6 +77,50 @@ namespace HCP.Service.Integrations.BlobStorage
 
             return sasUrls;
         }
+        public async Task<List<string>> UploadFilesAsyncWithoutSAS(List<IFormFile> files)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+            await containerClient.CreateIfNotExistsAsync();
+
+            List<string> fileUrls = new List<string>();
+
+            foreach (var file in files)
+            {
+                string blobName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                BlobClient blobClient = containerClient.GetBlobClient(blobName);
+
+                var blobHttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = GetContentType(file.FileName),
+                };
+
+                await using var stream = file.OpenReadStream();
+                await blobClient.UploadAsync(stream, new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
+
+                fileUrls.Add(blobClient.Uri.ToString());
+            }
+
+            return fileUrls;
+        }
+        private string GetContentType(string fileName)
+        {
+            var mimeTypes = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                [".jpg"] = "image/jpeg",
+                [".jpeg"] = "image/jpeg",
+                [".png"] = "image/png",
+                [".gif"] = "image/gif",
+                [".pdf"] = "application/pdf",
+                [".doc"] = "application/msword",
+                [".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                [".xls"] = "application/vnd.ms-excel",
+                [".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            };
+
+            string extension = Path.GetExtension(fileName)?.ToLowerInvariant();
+            return mimeTypes.TryGetValue(extension, out var contentType) ? contentType : "application/octet-stream";
+        }
+
     }
 
 }
