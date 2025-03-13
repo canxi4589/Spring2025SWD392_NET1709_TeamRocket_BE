@@ -85,6 +85,7 @@ namespace HCP.Service.Services.CheckoutService
                     TimeSLotId = requestDTO.ServiceTimeSlotId,
                     DistancePrice = distancePrice,
                     TotalPrice = checkoutService.Price + distancePrice,     // Update later with additional services
+
                 };
 
                 await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
@@ -192,6 +193,7 @@ namespace HCP.Service.Services.CheckoutService
 
             _unitOfWork.Repository<Checkout>().Update(checkout);
             await _unitOfWork.Repository<Checkout>().SaveChangesAsync();
+
             return true;
         }
 
@@ -307,4 +309,3 @@ namespace HCP.Service.Services.CheckoutService
         }
     }
 }
-
