@@ -83,7 +83,7 @@ namespace HomeCleaningService.Controllers
            
             if(User == null)
             {
-                return NotFound(CommonConst.NotFoundError);
+                return NotFound(new AppResponse<AppUser>().SetErrorResponse(KeyConst.Unathorized, CommonConst.UnauthorizeError));
             }
 
             if (result.HousekeeperId.IsNullOrEmpty())
