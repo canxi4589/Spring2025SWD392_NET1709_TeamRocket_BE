@@ -83,7 +83,7 @@ namespace HomeCleaningService.Controllers
            
             if(User == null)
             {
-                return NotFound();
+                return NotFound(CommonConst.NotFoundError);
             }
 
             if (result.HousekeeperId.IsNullOrEmpty())
