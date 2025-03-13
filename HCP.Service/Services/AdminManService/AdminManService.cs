@@ -3,6 +3,7 @@ using HCP.Service.DTOs.AdminManagementDTO;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Data;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 
@@ -30,7 +31,7 @@ namespace HCP.Service.Services.AdminManService
                 Avatar = user.Avatar
             }).ToList();
         }
-        public async Task<UserAdminListDTO> GetUsersByAdminCustom(bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
+        public async Task<UserAdminListDTO> GetUsersByAdminCustom(string? search, bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
         {
             var users = new List<UserAdminDTO>();
             if (includeStaff)
@@ -44,6 +45,10 @@ namespace HCP.Service.Services.AdminManService
             if (includeHousekeepers)
             {
                 users.AddRange(await GetUsersByRoleAsync("Housekeeper"));
+            }
+            if(!search.IsNullOrEmpty())
+            {
+                users = users.Where(c=> (c.FullName.ToLower().Contains(search.ToLower())) || (c.FullName.ToLower().Contains(search.ToLower()))).ToList();
             }
             if (pageIndex == null || pageSize == null)
             {

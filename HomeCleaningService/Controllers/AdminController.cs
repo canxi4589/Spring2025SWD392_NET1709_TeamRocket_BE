@@ -32,24 +32,24 @@ namespace HomeCleaningService.Controllers
 
         [HttpGet("user")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetUsersByAdmin(bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
+        public async Task<IActionResult> GetUsersByAdmin(string? search, bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
         {
-            var users = await _userAdminManService.GetUsersByAdminCustom(includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
+            var users = await _userAdminManService.GetUsersByAdminCustom(search, includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
             return Ok(new AppResponse<UserAdminListDTO>().SetSuccessResponse(users));
         }
 
         [HttpGet("cleaningService")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllServices(int? pageIndex, int? pageSize)
+        public async Task<IActionResult> GetAllServices(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
-            var services = await _userAdminServiceService.GetAllServicesAsync(pageIndex, pageSize);
+            var services = await _userAdminServiceService.GetAllServicesAsync(search, pageIndex, pageSize, day, month, year);
             return Ok(new AppResponse<ServiceAdminShowListDTO>().SetSuccessResponse(services));
         }
         [HttpGet("serviceCategory")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllCategories(int? pageIndex, int? pageSize)
+        public async Task<IActionResult> GetAllCategories(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
-            var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync(pageIndex, pageSize);
+            var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync(search, pageIndex, pageSize, day, month, year);
             return Ok(new AppResponse<ServiceCategoryAdminShowListDTO>().SetSuccessResponse(categories));
         }
     }

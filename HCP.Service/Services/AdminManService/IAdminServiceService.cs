@@ -5,6 +5,6 @@ namespace HCP.Service.Services.AdminManService
 {
     public interface IAdminServiceService
     {
-        Task<ServiceAdminShowListDTO> GetAllServicesAsync(int? pageIndex, int? pageSize);
+        Task<ServiceAdminShowListDTO> GetAllServicesAsync(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year);
     }
 }

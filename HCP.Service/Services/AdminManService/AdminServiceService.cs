@@ -6,6 +6,7 @@ using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace HCP.Service.Services.AdminManService
             _userManager = userManager;
         }
 
-        public async Task<ServiceAdminShowListDTO> GetAllServicesAsync(int? pageIndex, int? pageSize)
+        public async Task<ServiceAdminShowListDTO> GetAllServicesAsync(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
             var services = await _unitOfWork.Repository<CleaningService>()
                 .GetAll()
@@ -64,8 +65,24 @@ namespace HCP.Service.Services.AdminManService
                     FirstImgLinkUrl = service.ServiceImages.FirstOrDefault()?.LinkUrl
                 });
             }
-
-            if (pageIndex == null || pageSize == null)
+            if(!search.IsNullOrEmpty())
+            {
+                svList = svList.Where(c => (c.ServiceName.ToLower().Contains(search.ToLower())) 
+                || (c.CategoryName.ToLower().Contains(search.ToLower()))
+                || (c.City.ToLower().Contains(search.ToLower()))
+                || (c.District.ToLower().Contains(search.ToLower()))
+                || (c.AddressLine.ToLower().Contains(search.ToLower()))
+                || (c.HousekeeperName.ToLower().Contains(search.ToLower()))
+                || (c.StaffName.ToLower().Contains(search.ToLower()))
+                || (c.HousekeeperName.ToLower().Contains(search.ToLower()))
+                || (c.Price.ToString().ToLower().Contains(search.ToLower()))
+                ).ToList();
+            }
+            if (day.HasValue && month.HasValue && year.HasValue)
+            {
+                svList = svList.Where(c => (c.CreatedAt.Day == day && c.CreatedAt.Month == month && c.CreatedAt.Year == year)).ToList();
+            }
+                if (pageIndex == null || pageSize == null)
             {
                 var temp1 = PaginatedList<ServiceAdminShowDTO>.Create(svList.AsQueryable(), 1, svList.Count);
                 return new ServiceAdminShowListDTO
