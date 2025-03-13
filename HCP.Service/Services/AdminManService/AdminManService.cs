@@ -16,60 +16,54 @@ namespace HCP.Service.Services.AdminManService
         {
             _userManager = userManager;
         }
-
-        public async Task<UserAdminListDTO> GetUsersByAdminCustom([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers, int? pageIndex, int? pageSize)
+        private async Task<List<UserAdminDTO>> GetUsersByRoleAsync(string role)
         {
-            var userss = await _userManager.GetUsersInRoleAsync("Staff");
-            if (!includeStaff)
-            {
-                userss = userss.Where(user => user != null).ToList();
-            }
-            if (includeCustomers)
-            {
-                var cus = await _userManager.GetUsersInRoleAsync("Customer");
-                foreach (var item in cus)
-                {
-                    userss.Add(item);
-                }
-            }
-            if (includeHousekeepers)
-            {
-                var hkp = await _userManager.GetUsersInRoleAsync("Housekeeper");
-                foreach (var item in hkp)
-                {
-                    userss.Add(item);
-                }
-            }
-            var userList = userss.Select(user => new UserAdminDTO
+            var users = await _userManager.GetUsersInRoleAsync(role);
+            return users.Select(user => new UserAdminDTO
             {
                 Id = user.Id,
                 FullName = user.FullName,
-                Email = user.Email ?? string.Empty, // Handle possible null reference
-                PhoneNumber = user.PhoneNumber ?? string.Empty, // Handle possible null reference
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
                 Status = "IsActive",
                 Birthday = user.Birthday,
                 Avatar = user.Avatar
-            }).AsQueryable(); // Convert to IQueryable
-
+            }).ToList();
+        }
+        public async Task<UserAdminListDTO> GetUsersByAdminCustom(bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
+        {
+            var users = new List<UserAdminDTO>();
+            if (includeStaff)
+            {
+                users.AddRange(await GetUsersByRoleAsync("Staff"));
+            }
+            if (includeCustomers)
+            {
+                users.AddRange(await GetUsersByRoleAsync("Customer"));
+            }
+            if (includeHousekeepers)
+            {
+                users.AddRange(await GetUsersByRoleAsync("Housekeeper"));
+            }
             if (pageIndex == null || pageSize == null)
             {
-                var temp1 = await PaginatedList<UserAdminDTO>.CreateAsync(userList, 1, userList.Count());
+                var temp1 = PaginatedList<UserAdminDTO>.CreateAsync(users, 1, users.Count());
                 return new UserAdminListDTO
                 {
                     Items = temp1,
                     hasNext = temp1.HasNextPage,
                     hasPrevious = temp1.HasPreviousPage,
-                    totalCount = userss.Count,
+                    totalCount = users.Count,
                     totalPages = temp1.TotalPages,
                 };
             }
-            var temp2 = await PaginatedList<UserAdminDTO>.CreateAsync(userList, (int)pageIndex, (int)pageSize);
+            var temp2 = PaginatedList<UserAdminDTO>.CreateAsync(users, (int)pageIndex, (int)pageSize);
             return new UserAdminListDTO
             {
                 Items = temp2,
                 hasNext = temp2.HasNextPage,
                 hasPrevious = temp2.HasPreviousPage,
-                totalCount = userList.Count(),
+                totalCount = users.Count(),
                 totalPages = temp2.TotalPages,
             };
         }

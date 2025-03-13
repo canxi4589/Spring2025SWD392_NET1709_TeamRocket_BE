@@ -32,7 +32,7 @@ namespace HomeCleaningService.Controllers
 
         [HttpGet("user")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetUsersByAdmin([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers, int? pageIndex, int? pageSize)
+        public async Task<IActionResult> GetUsersByAdmin(bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
         {
             var users = await _userAdminManService.GetUsersByAdminCustom(includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
             return Ok(new AppResponse<UserAdminListDTO>().SetSuccessResponse(users));

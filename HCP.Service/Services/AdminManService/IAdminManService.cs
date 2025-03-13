@@ -5,6 +5,6 @@ namespace HCP.Service.Services.AdminManService
 {
     public interface IAdminManService
     {
-        Task<UserAdminListDTO> GetUsersByAdminCustom([FromQuery] bool includeStaff, [FromQuery] bool includeCustomers, [FromQuery] bool includeHousekeepers, int? pageIndex, int? pageSize);
+        Task<UserAdminListDTO> GetUsersByAdminCustom(bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize);
     }
 }

@@ -54,5 +54,13 @@ namespace HCP.Service.Services.ListService
             var totalPages = (int)Math.Ceiling(count / (double)pageSize);
             return new PaginatedList<T>(items, pageIndex, totalPages);
         }
+        public static PaginatedList<T> CreateAsync(IList<T> source, int pageIndex, int pageSize)
+        {
+            var count = source.Count();
+            var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+            var totalPages = (int)Math.Ceiling(count / (double)pageSize);
+            return new PaginatedList<T>(items, pageIndex, totalPages);
+        }
+        
     }
 }
