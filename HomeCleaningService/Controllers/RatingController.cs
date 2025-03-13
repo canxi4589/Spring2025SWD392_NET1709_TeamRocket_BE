@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using HomeCleaningService.Helpers;
 using static HCP.Service.DTOs.RatingDTO.RatingDTO;
 using Azure;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HomeCleaningService.Controllers
 {
@@ -83,6 +84,11 @@ namespace HomeCleaningService.Controllers
             if(User == null)
             {
                 return NotFound();
+            }
+
+            if (result.HousekeeperId.IsNullOrEmpty())
+            {
+                return NotFound(new AppResponse<HousekeperRatingDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
             }
 
             return Ok(new AppResponse<HousekeperRatingDTO>().SetSuccessResponse(result));

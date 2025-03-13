@@ -144,6 +144,16 @@ namespace HCP.Service.Integrations.Vnpay
                            .ToDictionary(split => split[0], split => split[1]);
         }
 
+        public string CreatePaymentUrl(Booking order, string returnUrl)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string CreateDepositPaymentUrl(int amount, string returnUrl)
+        {
+            throw new NotImplementedException();
+        }
+
         public class VnpayRefundRequest
         {
             public string vnp_RequestId { get; set; }

@@ -222,6 +222,11 @@ namespace HCP.Service.Services.RatingService
         {
             var housekeeper = await _userManager.FindByIdAsync(userId);
 
+            if(housekeeper == null)
+            {
+                return new();
+            }
+
             var services = await _unitOfWork.Repository<CleaningService>()
                     .GetAll()
                     .Where(r => r.UserId == userId)
