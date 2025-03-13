@@ -250,7 +250,7 @@ namespace HCP.Service.Services.WalletService
                 Type = TransactionType.Deposit.ToString(),
                 Status = TransactionStatus.Pending.ToString(),
                 CreatedDate = DateTime.Now
-            };
+            };  
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();
 

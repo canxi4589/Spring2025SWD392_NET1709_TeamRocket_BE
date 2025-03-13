@@ -6,6 +6,7 @@ using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
+using HCP.Service.Services.TemporaryService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -26,17 +27,20 @@ namespace HomeCleaningService.Controllers
         private readonly IWalletService _walletService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICustomerService _customerService;
+        private readonly ITemporaryStorage _tempStorage;
 
-        public PaymentController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IBookingService bookingService, Ivnpay ivnpay, IEmailSenderService emailSenderService, IConfiguration configuration, IWalletService walletService, ICustomerService customerService)
 
+public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, string vnpHashSecret, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage)
         {
-            _userManager = userManager;
             _bookingService = bookingService;
+            _userManager = userManager;
             this.ivnpay = ivnpay;
             _emailSenderService = emailSenderService;
+            _vnpHashSecret = vnpHashSecret;
             _walletService = walletService;
             _unitOfWork = unitOfWork;
             _customerService = customerService;
+            _tempStorage = tempStorage;
         }
 
         [HttpPost]
@@ -93,60 +97,55 @@ namespace HomeCleaningService.Controllers
                 return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
-        [HttpPost("CreatePayment")]
-        [Authorize]
-        public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request, string paymentMethod = KeyConst.VnPay)
-        {
-            var userClaims = User;
-            try
-            {
+        //[HttpPost("CreatePayment")]
+        //[Authorize]
+        //public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request, string paymentMethod = KeyConst.VnPay)
+        //{
+        //    var userClaims = User;
+        //    try
+        //    {
                 // Create the booking
-                var booking = await _bookingService.CreateBookingAsync(request, userClaims);
-                await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, paymentMethod);
+                //await _tempStorage.StoreAsync(request, userClaims);
+                //var booking = await _bookingService.CreateBookingAsync(request, userClaims);
+                //await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, paymentMethod);
                 // Generate the VNPay payment URL
-                var returnUrl = "https://your-return-url.com";
-                string paymentUrl = ivnpay.CreatePaymentUrl(booking, returnUrl);
+        //        string paymentUrl = ivnpay.CreatePaymentUrl(booking);
 
-                return Ok(new { bookingId = booking.Id, url = paymentUrl });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new AppResponse<string>().SetErrorResponse(KeyConst.Unathorized, ex.Message));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
-            }
-        }
+        //        return Ok(new { url = paymentUrl });
+        //    }
+        //    catch (UnauthorizedAccessException ex)
+        //    {
+        //        return Unauthorized(new AppResponse<string>().SetErrorResponse(KeyConst.Unathorized, ex.Message));
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, ex.Message));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
+        //    }
+        //}
 
-        [Authorize]
         [HttpGet("PaymentReturn-VNPAY")]
         public IActionResult PaymentReturn()
         {
             string queryString = Request.QueryString.Value;
-            //var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
-            var vnp_HashSecret = _vnpHashSecret;
-            // Retrieve the order ID from the query string
             if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
             {
-                if (true)
-                {
-                    var paymentStatus = Request.Query["vnp_ResponseCode"];
-                    if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
-                    {
 
-                        //return Redirect("https://www.google.com/");                                   // Redirect to success page
-                        return Redirect("http://localhost:5173/service/Checkout/success");
-                    }
-                    else
-                    {
-                        _bookingService.UpdateStatusBooking(orderId, PaymentConst.IsDeleted);
-                        return Redirect("http://localhost:5173/service/Checkout/fail");
-                    }
+                var paymentStatus = Request.Query["vnp_ResponseCode"];
+                if (paymentStatus == PaymentConst.SuccessCode)
+                {
+
+                    //return Redirect("https://www.google.com/");                                 
+                    return Redirect("http://localhost:5173/service/Checkout/success");
+                }
+                else
+                {
+                    _bookingService.UpdateStatusBooking(orderId, PaymentConst.IsDeleted);
+                    return Redirect("http://localhost:5173/service/Checkout/fail");
+
                 }
             }
             return BadRequest(PaymentConst.InvalidError);

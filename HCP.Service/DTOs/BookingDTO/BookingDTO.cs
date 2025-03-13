@@ -32,6 +32,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public Guid ServiceId { get; set; }
         public string? Note {  get; set; }
         public List<Guid> BookingAdditionalIds { get; set; } = new List<Guid>();
+        public decimal? totalAmount { get; set; }
     }
     public class CheckoutResponseDTO
     {

@@ -30,9 +30,9 @@ namespace HCP.Service.Integrations.Vnpay
 
         private readonly string vnp_HashSecret;
         private readonly string vnp_TmnCode;
-        public string CreatePaymentUrl(Booking order, string returnUrl)
+        public string CreatePaymentUrl(Booking order)
         {
-            returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
+            string returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(order.TotalPrice, CultureInfo.InvariantCulture);
