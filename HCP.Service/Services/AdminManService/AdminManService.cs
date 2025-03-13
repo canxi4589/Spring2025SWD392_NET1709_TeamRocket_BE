@@ -48,7 +48,7 @@ namespace HCP.Service.Services.AdminManService
             }
             if(!search.IsNullOrEmpty())
             {
-                users = users.Where(c=> (c.FullName.ToLower().Contains(search.ToLower())) || (c.FullName.ToLower().Contains(search.ToLower()))).ToList();
+                users = users.Where(c=> (c.FullName.ToLower().Contains(search.ToLower())) || (c.Email.ToLower().Contains(search.ToLower()))).ToList();
             }
             if (pageIndex == null || pageSize == null)
             {

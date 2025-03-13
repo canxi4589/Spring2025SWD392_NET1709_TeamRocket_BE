@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
+using HCP.Repository.Constance;
 
 namespace HomeCleaningService.Controllers
 {
@@ -31,7 +32,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpGet("user")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetUsersByAdmin(string? search, bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
         {
             var users = await _userAdminManService.GetUsersByAdminCustom(search, includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
@@ -39,14 +40,14 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpGet("cleaningService")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetAllServices(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
             var services = await _userAdminServiceService.GetAllServicesAsync(search, pageIndex, pageSize, day, month, year);
             return Ok(new AppResponse<ServiceAdminShowListDTO>().SetSuccessResponse(services));
         }
         [HttpGet("serviceCategory")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetAllCategories(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
             var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync(search, pageIndex, pageSize, day, month, year);

@@ -1,4 +1,5 @@
-﻿using HCP.Repository.Data;
+﻿using HCP.Repository.Constance;
+using HCP.Repository.Data;
 using HCP.Repository.Entities;
 using HomeCleaningService;
 using Microsoft.AspNetCore.Identity;
@@ -47,7 +48,7 @@ namespace HomeCleaningService.Extensions
         private static async Task SeedRolesAndUsersAsync(RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager)
         {
             // Define roles
-            string[] roles = { "Housekeeper", "Customer", "Admin", "Staff" };
+            string[] roles = { "Housekeeper", "Customer", KeyConst.Admin, "Staff" };
 
             // Create roles if they don't exist
             foreach (var role in roles)
@@ -70,7 +71,7 @@ namespace HomeCleaningService.Extensions
             ("Charlie", "staff1@example.com", "StaffCharlie", "Staff"),
             ("Eve", "staff2@example.com", "StaffEve", "Staff"),
 
-            ("Admin", "admin@example.com", "AdminUser", "Admin")
+            (KeyConst.Admin, "admin@example.com", "AdminUser", KeyConst.Admin)
         };
 
             foreach (var (firstName, email, userName, role) in users)
