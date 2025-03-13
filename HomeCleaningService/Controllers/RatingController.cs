@@ -90,7 +90,6 @@ namespace HomeCleaningService.Controllers
             {
                 return NotFound(new AppResponse<HousekeperRatingDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
             }
-
             return Ok(new AppResponse<HousekeperRatingDTO>().SetSuccessResponse(result));
         }
     }
