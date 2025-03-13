@@ -83,14 +83,13 @@ namespace HomeCleaningService.Controllers
            
             if(User == null)
             {
-                return NotFound();
+                return NotFound(new AppResponse<AppUser>().SetErrorResponse(KeyConst.Unathorized, CommonConst.UnauthorizeError));
             }
 
             if (result.HousekeeperId.IsNullOrEmpty())
             {
                 return NotFound(new AppResponse<HousekeperRatingDTO>().SetErrorResponse(KeyConst.Rating, RatingConst.NotFoundError));
             }
-
             return Ok(new AppResponse<HousekeperRatingDTO>().SetSuccessResponse(result));
         }
     }
