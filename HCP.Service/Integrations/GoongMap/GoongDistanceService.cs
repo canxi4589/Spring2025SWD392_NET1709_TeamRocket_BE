@@ -165,7 +165,44 @@ public class GoongDistanceService : IGoongDistanceService
             return new List<CleaningService>();
         }
     }
+    public async Task<List<CleaningService>> GetBookableServicesWithinDistanceAsync(
+    string userPlaceId, List<CleaningService> services)
+    {
+        try
+        {
+            var servicePlaceIds = services.Select(s => s.PlaceId).ToList();
 
+            // Retrieve distances
+            var distances = await GetDistancesAsyncByList(userPlaceId, servicePlaceIds);
+
+            if (distances == null)
+            {
+                _logger.LogError("Failed to retrieve distances.");
+                return new List<CleaningService>();
+            }
+
+            return services
+                .Where(service =>
+                    distances.ContainsKey(service.PlaceId) &&
+                    IsServiceBookable(service, distances[service.PlaceId])) 
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while filtering bookable services.");
+            return new List<CleaningService>();
+        }
+    }
+
+    private bool IsServiceBookable(CleaningService service, double distance)
+    {
+        return service.Status == "Active" &&
+               service.ServiceTimeSlots.Any(slot => slot.Status != "hehe") && 
+               service.DistancePricingRules.Any(rule =>
+                   rule.IsActive &&
+                   distance >= rule.MinDistance &&
+                   distance <= rule.MaxDistance); 
+    }
     private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
     {
         const double R = 6371; // Earth radius in km

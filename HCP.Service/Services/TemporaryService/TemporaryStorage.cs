@@ -1,4 +1,6 @@
 ﻿using HCP.Service.DTOs.BookingDTO;
+using HCP.Service.DTOs.CheckoutDTO;
+using HCP.Service.DTOs.PaymentDTO;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System;
@@ -23,7 +25,6 @@ namespace HCP.Service.Services.TemporaryService
         {
             _httpContextAccessor = httpContextAccessor;
         }
-
         public async Task StoreAsync(ConfirmBookingDTO request, ClaimsPrincipal userClaims)
         {
             var session = _httpContextAccessor.HttpContext.Session;
@@ -31,6 +32,25 @@ namespace HCP.Service.Services.TemporaryService
             var jsonData = JsonConvert.SerializeObject(request);
             session.SetString(key, jsonData);
             await Task.CompletedTask;
+        }
+        public async Task StoreAsync(PaymentBodyDTO request)
+        {
+            var session = _httpContextAccessor.HttpContext.Session;
+            var key = $"{request.Id}_bookingPayment";
+            var jsonData = JsonConvert.SerializeObject(request);
+            session.SetString(key, jsonData);
+            await Task.CompletedTask;
+        }
+        public async Task<PaymentBodyDTO> RetrieveAsync(Guid id)
+        {
+            var session = _httpContextAccessor.HttpContext.Session;
+            var key = $"{id}_bookingPayment";
+            var jsonData = session.GetString(key);
+            if (jsonData != null)
+            {
+                return JsonConvert.DeserializeObject<PaymentBodyDTO>(jsonData);
+            }
+            return null;
         }
         public async Task StoreTest(ClaimsPrincipal userClaims, Test huh)
         {

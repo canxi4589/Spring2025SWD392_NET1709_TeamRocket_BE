@@ -146,9 +146,9 @@ namespace HCP.Service.Services.CleaningService1
 
             var filteredServices = servicesQuery.ToList();
 
-            if (!string.IsNullOrEmpty(userPlaceId) && maxDistanceKm.HasValue)
+            if (!string.IsNullOrEmpty(userPlaceId))
             {
-                filteredServices = await goongDistanceService.GetServicesWithinDistanceAsync(userPlaceId, maxDistanceKm.Value, filteredServices);
+                filteredServices = await goongDistanceService.GetBookableServicesWithinDistanceAsync(userPlaceId, filteredServices);
             }
 
             var serviceDTOs = filteredServices.Select(c => new CleaningServiceItemDTO
@@ -261,7 +261,7 @@ namespace HCP.Service.Services.CleaningService1
                 name = service.ServiceName,
                 numOfBooks = service.Bookings?.Count ?? 0,
                 location = $"{service.City}, {service.District}",
-                reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
+                reviews = rating == null ? rating.RatingAvg : 0,
                 numOfReviews = service.ServiceRatings.Count,
                 Price = service.Price,
                 numOfPics = service.ServiceImages.Count,

@@ -28,7 +28,6 @@ namespace HomeCleaningService.Extensions
             {
                 var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
                 await context.Database.MigrateAsync();
-                // Seed roles and users
                 var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
                 var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
 

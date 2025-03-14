@@ -14,13 +14,11 @@ namespace HomeCleaningService.Extensions;
            IConfiguration config
        )
         {
-        // Đăng ký các dịch vụ của Identity
         services
             .AddIdentity<AppUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-            // Truy cập IdentityOptions
             services.Configure<IdentityOptions>(options =>
             {
                 options.Password.RequireDigit = false; 

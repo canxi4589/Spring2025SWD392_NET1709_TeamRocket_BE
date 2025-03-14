@@ -8,10 +8,13 @@ namespace HCP.Service.Services.WalletService
     {
         Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail);
         Task<double> getUserBalance(AppUser user);
+        Task<double> getUserBalance(ClaimsPrincipal user);
+
         Task<double> VNDMoneyExchangeFromUSD(decimal amount);
         Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user);
         Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user);
         Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot);
         Task<WalletTransactionWithdrawResponseDTO> StaffProccessWithdraw(Guid transId, bool action);
+        Task DeduceFromWallet(ClaimsPrincipal user, decimal amount);
     }
 }
