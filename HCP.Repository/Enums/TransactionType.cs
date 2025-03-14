@@ -9,6 +9,10 @@ namespace HCP.Repository.Enums
 {
     public enum TransactionType
     {
+
+        [Description("Money taken from wallet for booking action transaction")]
+        BookingPurchase,
+
         [Description("Deposit (nap tien) transaction")]
         Deposit,
 

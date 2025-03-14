@@ -1,6 +1,7 @@
 ﻿using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.DTOs.PaymentDTO;
+using HCP.Service.DTOs.WalletDTO;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System;
@@ -49,6 +50,25 @@ namespace HCP.Service.Services.TemporaryService
             if (jsonData != null)
             {
                 return JsonConvert.DeserializeObject<PaymentBodyDTO>(jsonData);
+            }
+            return null;
+        }
+        public async Task StoreAsync(WalletDepositRequestDTO request)
+        {
+            var session = _httpContextAccessor.HttpContext.Session;
+            var key = $"{request.Id}_depositPayment";
+            var jsonData = JsonConvert.SerializeObject(request);
+            session.SetString(key, jsonData);
+            await Task.CompletedTask;
+        }
+        public async Task<WalletDepositRequestDTO> RetrieveDepositAsync(Guid id)
+        {
+            var session = _httpContextAccessor.HttpContext.Session;
+            var key = $"{id}_depositPayment";
+            var jsonData = session.GetString(key);
+            if (jsonData != null)
+            {
+                return JsonConvert.DeserializeObject<WalletDepositRequestDTO>(jsonData);
             }
             return null;
         }

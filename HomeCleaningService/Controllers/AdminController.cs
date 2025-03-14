@@ -57,5 +57,6 @@ namespace HomeCleaningService.Controllers
             var chartData = await _adminManService.GetRevenueChartDatas(dayChart, weekChart, yearChart, yearsChart, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
             return Ok(new AppResponse<ChartDataAdminShowListDTO>().SetSuccessResponse(chartData));
         }
+
     }
 }

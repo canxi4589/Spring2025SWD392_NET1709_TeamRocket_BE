@@ -83,9 +83,8 @@ namespace HomeCleaningService.Controllers
                 // Generate the VNPay payment URL
                 var returnUrl = "https://your-return-url.com";
                 var depoTransac = await _walletService.createDepositTransaction(amount, user);
-                var walletTrans = _unitOfWork.Repository<WalletTransaction>().GetById(depoTransac.Id);
-                if (walletTrans == null) throw new Exception(TransactionConst.DepositFail);
-                string paymentUrl = ivnpay.CreateDepositPaymentUrl(walletTrans, returnUrl);
+                await _tempStorage.StoreAsync(depoTransac);
+                string paymentUrl = ivnpay.CreateDepositPaymentUrl(depoTransac, returnUrl);
 
                 return Ok(new { url = paymentUrl });
             }
@@ -122,7 +121,7 @@ namespace HomeCleaningService.Controllers
                             .SetErrorResponse("INSUFFICIENT_FUNDS", "Not enough funds in wallet"));
 
                     await _walletService.DeduceFromWallet(User, dto.Amount);
-                    //de transaction cho Thinh lam
+                    //de transaction cho Thinh lam (xong roy nhe)
 
                     return Ok(new { url = $"http://localhost:5173/service/Checkout/success" });
                 }
@@ -181,13 +180,13 @@ namespace HomeCleaningService.Controllers
                     var paymentStatus = Request.Query["vnp_ResponseCode"];
                     if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
                     {
-                        await _walletService.processDepositTransaction(transactId, true);
+                        await _walletService.processDepositTransaction(_tempStorage.RetrieveDepositAsync(transactId), true);
                         //return Redirect("https://www.google.com/");                                   // Redirect to success page
                         return Redirect("http://localhost:5173/wallet/deposit/success");
                     }
                     else
                     {
-                        await _walletService.processDepositTransaction(transactId, false);
+                        await _walletService.processDepositTransaction(_tempStorage.RetrieveDepositAsync(transactId), false);
                         return Redirect("http://localhost:5173/wallet/deposit/fail");
                     }
                 }

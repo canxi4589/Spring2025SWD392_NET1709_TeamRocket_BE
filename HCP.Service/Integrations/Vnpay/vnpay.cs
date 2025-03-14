@@ -1,6 +1,7 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.DTOs.PaymentDTO;
+using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Integrations.Currency;
 using HCP.Service.Services.CheckoutService;
 using Microsoft.Extensions.Configuration;
@@ -90,7 +91,7 @@ namespace HCP.Service.Integrations.Vnpay
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
             return paymentUrl;
         }
-        public string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl)
+        public string CreateDepositPaymentUrl(WalletDepositRequestDTO walletTrans, string returnUrl)
         {
             returnUrl = "https://localhost:7143/api/Payment/PaymentDepositReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
