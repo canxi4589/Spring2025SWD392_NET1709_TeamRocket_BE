@@ -24,6 +24,7 @@ using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
+using HCP.Repository.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -149,6 +150,7 @@ builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 
+builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 
 
 var app = builder.Build();

@@ -2,6 +2,7 @@
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
+using HCP.Repository.Repository;
 using HCP.Service.DTOs;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.DTOs.RequestDTO;
@@ -25,25 +26,20 @@ namespace HCP.Service.Services.RequestService
         private readonly UserManager<AppUser> _userManager;
         private readonly IEmailSenderService _emailSenderService;
         private readonly ICleaningService1 _cleaningService;
+        private readonly IRequestRepository _requestRepository;
 
-        public HandleRequestService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IEmailSenderService emailSenderService, ICleaningService1 cleaningService)
+        public HandleRequestService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IEmailSenderService emailSenderService, ICleaningService1 cleaningService, IRequestRepository requestRepository)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _emailSenderService = emailSenderService;
             _cleaningService = cleaningService;
+            _requestRepository = requestRepository;
         }
 
         public async Task<List<PendingRequestDTO>> GetPendingCreateServiceRequestsAsync()
         {
-            var pendingRequests = await _unitOfWork.Repository<CleaningService>()
-                .GetAll()
-                .Where(cs => cs.Status == ServiceStatus.Pending.ToString())
-                .Include(cs => cs.AdditionalServices) 
-                .Include(cs => cs.ServiceImages)
-                .Include(cs => cs.ServiceTimeSlots)
-                .Include(cs => cs.DistancePricingRules)
-                .ToListAsync(); 
+            var pendingRequests = await _requestRepository.GetCleaningServices(ServiceStatus.Pending.ToString());
 
             var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
             var categories = await _unitOfWork.Repository<ServiceCategory>()
@@ -106,11 +102,11 @@ namespace HCP.Service.Services.RequestService
             var pendingRequests = await _unitOfWork.Repository<CleaningService>()
                 .GetAll()
                 .Where(cs => cs.Id == id)
-                .Include(cs => cs.AdditionalServices) 
+                .Include(cs => cs.AdditionalServices)
                 .Include(cs => cs.ServiceImages)
                 .Include(cs => cs.ServiceTimeSlots)
                 .Include(cs => cs.DistancePricingRules)
-                .ToListAsync(); 
+                .ToListAsync();
 
             var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
             var categories = await _unitOfWork.Repository<ServiceCategory>()
