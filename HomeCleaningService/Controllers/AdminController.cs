@@ -19,23 +19,19 @@ namespace HomeCleaningService.Controllers
     public class AdminController : Controller
     {
         private readonly UserManager<AppUser> _userManager;
-        private readonly IAdminManService _userAdminManService;
-        private readonly IAdminServiceService _userAdminServiceService;
-        private readonly IAdminManServiceCategory _adminManServiceCategory;
+        private readonly IAdminManService _adminManService;
 
-        public AdminController(UserManager<AppUser> userManager, IAdminManService userAdminManService, IAdminServiceService userAdminServiceService, IAdminManServiceCategory adminManServiceCategory)
+        public AdminController(UserManager<AppUser> userManager, IAdminManService adminManService)
         {
             _userManager = userManager;
-            _userAdminManService = userAdminManService;
-            _userAdminServiceService = userAdminServiceService;
-            _adminManServiceCategory = adminManServiceCategory;
+            _adminManService = adminManService;
         }
 
         [HttpGet("user")]
         [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetUsersByAdmin(string? search, bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize)
         {
-            var users = await _userAdminManService.GetUsersByAdminCustom(search, includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
+            var users = await _adminManService.GetUsersByAdminCustom(search, includeStaff, includeCustomers, includeHousekeepers, pageIndex, pageSize);
             return Ok(new AppResponse<UserAdminListDTO>().SetSuccessResponse(users));
         }
 
@@ -43,14 +39,21 @@ namespace HomeCleaningService.Controllers
         [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetAllServices(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
-            var services = await _userAdminServiceService.GetAllServicesAsync(search, pageIndex, pageSize, day, month, year);
+            var services = await _adminManService.GetAllServicesAsync(search, pageIndex, pageSize, day, month, year);
             return Ok(new AppResponse<ServiceAdminShowListDTO>().SetSuccessResponse(services));
         }
         [HttpGet("serviceCategory")]
         [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetAllCategories(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
-            var categories = await _adminManServiceCategory.GetAllServiceCategoriesAsync(search, pageIndex, pageSize, day, month, year);
+            var categories = await _adminManService.GetAllServiceCategoriesAsync(search, pageIndex, pageSize, day, month, year);
+            return Ok(new AppResponse<ServiceCategoryAdminShowListDTO>().SetSuccessResponse(categories));
+        }
+        [HttpGet("revenueChartData")]
+        [Authorize(Roles = KeyConst.Admin)]
+        public async Task<IActionResult> GetRevenueChartData(bool monthChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
+        {
+            var categories = await _adminManService.(monthChart, weekChart, yearChart, yearsChart, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
             return Ok(new AppResponse<ServiceCategoryAdminShowListDTO>().SetSuccessResponse(categories));
         }
     }

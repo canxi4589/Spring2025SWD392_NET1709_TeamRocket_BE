@@ -143,8 +143,6 @@ builder.Services.AddScoped<Ivnpay,VnPay>();
 builder.Services.AddScoped<IBookingTransactionService, BookingTransactionService>();
 builder.Services.AddScoped<IGoongDistanceService, GoongDistanceService>();
 builder.Services.AddScoped<IAdminManService, AdminManService>();
-builder.Services.AddScoped<IAdminServiceService, AdminServiceService>();
-builder.Services.AddScoped<IAdminManServiceCategory, AdminManServiceCategory>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
