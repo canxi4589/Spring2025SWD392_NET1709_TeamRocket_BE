@@ -11,6 +11,7 @@ using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
 using HCP.Service.DTOs.CleaningServiceDTO;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 using HCP.Repository.Constance;
+using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 
 namespace HomeCleaningService.Controllers
 {
@@ -51,10 +52,10 @@ namespace HomeCleaningService.Controllers
         }
         [HttpGet("revenueChartData")]
         [Authorize(Roles = KeyConst.Admin)]
-        public async Task<IActionResult> GetRevenueChartData(bool monthChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
+        public async Task<IActionResult> GetRevenueChartData(bool dayChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
         {
-            var categories = await _adminManService.(monthChart, weekChart, yearChart, yearsChart, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
-            return Ok(new AppResponse<ServiceCategoryAdminShowListDTO>().SetSuccessResponse(categories));
+            var chartData = await _adminManService.GetRevenueChartDatas(dayChart, weekChart, yearChart, yearsChart, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
+            return Ok(new AppResponse<ChartDataAdminShowListDTO>().SetSuccessResponse(chartData));
         }
     }
 }

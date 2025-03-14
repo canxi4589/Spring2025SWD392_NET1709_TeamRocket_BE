@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Data;
+using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
+using System.Globalization;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
+using HCP.Repository.Enums;
 
 namespace HCP.Service.Services.AdminManService
 {
@@ -52,9 +55,9 @@ namespace HCP.Service.Services.AdminManService
             {
                 users.AddRange(await GetUsersByRoleAsync("Housekeeper"));
             }
-            if(!search.IsNullOrEmpty())
+            if (!search.IsNullOrEmpty())
             {
-                users = users.Where(c=> (c.FullName.ToLower().Contains(search.ToLower())) || (c.Email.ToLower().Contains(search.ToLower()))).ToList();
+                users = users.Where(c => (c.FullName.ToLower().Contains(search.ToLower())) || (c.Email.ToLower().Contains(search.ToLower()))).ToList();
             }
             if (pageIndex == null || pageSize == null)
             {
@@ -196,9 +199,78 @@ namespace HCP.Service.Services.AdminManService
                 totalPages = temp2.TotalPages,
             };
         }
-        public async Task<ServiceAdminShowListDTO> GetRevenueChartDatas(bool monthChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
+        public async Task<ChartDataAdminShowListDTO> GetRevenueChartDatas(bool dayChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
         {
+            var chartDataList = new List<ChartDataAdminShowDTO>();
 
+            // Query payments with status "finished" and include booking
+            var payments = _unitOfWork.Repository<Payment>()
+                .GetAll()
+                .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Completed.ToString()))
+                .Include(p => p.Booking)
+                .ToList();
+
+            if (yearChart && yearStart.HasValue)
+            {
+                // Year chart - show data for each month in the selected year
+                for (int month = 1; month <= 12; month++)
+                {
+                    // Define the start and end of the month
+                    var monthStartDate = new DateTime(yearStart.Value, month, 1);
+                    var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
+                    var monthlyRevenue = payments.Where(p => p.PaymentDate >= monthStartDate && p.PaymentDate <= monthEndDate).Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                    chartDataList.Add(new ChartDataAdminShowDTO
+                    {
+                        name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
+                        revenue = (double)monthlyRevenue // Assuming 'revenued' is the correct property name
+                    });
+                }
+            }
+
+            else if (yearsChart && yearStart.HasValue && yearEnd.HasValue)
+            {
+                // Years chart - show data for each year between start and end year
+                for (int year = yearStart.Value; year <= yearEnd.Value; year++)
+                {
+                    var yearStartDate = new DateTime(year, 1, 1);
+                    var yearEndDate = new DateTime(year, 12, 31);
+
+                    var yearlyRevenue = payments
+                        .Where(p => p.PaymentDate >= yearStartDate && p.PaymentDate <= yearEndDate)
+                        .Sum(p => p.Amount) * 0.1m; // 10% of the amount
+
+                    chartDataList.Add(new ChartDataAdminShowDTO
+                    {
+                        name = year.ToString(),
+                        revenue = (double)yearlyRevenue
+                    });
+                }
+            }
+            else if (dayChart && !weekChart && !yearChart && !yearsChart &&
+                     dayStart.HasValue && monthStart.HasValue && yearStart.HasValue &&
+                     dayEnd.HasValue && monthEnd.HasValue && yearEnd.HasValue)
+            {
+                // Day chart - show data for each day between start and end date
+                var startDate = new DateTime(yearStart.Value, monthStart.Value, dayStart.Value);
+                var endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
+
+                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    var dailyRevenue = payments
+                        .Where(p => p.PaymentDate.Date == date.Date)
+                        .Sum(p => p.Amount) * 0.1m; // 10% of the amount
+
+                    chartDataList.Add(new ChartDataAdminShowDTO
+                    {
+                        name = date.ToString("dd/MM/yyyy"),
+                        revenue = (double)dailyRevenue
+                    });
+                }
+            }
+            return new ChartDataAdminShowListDTO
+            {
+                ChartData = chartDataList
+            };
         }
     }
 }
