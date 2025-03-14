@@ -32,22 +32,29 @@ namespace HomeCleaningService.Controllers
 
                 if (createdCheckout == null)
                 {
-                    return BadRequest(new { error = CheckoutConst.CreateCheckoutError });
+                    var errorResponse = new AppResponse<object>()
+                        .SetErrorResponse(KeyConst.Checkout, CheckoutConst.CreateCheckoutError);
+                    return BadRequest(errorResponse);
                 }
 
-                return Ok(new { message = CheckoutConst.CreateCheckoutSuccess, data = createdCheckout });
+                var successResponse = new AppResponse<object>()
+                    .SetSuccessResponse(createdCheckout);
+                return Ok(successResponse);
             }
             catch (DbUpdateException dbEx)
             {
-                //Console.WriteLine($"Database Error: {dbEx.Message} | Inner: {dbEx.InnerException?.Message}");
-                return StatusCode(500, new { error = CommonConst.DatabaseError, details = dbEx.Message });
+                var errorResponse = new AppResponse<object>()
+                    .SetErrorResponse(KeyConst.Error, dbEx.Message);
+                return StatusCode(500, errorResponse);
             }
             catch (Exception ex)
             {
-                //Console.WriteLine($"Unhandled Exception: {ex.Message}");
-                return StatusCode(500, new { error = CommonConst.InternalError, details = ex.Message });
+                var errorResponse = new AppResponse<object>()
+                    .SetErrorResponse(KeyConst.Error, ex.Message);
+                return StatusCode(400, errorResponse);
             }
         }
+
 
         [HttpPut("change-status/{checkoutId}")]
         [Authorize]

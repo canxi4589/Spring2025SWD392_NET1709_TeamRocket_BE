@@ -413,7 +413,10 @@ namespace HCP.Service.Services.CleaningService1
             }
             
             if (services == null || !services.Any())
-                return new ServiceOverviewListDTO();
+                return new ServiceOverviewListDTO
+                {
+                    Items = new()
+                };
 
             if (pageIndex == null || pageSize == null)
             {
