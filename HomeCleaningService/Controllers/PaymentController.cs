@@ -2,8 +2,11 @@
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
+using HCP.Service.DTOs.CheckoutDTO;
+using HCP.Service.DTOs.PaymentDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
+using HCP.Service.Services.CheckoutService;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
 using HCP.Service.Services.TemporaryService;
@@ -12,6 +15,7 @@ using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HomeCleaningService.Controllers
 {
@@ -28,9 +32,9 @@ namespace HomeCleaningService.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICustomerService _customerService;
         private readonly ITemporaryStorage _tempStorage;
+        private readonly ICheckoutService _checkoutService;
 
-
-public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, string vnpHashSecret, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage)
+        public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, string vnpHashSecret, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage, ICheckoutService checkoutService)
         {
             _bookingService = bookingService;
             _userManager = userManager;
@@ -41,6 +45,7 @@ public PaymentController(IBookingService bookingService, UserManager<AppUser> us
             _unitOfWork = unitOfWork;
             _customerService = customerService;
             _tempStorage = tempStorage;
+            _checkoutService = checkoutService;
         }
 
         [HttpPost]
@@ -97,66 +102,78 @@ public PaymentController(IBookingService bookingService, UserManager<AppUser> us
                 return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
-        //[HttpPost("CreatePayment")]
-        //[Authorize]
-        //public async Task<IActionResult> CreatePayment([FromBody] ConfirmBookingDTO request, string paymentMethod = KeyConst.VnPay)
-        //{
-        //    var userClaims = User;
-        //    try
-        //    {
-                // Create the booking
-                //await _tempStorage.StoreAsync(request, userClaims);
-                //var booking = await _bookingService.CreateBookingAsync(request, userClaims);
-                //await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, paymentMethod);
-                // Generate the VNPay payment URL
-        //        string paymentUrl = ivnpay.CreatePaymentUrl(booking);
-
-        //        return Ok(new { url = paymentUrl });
-        //    }
-        //    catch (UnauthorizedAccessException ex)
-        //    {
-        //        return Unauthorized(new AppResponse<string>().SetErrorResponse(KeyConst.Unathorized, ex.Message));
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, ex.Message));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
-        //    }
-        //}
-
-        [HttpGet("PaymentReturn-VNPAY")]
-        public IActionResult PaymentReturn()
+        [HttpPost("CreatePayment")]
+        [Authorize]
+        public async Task<IActionResult> CreatePayment([FromBody] PaymentBodyDTO dto)
         {
-            string queryString = Request.QueryString.Value;
-            if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid orderId))
+            var userClaims = User;
+            try
             {
 
-                var paymentStatus = Request.Query["vnp_ResponseCode"];
+                if (dto.PaymentMethod.ToUpper() == "WALLET")
+                {
+                    var userId = userClaims.FindFirst("id")?.Value;
+                    if (string.IsNullOrEmpty(userId))
+                        throw new UnauthorizedAccessException("User ID not found in claims");
+
+                    var walletBalance = await _walletService.getUserBalance(User);
+                    if (walletBalance < (double)dto.Amount)
+                        return BadRequest(new AppResponse<string>()
+                            .SetErrorResponse("INSUFFICIENT_FUNDS", "Not enough funds in wallet"));
+
+                    await _walletService.DeduceFromWallet(User, dto.Amount);
+                    //de transaction cho Thinh lam
+
+                    return Ok(new { url = $"http://localhost:5173/service/Checkout/success" });
+                }
+                else 
+                {
+                    await _tempStorage.StoreAsync(dto);
+                    dto.Uid = userClaims.FindFirst("id")?.Value;
+                    string paymentUrl = ivnpay.CreatePaymentUrl(dto);
+                    return Ok(new { url = paymentUrl });
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new AppResponse<string>().SetErrorResponse(KeyConst.Unathorized, ex.Message));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.NotFound, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
+            }
+        }
+
+        [HttpGet("PaymentReturn-VNPAY")]
+        public async Task<IActionResult> PaymentReturn()
+        {
+            string queryString = Request.QueryString.Value;
+            var paymentStatus = Request.Query["vnp_ResponseCode"];
+            if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid Id))
+            {
                 if (paymentStatus == PaymentConst.SuccessCode)
                 {
-
+                    var dto =await _tempStorage.RetrieveAsync(Id);
+                    var body =await _checkoutService.GetCheckoutById(Id);
+                    var booking = await _bookingService.CreateBookingAsync1(body,dto.Uid);
+                    await _bookingService.CreatePayment(booking.Id,booking.TotalPrice,dto.PaymentMethod);
                     //return Redirect("https://www.google.com/");                                 
                     return Redirect("http://localhost:5173/service/Checkout/success");
                 }
-                else
-                {
-                    _bookingService.UpdateStatusBooking(orderId, PaymentConst.IsDeleted);
-                    return Redirect("http://localhost:5173/service/Checkout/fail");
-
-                }
             }
-            return BadRequest(PaymentConst.InvalidError);
+            return Redirect("http://localhost:5173/service/Checkout/fail");
+
+
         }
         [HttpGet("PaymentDepositReturn-VNPAY")]
         public async Task<IActionResult> PaymentDepositReturn()
         {
             string queryString = Request.QueryString.Value;
-            //var vnp_HashSecret = "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T";
             var vnp_HashSecret = _vnpHashSecret;
-            // Retrieve the order ID from the query string
             if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid transactId))
             {
                 if (true)

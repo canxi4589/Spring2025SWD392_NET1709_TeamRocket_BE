@@ -42,7 +42,7 @@ namespace HomeCleaningService.Controllers
         {
             var services = await _cleaningService.GetAllServiceItems(
                 request.UserPlaceId,
-                request.MaxDistanceKm,
+                null,
                 request.PageIndex,
                 request.PageSize,
                 request.CategoryIds,
@@ -170,7 +170,7 @@ namespace HomeCleaningService.Controllers
 
             try
             {
-                var sasUrls = await _blobStorageService.UploadFilesAsync(files);
+                var sasUrls = await _blobStorageService.UploadFilesAsyncWithoutSAS(files);
                 return Ok(response.SetSuccessResponse(sasUrls, KeyConst.Upload, CommonConst.SuccessTaskMessage));
             }
             catch (Exception ex)
