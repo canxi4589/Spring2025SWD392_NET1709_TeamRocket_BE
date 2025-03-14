@@ -333,12 +333,24 @@ namespace HCP.Service.Services.WalletService
         {
             return user.BalanceWallet;
         }
+        public async Task DeduceFromWallet(ClaimsPrincipal user,decimal amount)
+        {
+            var user1 = await _userManager.GetUserAsync(user);
+            user1.BalanceWallet -=(double)amount;
+            await _userManager.UpdateAsync(user1);
+        }
         public async Task<double> VNDMoneyExchangeFromUSD(decimal amount)
         {
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(amount, CultureInfo.InvariantCulture);
             return Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
+        }
+
+        public async Task<double> getUserBalance(ClaimsPrincipal user)
+        {
+            var user1 = await _userManager.GetUserAsync(user);
+            return user1.BalanceWallet;
         }
     }
 }

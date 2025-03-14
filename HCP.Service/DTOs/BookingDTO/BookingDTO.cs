@@ -54,7 +54,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public string? exchangeRate {  get; set; }
         public decimal TotalPrice {  get; set; }
         public List<BookingAdditionalDTO> BookingAdditionalDTOs = new List<BookingAdditionalDTO>();
-        public List<PaymentMethodDTO> PaymentMethods { get; set; } = new List<PaymentMethodDTO>();
+        public List<PaymentMethodDTO1> PaymentMethods { get; set; } = new List<PaymentMethodDTO1>();
     }
     public class BillingAddress
     {
@@ -74,7 +74,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public decimal Price {  get; set; }
         public double? Duration {  get; set; }
     }
-    public class PaymentMethodDTO
+    public class PaymentMethodDTO1
     {
         public string Name { get; set; }
         public bool IsChoosable { get; set; }
