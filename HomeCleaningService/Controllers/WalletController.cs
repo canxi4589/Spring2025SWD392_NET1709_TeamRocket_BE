@@ -10,6 +10,7 @@ using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 
 namespace HomeCleaningService.Controllers
 {
@@ -76,6 +77,18 @@ namespace HomeCleaningService.Controllers
         {
             var returnAmount = await _walletService.VNDMoneyExchangeFromUSD(amount);
             return Ok(new AppResponse<double>().SetSuccessResponse(returnAmount));
+        }
+        [HttpGet("revenueHousekeeperData")]
+        [Authorize(Roles = KeyConst.Housekeeper)]
+        public async Task<IActionResult> GetRevenueHousekeeperData(bool dayRevenue, bool weekRevenue, bool yearRevenue, bool yearsRevenue, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var chartData = await _walletService.GetRevenueHousekeeperDatas(user, dayRevenue, weekRevenue, yearRevenue, yearsRevenue, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
+                return Ok(new AppResponse<RevenueHousekeeperDatasListShowDTO>().SetSuccessResponse(chartData));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.NotFoundError));
         }
     }
 }

@@ -84,4 +84,13 @@ namespace HCP.Service.DTOs.WalletDTO
         public string UserId { get; set; }
         public Guid? ReferenceId { get; set; }
     }
+    public class RevenueHousekeeperDatasShowDTO
+    {
+        public double revenue { get; set; }
+        public string name { get; set; }
+    }
+    public class RevenueHousekeeperDatasListShowDTO
+    {
+        public List<RevenueHousekeeperDatasShowDTO> ChartData { get; set; }
+    }
 }
