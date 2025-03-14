@@ -43,23 +43,23 @@ namespace HCP.Service.Services.BookingService
             if (status != null)
             {
                 if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
-                if (status.Equals("Ongoing"))
+                if (status.Equals(BookingStatus.OnGoing.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnGoing.ToString());
                 }
-                if (status.Equals("Finished"))
+                if (status.Equals(BookingStatus.Finished.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Finished.ToString());
                 }
-                if (status.Equals("Canceled"))
+                if (status.Equals(BookingStatus.Canceled.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Canceled.ToString());
                 }
-                if (status.Equals("Refunded"))
+                if (status.Equals(BookingStatus.Refunded.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
                 }
-                if (status.Equals("Completed"))
+                if (status.Equals(BookingStatus.Completed.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Completed.ToString());
                 }
