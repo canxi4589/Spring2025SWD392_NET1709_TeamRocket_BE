@@ -406,11 +406,17 @@ namespace HCP.Service.Services.CleaningService1
 
             if (!string.IsNullOrEmpty(status))
             {
-                services = services.Where(c => c.Status == status);
+                if (!status.Contains(CommonConst.All, StringComparison.OrdinalIgnoreCase))
+                {
+                    services = services.Where(c => c.Status == status);
+                }
             }
-
+            
             if (services == null || !services.Any())
-                return null;
+                return new ServiceOverviewListDTO
+                {
+                    Items = new()
+                };
 
             if (pageIndex == null || pageSize == null)
             {

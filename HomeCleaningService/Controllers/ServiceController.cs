@@ -93,7 +93,10 @@ namespace HomeCleaningService.Controllers
             var service = await _cleaningService.GetServiceByUserFilter(status, User, pageIndex, pageSize);
 
             if (service == null)
-                return NotFound(new AppResponse<ServiceOverviewListDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
+            {
+                var errorResponse = new AppResponse<object>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage);
+                return BadRequest(errorResponse);
+            }
 
             return Ok(new AppResponse<ServiceOverviewListDTO>().SetSuccessResponse(service));
         }

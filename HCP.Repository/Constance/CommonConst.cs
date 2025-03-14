@@ -18,5 +18,8 @@ namespace HCP.Repository.Constance
 
         //Success
         public const string SuccessTaskMessage = "Task done successfully";
+
+        //Filter
+        public const string All = "All";
     }
 }
