@@ -82,6 +82,35 @@ namespace HomeCleaningService.Controllers
                 return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
-
+        [HttpPost("submit-proof")]
+        [Authorize]
+        public async Task<IActionResult> SubmitBookingProof([FromBody] SubmitBookingProofDTO dto)
+        {
+            try
+            {
+                var proof = await _bookingService.SubmitBookingProofAsync(dto);
+                var successResponse = new AppResponse<BookingFinishProof>()
+                    .SetSuccessResponse(proof, KeyConst.BookingProof, BookingConst.ProofSubmittedSuccessfully);
+                return Ok(successResponse);
+            }
+            catch (KeyNotFoundException)
+            {
+                var errorResponse = new AppResponse<BookingFinishProof>()
+                    .SetErrorResponse(KeyConst.Booking, BookingConst.BookingNotFound);
+                return NotFound(errorResponse);
+            }
+            catch (InvalidOperationException)
+            {
+                var errorResponse = new AppResponse<BookingFinishProof>()
+                    .SetErrorResponse(KeyConst.Status, BookingConst.InvalidBookingStatusForProof);
+                return BadRequest(errorResponse);
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new AppResponse<BookingFinishProof>()
+                    .SetErrorResponse(KeyConst.Error, $"{BookingConst.ProofSubmissionFailed}: {ex.Message}");
+                return StatusCode(500, errorResponse);
+            }
+        }
     }
 }
