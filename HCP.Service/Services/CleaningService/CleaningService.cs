@@ -299,7 +299,7 @@ namespace HCP.Service.Services.CleaningService1
             );
 
             var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(
-                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart == targetDate,
+                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart.Date == targetDate.Date,
                 orderBy: b => b.OrderBy(c => c.TimeStart)
             );
 
