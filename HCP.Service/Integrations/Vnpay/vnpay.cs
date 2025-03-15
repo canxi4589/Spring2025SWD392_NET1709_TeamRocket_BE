@@ -91,7 +91,7 @@ namespace HCP.Service.Integrations.Vnpay
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
             return paymentUrl;
         }
-        public string CreateDepositPaymentUrl(WalletDepositRequestDTO walletTrans, string returnUrl)
+        public string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl)
         {
             returnUrl = "https://localhost:7143/api/Payment/PaymentDepositReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();

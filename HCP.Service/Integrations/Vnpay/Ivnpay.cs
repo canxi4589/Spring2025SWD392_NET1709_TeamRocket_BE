@@ -13,7 +13,7 @@ namespace HCP.Service.Integrations.Vnpay
 {
     public interface Ivnpay
     {
-        string CreateDepositPaymentUrl(WalletDepositRequestDTO walletTrans, string returnUrl);
+        string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl);
 
         string CreatePaymentUrl(Booking order);
         string CreatePaymentUrl(PaymentBodyDTO body);

@@ -84,8 +84,9 @@ namespace HomeCleaningService.Controllers
                 // Generate the VNPay payment URL
                 var returnUrl = "https://your-return-url.com";
                 var depoTransac = await _walletService.createDepositTransaction(amount, user);
-                await _tempStorage.StoreAsync(depoTransac);
-                string paymentUrl = ivnpay.CreateDepositPaymentUrl(depoTransac, returnUrl);
+                var walletTrans = _unitOfWork.Repository<WalletTransaction>().GetById(depoTransac.Id);
+                if (walletTrans == null) throw new Exception(TransactionConst.DepositFail);
+                string paymentUrl = ivnpay.CreateDepositPaymentUrl(walletTrans, returnUrl);
 
                 return Ok(new { url = paymentUrl });
             }
@@ -183,13 +184,13 @@ namespace HomeCleaningService.Controllers
                     var paymentStatus = Request.Query["vnp_ResponseCode"];
                     if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
                     {
-                        await _walletService.processDepositTransaction(_tempStorage.RetrieveDepositAsync(transactId), true);
+                        await _walletService.processDepositTransaction(transactId, true);
                         //return Redirect("https://www.google.com/");                                   // Redirect to success page
                         return Redirect("http://localhost:5173/wallet/deposit/success");
                     }
                     else
                     {
-                        await _walletService.processDepositTransaction(_tempStorage.RetrieveDepositAsync(transactId), false);
+                        await _walletService.processDepositTransaction(transactId, false);
                         return Redirect("http://localhost:5173/wallet/deposit/fail");
                     }
                 }

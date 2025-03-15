@@ -250,47 +250,56 @@ namespace HCP.Service.Services.WalletService
         }
 
         //This method is used to create a deposit transaction, store it in the temporary storage and return the transaction
-        public async Task<WalletDepositRequestDTO> createDepositTransaction(decimal amount, AppUser user)
+        public async Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user)
         {
             Guid id = Guid.NewGuid();
-            var wTransaction = new WalletDepositRequestDTO
+            var wTransaction = new WalletTransaction
             {
                 Id = id,
                 AfterAmount = 0,
                 Current = (Decimal)user.BalanceWallet,
+                User = user,
                 UserId = user.Id,
                 Amount = amount,
                 Type = TransactionType.Deposit.ToString(),
                 Status = TransactionStatus.Pending.ToString(),
                 CreatedDate = DateTime.Now
             };
-            await _temporaryStorage.StoreAsync(wTransaction);
-            return wTransaction;
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new WalletTransactionDepositResponseDTO
+            {
+                Id = id,
+                Amount = (Double)wTransaction.Amount,
+                Current = (Double)wTransaction.Current,
+                AfterAmount = (Double)wTransaction.AfterAmount,
+                Type = wTransaction.Type,
+                UserId = user.Id,
+                FullName = user.FullName,
+                Mail = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Status = wTransaction.Status,
+                CreatedDate = wTransaction.CreatedDate,
+                Description = "Deposit pending!"
+            };
         }
 
         //This method is used to process the deposit transaction, take the transaction from the temporary storage and process it, including updating the user's balance
-        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Task<WalletDepositRequestDTO> readyTransact, bool successOrNot)
+        public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot)
         {
             if (successOrNot)
             {
-                if (readyTransact == null) throw new Exception(TransactionConst.NotFoundError);
-                var user = await _userManager.FindByIdAsync(readyTransact.Result.UserId);
+                var wTransaction = await _unitOfWork.Repository<WalletTransaction>().FindAsync(c => c.Id.Equals(depoTrans));
+                if (wTransaction == null) throw new Exception(TransactionConst.NotFoundError);
+                var user = await _userManager.FindByIdAsync(wTransaction.UserId);
                 if (user == null) throw new Exception(CustomerConst.NotFoundError);
-                var wTransaction = new WalletTransaction
-                {
-                    Id = readyTransact.Result.Id,
-                    AfterAmount = (Decimal)user.BalanceWallet + readyTransact.Result.Amount,
-                    Current = (Decimal)user.BalanceWallet,
-                    User = user,
-                    UserId = user.Id,
-                    Amount = readyTransact.Result.Amount,
-                    Type = readyTransact.Result.Type,
-                    Status = TransactionStatus.Done.ToString(),
-                    CreatedDate = DateTime.Now
-                };
+                wTransaction.AfterAmount = (Decimal)user.BalanceWallet + wTransaction.Amount;
+                wTransaction.Current = (Decimal)user.BalanceWallet;
+                wTransaction.Status = TransactionStatus.Done.ToString();
                 user.BalanceWallet += (double)wTransaction.Amount;
                 await _userManager.UpdateAsync(user);
-                await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
+                _unitOfWork.Repository<WalletTransaction>().Update(wTransaction);
                 await _unitOfWork.SaveChangesAsync();
 
                 return new WalletTransactionDepositResponseDTO
@@ -311,21 +320,12 @@ namespace HCP.Service.Services.WalletService
             }
             else
             {
-                if (readyTransact == null) throw new Exception(TransactionConst.NotFoundError);
-                var user = await _userManager.FindByIdAsync(readyTransact.Result.UserId);
-                if (user == null) throw new Exception(CustomerConst.NotFoundError);
-                var wTransaction = new WalletTransaction
-                {
-                    Id = readyTransact.Result.Id,
-                    AfterAmount = (Decimal)user.BalanceWallet,
-                    Current = (Decimal)user.BalanceWallet,
-                    User = user,
-                    UserId = user.Id,
-                    Amount = readyTransact.Result.Amount,
-                    Type = readyTransact.Result.Type,
-                    Status = TransactionStatus.Fail.ToString(),
-                    CreatedDate = DateTime.Now
-                };
+                var wTransaction = await _unitOfWork.Repository<WalletTransaction>().FindAsync(c => c.Id.Equals(depoTrans));
+                if (wTransaction == null) throw new Exception(TransactionConst.NotFoundError);
+                var user = wTransaction.User;
+                wTransaction.AfterAmount = (Decimal)user.BalanceWallet;
+                wTransaction.Current = (Decimal)user.BalanceWallet;
+                wTransaction.Status = TransactionStatus.Fail.ToString();
                 await _unitOfWork.SaveChangesAsync();
                 return new WalletTransactionDepositResponseDTO
                 {
