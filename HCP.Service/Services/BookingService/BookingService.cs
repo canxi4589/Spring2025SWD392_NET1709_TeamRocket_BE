@@ -547,7 +547,40 @@ namespace HCP.Service.Services.BookingService
 
             return new BookingListResponseDto { Items = bookings, TotalCount = totalCount };
         }
+        public async Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto)
+        {
 
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var booking = await bookingRepository.FindAsync(
+                b => b.Id == dto.BookingId
+            );
+
+            if (booking == null)
+            {
+                throw new KeyNotFoundException("Booking not found");
+            }
+            var validStatuses = new[] { "OnGoing", "Paid" };
+            if (!validStatuses.Contains(booking.Status))
+            {
+                throw new InvalidOperationException("Proof can only be submitted for OnGoing or Paid bookings");
+            }
+
+            var proof = new BookingFinishProof
+            {
+                BookingId = dto.BookingId,
+                Title = dto.Title,
+                ImgUrl = dto.ImgUrl,
+            };
+
+            booking.Status = BookingStatus.Completed.ToString();
+            booking.CompletedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Repository<BookingFinishProof>().AddAsync(proof);
+            bookingRepository.Update(booking); 
+            await _unitOfWork.Complete();
+
+            return proof;
+        }
 
 
     }

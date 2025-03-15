@@ -21,5 +21,6 @@ namespace HCP.Service.Services.BookingService
         Task<Payment> UpdatePaymentStatusAsync(Guid paymentId, string status);
         Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize, string? Status);
         Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid);
+        Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto);
     }
 }

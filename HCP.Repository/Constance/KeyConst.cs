@@ -26,6 +26,9 @@ namespace HCP.Repository.Constance
         public const string Unathorized = "Unauthorized";
         public const string NotFound = "Not Found";
         public const string Unknown = "Unknown";
+        public const string Booking = "Booking";
+        public const string BookingProof = "Booking Proof";
+        public const string Status = "status";
 
         //others
         public const string VnPay = "Vnpay";
