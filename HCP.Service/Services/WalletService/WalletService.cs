@@ -404,7 +404,7 @@ namespace HCP.Service.Services.WalletService
                     // Define the start and end of the month
                     var monthStartDate = new DateTime(yearStart.Value, month, 1);
                     var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
-                    var monthlyRevenue = payments.Where(p => p.PaymentDate >= monthStartDate && p.PaymentDate <= monthEndDate).Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                    var monthlyRevenue = payments.Where(p => p.PaymentDate >= monthStartDate && p.PaymentDate <= monthEndDate).Sum(p => p.Amount) * 0.9m; // 90% of the amount
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
                         name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
@@ -423,7 +423,7 @@ namespace HCP.Service.Services.WalletService
 
                     var yearlyRevenue = payments
                         .Where(p => p.PaymentDate >= yearStartDate && p.PaymentDate <= yearEndDate)
-                        .Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                        .Sum(p => p.Amount) * 0.9m; // 90% of the amount
 
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
@@ -444,7 +444,7 @@ namespace HCP.Service.Services.WalletService
                 {
                     var dailyRevenue = payments
                         .Where(p => p.PaymentDate.Date == date.Date)
-                        .Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                        .Sum(p => p.Amount) * 0.9m; // 90% of the amount
                     totalRevenue += dailyRevenue;
                 }
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
