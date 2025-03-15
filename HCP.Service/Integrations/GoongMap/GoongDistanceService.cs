@@ -1,8 +1,10 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -92,7 +94,7 @@ public class GoongDistanceService : IGoongDistanceService
             {
                 var lat = geometry.GetProperty("location").GetProperty("lat").GetDouble();
                 var lng = geometry.GetProperty("location").GetProperty("lng").GetDouble();
-                var coordinates = $"{lat},{lng}";
+                var coordinates = string.Format(CultureInfo.InvariantCulture, "{0},{1}", lat, lng);
 
                 _logger.LogInformation("Coordinates retrieved for Place ID {PlaceId}: {Coordinates}", placeId, coordinates);
                 return coordinates;
@@ -196,7 +198,7 @@ public class GoongDistanceService : IGoongDistanceService
 
     private bool IsServiceBookable(CleaningService service, double distance)
     {
-        return service.Status == "Active" &&
+        return service.Status == ServiceStatus.Active.ToString() &&
                service.ServiceTimeSlots.Any(slot => slot.Status != "hehe") && 
                service.DistancePricingRules.Any(rule =>
                    rule.IsActive &&
@@ -227,8 +229,10 @@ public class GoongDistanceService : IGoongDistanceService
             return distances;
         }
 
-        var destinations = string.Join("|", destinationPlaceIds);
-        var url = $"https://rsapi.goong.io/DistanceMatrix?origins=place_id:{originPlaceId}&destinations=place_id:{destinations}&vehicle=car&api_key={GoongApiKey}";
+        var destination = destinationPlaceIds.Select( async c => await GetLatLngFromPlaceId(c));
+        var origin = await GetLatLngFromPlaceId(originPlaceId);
+        var destinations = string.Join("|", destination);
+        var url = $"https://rsapi.goong.io/DistanceMatrix?origins=place_id:{origin}&destinations=place_id:{destinations}&vehicle=car&api_key={GoongApiKey}";
 
         _logger.LogInformation("Calling Goong Distance API: {Url}", url);
 
@@ -258,7 +262,7 @@ public class GoongDistanceService : IGoongDistanceService
                 if (elements[i].TryGetProperty("distance", out var distanceElement))
                 {
                     var distanceInMeters = distanceElement.GetProperty("value").GetDouble();
-                    distances[destinationPlaceIds[i]] = distanceInMeters / 1000.0; // Convert to km
+                    distances[destinationPlaceIds[i]] = distanceInMeters / 1000.0;
                 }
                 else
                 {

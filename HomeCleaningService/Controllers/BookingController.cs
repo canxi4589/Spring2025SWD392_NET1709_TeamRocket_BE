@@ -67,7 +67,6 @@ namespace HomeCleaningService.Controllers
         {
             var userClaims = User;
             var response = new AppResponse<BookingListResponseDto>();
-
             try
             {
                 var result = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
