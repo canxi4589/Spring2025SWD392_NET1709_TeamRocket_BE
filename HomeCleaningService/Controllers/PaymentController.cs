@@ -1,6 +1,7 @@
 ﻿using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
+using HCP.Service.DTOs;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.DTOs.PaymentDTO;
@@ -161,6 +162,8 @@ namespace HomeCleaningService.Controllers
                     var body =await _checkoutService.GetCheckoutById(Id);
                     var booking = await _bookingService.CreateBookingAsync1(body,dto.Uid);
                     await _bookingService.CreatePayment(booking.Id,booking.TotalPrice,dto.PaymentMethod);
+                    var user = await _userManager.FindByIdAsync(dto.Uid);
+                    _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
                     //return Redirect("https://www.google.com/");                                 
                     return Redirect("http://localhost:5173/service/Checkout/success");
                 }
