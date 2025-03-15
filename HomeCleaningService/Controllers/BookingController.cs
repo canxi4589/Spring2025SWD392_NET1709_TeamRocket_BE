@@ -61,6 +61,13 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound();
         }
+        [HttpGet("bookingCountHousekeeper")]
+        [Authorize]
+        public async Task<IActionResult> GetBookingCountByHousekeeper()
+        {
+            var bookingCount = await _bookingService.GetBookingCountHousekeeper(User);
+            return Ok(new AppResponse<BookingCountDTO>().SetSuccessResponse(bookingCount));
+        }
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetHousekeeperBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)

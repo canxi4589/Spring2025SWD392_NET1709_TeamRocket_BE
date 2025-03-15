@@ -18,6 +18,14 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public bool hasNext {  get; set; }
         public bool hasPrevious { get; set; }
     }
+    public class CleaningServiceTopListDTO
+    {
+        public List<CleaningServiceTopItemsDTO> Items {  get; set; }
+        public int totalCount {  get; set; }
+        public int totalPages { get; set; }
+        public bool hasNext {  get; set; }
+        public bool hasPrevious { get; set; }
+    }
     public class CleaningServiceItemDTO
     {
         public Guid id { get; set; }
@@ -28,6 +36,19 @@ namespace HCP.Service.DTOs.CleaningServiceDTO
         public string location { get; set; }
         public string? Url {  get; set; }
         public string? CategoryName { get; set; }
+    }
+    public class CleaningServiceTopItemsDTO
+    {
+        public Guid id { get; set; }
+        public string category { get; set; }
+        public string name { get; set; }
+        public decimal overallRating { get; set; }
+        public decimal price {  get; set; }
+        public string location { get; set; }
+        public string? Url {  get; set; }
+        public string? CategoryName { get; set; }
+        public decimal revenue { get; set; }
+        public int NumberOfBooking { get; set; }
     }
     public class CategoryDTO
     {

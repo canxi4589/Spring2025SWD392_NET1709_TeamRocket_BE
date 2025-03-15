@@ -15,6 +15,7 @@ namespace HCP.Service.Services.BookingService
         Task<CheckoutResponseDTO> GetCheckoutInfo(CheckoutRequestDTO request, ClaimsPrincipal userClaims);
         Task<Booking> CreateBookingAsync(CheckoutResponseDTO1 dto, ClaimsPrincipal userClaims);
         Task<Booking> GetBookingById(Guid id);
+        Task<BookingCountDTO> GetBookingCountHousekeeper(ClaimsPrincipal claim);
         Booking UpdateStatusBooking(Guid id, string status);
         Task DeleteBooking(Guid id);
         Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay");

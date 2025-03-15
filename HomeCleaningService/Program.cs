@@ -147,10 +147,10 @@ builder.Services.AddScoped<IAdminManService, AdminManService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
-
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 
 
+builder.Services.AddHostedService<AllBackGroundService>();
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

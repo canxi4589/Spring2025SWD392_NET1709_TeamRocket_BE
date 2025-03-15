@@ -12,6 +12,7 @@ using HCP.Service.DTOs.CleaningServiceDTO;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 using HCP.Repository.Constance;
 using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
+using HCP.Service.DTOs.BookingDTO;
 
 namespace HomeCleaningService.Controllers
 {
@@ -57,6 +58,12 @@ namespace HomeCleaningService.Controllers
             var chartData = await _adminManService.GetRevenueChartDatas(dayChart, weekChart, yearChart, yearsChart, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
             return Ok(new AppResponse<ChartDataAdminShowListDTO>().SetSuccessResponse(chartData));
         }
-
+        [HttpGet("bookingsAdminView")]
+        [Authorize(Roles = KeyConst.Admin)]
+        public async Task<IActionResult> GetAllBookingByCateAndService(bool isService, bool isCategory, Guid Id, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
+        {
+            var list = await _adminManService.GetAllBookingByCateAndServiceAdmin(isService, isCategory, Id, pageIndex, pageSize, status, day, month, year);
+            return Ok(new AppResponse<BookingHistoryResponseListDTO>().SetSuccessResponse(list));
+        }
     }
 }

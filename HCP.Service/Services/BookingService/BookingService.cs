@@ -6,6 +6,7 @@ using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Humanizer;
 using Microsoft.AspNetCore.Identity;
@@ -25,11 +26,13 @@ namespace HCP.Service.Services.BookingService
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> userManager;
         private readonly IGoongDistanceService _goongDistanceService;
-        public BookingService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IGoongDistanceService goongDistanceService)
+        private readonly ICustomerService _customerService;
+        public BookingService(ICustomerService customerService, IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IGoongDistanceService goongDistanceService)
         {
             _unitOfWork = unitOfWork;
             this.userManager = userManager;
             _goongDistanceService = goongDistanceService;
+            _customerService = customerService;
         }
         public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
@@ -46,10 +49,6 @@ namespace HCP.Service.Services.BookingService
                 if (status.Equals(BookingStatus.OnGoing.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnGoing.ToString());
-                }
-                if (status.Equals(BookingStatus.Finished.ToString()))
-                {
-                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Finished.ToString());
                 }
                 if (status.Equals(BookingStatus.Canceled.ToString()))
                 {
@@ -243,6 +242,20 @@ namespace HCP.Service.Services.BookingService
             var bookingRepository = await _unitOfWork.Repository<Booking>().GetEntityByIdAsync(id);
             return bookingRepository;
 
+        }
+
+        public async Task<BookingCountDTO> GetBookingCountHousekeeper(ClaimsPrincipal claim)
+        {
+            var user = await _customerService.GetCustomerAsync(claim);
+            var bookingRepository = _unitOfWork.Repository<Booking>().GetAll()
+                .Include(c => c.CleaningService).Where(s => s.CleaningService.UserId == user.Id).ToList();
+            return new BookingCountDTO
+            {
+                UpcomingBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.OnGoing.ToString())).Count(),
+                CompletedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Completed.ToString())).Count(),
+                CanceledBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Canceled.ToString())).Count(),
+                RefundedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Refunded.ToString())).Count()
+            };
         }
         public Booking UpdateStatusBooking(Guid id, string status)
         {

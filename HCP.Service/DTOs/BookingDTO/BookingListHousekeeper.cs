@@ -15,6 +15,13 @@ namespace HCP.Service.DTOs.BookingDTO
         public int TotalCount { get; set; }
     }
 
+    public class BookingCountDTO
+    {
+        public int UpcomingBookings { get; set; }
+        public int CompletedBookings { get; set; }
+        public int CanceledBookings { get; set; }
+        public int RefundedBookings { get; set; }
+    }
     public class BookingListItemDto
     {
         public Guid Id { get; set; }

@@ -12,6 +12,8 @@ using System.Globalization;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
 using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 using HCP.Repository.Enums;
+using HCP.Service.DTOs.BookingDTO;
+using System.Security.Claims;
 
 namespace HCP.Service.Services.AdminManService
 {
@@ -83,7 +85,7 @@ namespace HCP.Service.Services.AdminManService
         }
         public async Task<ServiceCategoryAdminShowListDTO> GetAllServiceCategoriesAsync(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
-            var categories = _unitOfWork.Repository<ServiceCategory>().GetAll();
+            var categories = _unitOfWork.Repository<ServiceCategory>().GetAll().Include(c => c.CleaningServices).ThenInclude(c => c.Bookings);
             var categorieList = categories.Select(category => new ServiceCategoryAdminShowDTO
             {
                 CategoryName = category.CategoryName,
@@ -91,7 +93,8 @@ namespace HCP.Service.Services.AdminManService
                 PictureUrl = category.PictureUrl,
                 CreatedAt = category.CreatedAt,
                 UpdatedAt = category.UpdatedAt,
-                Description = category.Description
+                Description = category.Description,
+                NumberOfBooking = category.CleaningServices.Sum(cs => cs.Bookings.Count)
             });
             if (!search.IsNullOrEmpty())
             {
@@ -129,7 +132,7 @@ namespace HCP.Service.Services.AdminManService
             var services = await _unitOfWork.Repository<CleaningService>()
                 .GetAll()
                 .Include(c => c.User)
-                .Include(c => c.ServiceImages)
+                .Include(c => c.ServiceImages).Include(c => c.Bookings)
                 .ToListAsync();
 
             var svList = new List<ServiceAdminShowDTO>();
@@ -157,7 +160,8 @@ namespace HCP.Service.Services.AdminManService
                     HousekeeperName = service.User?.FullName ?? "Not found",
                     StaffId = service.StaffId ?? "Not found",
                     StaffName = staff?.FullName ?? "Not found",
-                    FirstImgLinkUrl = service.ServiceImages.FirstOrDefault()?.LinkUrl
+                    FirstImgLinkUrl = service.ServiceImages.FirstOrDefault()?.LinkUrl,
+                    NumberOfBooking = service.Bookings.Count()
                 });
             }
             if (!search.IsNullOrEmpty())
@@ -203,7 +207,7 @@ namespace HCP.Service.Services.AdminManService
         {
             var chartDataList = new List<ChartDataAdminShowDTO>();
 
-            // Query payments with status "finished" and include booking
+            // Query payments with status "Completed" and include booking
             var payments = _unitOfWork.Repository<Payment>()
                 .GetAll()
                 .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Completed.ToString()))
@@ -270,6 +274,74 @@ namespace HCP.Service.Services.AdminManService
             return new ChartDataAdminShowListDTO
             {
                 ChartData = chartDataList
+            };
+        }
+        public async Task<BookingHistoryResponseListDTO> GetAllBookingByCateAndServiceAdmin(bool isService, bool isCategory, Guid Id, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
+        {
+
+            var bookingHistoryList = _unitOfWork.Repository<Booking>().GetAll().Include(c => c.CleaningService).ThenInclude(c => c.Category).OrderByDescending(c => c.PreferDateStart)
+                .Where(c => (isCategory && c.CleaningService.Category.Id == Id) || (isService && c.CleaningService.Id == Id));
+            if (day.HasValue && month.HasValue && year.HasValue)
+            {
+                //var targetDay = new DateTime(day.Value, year.Value, month.
+                bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList
+                    .Where(c => (c.PreferDateStart.Day == day && c.PreferDateStart.Month == month && c.PreferDateStart.Year == year));
+            }
+            if (status != null)
+            {
+                if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
+                if (status.Equals(BookingStatus.OnGoing.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnGoing.ToString());
+                }
+                if (status.Equals(BookingStatus.Canceled.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Canceled.ToString());
+                }
+                if (status.Equals(BookingStatus.Refunded.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
+                }
+                if (status.Equals(BookingStatus.Completed.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Completed.ToString());
+                }
+            }
+            var bookingList = bookingHistoryList.Select(c => new BookingHistoryResponseDTO
+            {
+                BookingId = c.Id,
+                PreferDateStart = c.PreferDateStart,
+                TimeStart = c.TimeStart,
+                TimeEnd = c.TimeEnd,
+                Status = c.Status,
+                TotalPrice = c.TotalPrice,
+                Note = c.Note,
+                Location = c.AddressLine + ", " + c.District + ", " + c.City,
+                ServiceName = c.CleaningService.ServiceName,
+                CleaningServiceDuration = c.CleaningService.Duration,
+                isRating = c.isRating,
+                CleaningServiceId = c.CleaningServiceId
+            });
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = await PaginatedList<BookingHistoryResponseDTO>.CreateAsync(bookingList, 1, bookingList.Count());
+                return new BookingHistoryResponseListDTO
+                {
+                    Items = temp1,
+                    hasNext = temp1.HasNextPage,
+                    hasPrevious = temp1.HasPreviousPage,
+                    totalCount = temp1.Count(),
+                    totalPages = temp1.TotalPages,
+                };
+            }
+            var temp2 = await PaginatedList<BookingHistoryResponseDTO>.CreateAsync(bookingList, (int)pageIndex, (int)pageSize);
+            return new BookingHistoryResponseListDTO
+            {
+                Items = temp2,
+                hasNext = temp2.HasNextPage,
+                hasPrevious = temp2.HasPreviousPage,
+                totalCount = bookingList.Count(),
+                totalPages = temp2.TotalPages,
             };
         }
     }

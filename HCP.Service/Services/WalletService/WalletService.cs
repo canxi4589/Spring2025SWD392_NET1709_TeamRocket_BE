@@ -97,7 +97,7 @@ namespace HCP.Service.Services.WalletService
             if (searchField.Equals(TransactionType.Deposit.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
 
             if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()))
@@ -388,7 +388,7 @@ namespace HCP.Service.Services.WalletService
         {
             var chartDataList = new List<RevenueHousekeeperDatasShowDTO>();
 
-            // Query payments with status "finished" and include booking
+            // Query payments with status "Completed" and include booking
             var payments = await _unitOfWork.Repository<Payment>()
                 .GetAll()
                 .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Completed.ToString()))
@@ -439,19 +439,18 @@ namespace HCP.Service.Services.WalletService
                 // Day chart - show data for each day between start and end date
                 var startDate = new DateTime(yearStart.Value, monthStart.Value, dayStart.Value);
                 var endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
-                decimal totalRevenue = 0;
                 for (var date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     var dailyRevenue = payments
                         .Where(p => p.PaymentDate.Date == date.Date)
-                        .Sum(p => p.Amount) * 0.9m; // 90% of the amount
-                    totalRevenue += dailyRevenue;
-                }
+                        .Sum(p => p.Amount) * 0.9m; // 10% of the amount
+
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
-                        name = startDate.ToString("dd/MM/yyyy") + " - " + endDate.ToString("dd/MM/yyyy"),
-                        revenue = (double)totalRevenue
+                        name = date.ToString("dd/MM/yyyy"),
+                        revenue = (double)dailyRevenue
                     });
+                }
             }
             return new RevenueHousekeeperDatasListShowDTO
             {

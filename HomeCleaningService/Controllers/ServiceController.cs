@@ -55,6 +55,18 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<CleaningServiceListDTO>()
                 .SetSuccessResponse(services));
         }
+        [HttpPost("gettopservices")]
+        public async Task<IActionResult> GetTopServices(bool dayTop, bool weekTop, bool yearTop,
+            int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, 
+            int? dayEnd, int? monthEnd, int? yearEnd, string? search, int? tops = 3)
+        {
+            var services = await _cleaningService.GetTopServiceItems(User, dayTop, weekTop, yearTop, 
+                pageIndex, pageSize, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd,
+                search, tops);
+
+            return Ok(new AppResponse<CleaningServiceTopListDTO>()
+                .SetSuccessResponse(services));
+        }
 
         [HttpGet("filter-options")]
         public async Task<IActionResult> GetFilterOptions()
