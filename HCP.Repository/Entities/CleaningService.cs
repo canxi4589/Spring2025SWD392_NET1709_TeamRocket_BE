@@ -21,6 +21,7 @@ namespace HCP.Repository.Entities
         public string District { get; set; }
         public string PlaceId{ get; set; }
         public string AddressLine { get; set; }
+        public string? Cordinate { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public double Duration { get; set; }

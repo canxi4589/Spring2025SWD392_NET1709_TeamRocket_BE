@@ -6,6 +6,7 @@ using HCP.Service.DTOs.CheckoutDTO;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 namespace HCP.Service.Services.CheckoutService
 {
@@ -21,6 +22,7 @@ namespace HCP.Service.Services.CheckoutService
             _userManager = userManager;
             _goongDistanceService = goongDistanceService;
         }
+
         public async Task<CheckoutResponseDTO1> CreateCheckout(CheckoutRequestDTO1 requestDTO, ClaimsPrincipal user)
         {
             try
@@ -35,10 +37,9 @@ namespace HCP.Service.Services.CheckoutService
                 var checkoutService = await _unitOfWork.Repository<CleaningService>().GetEntityByIdAsync(requestDTO.ServiceId);
                 var checkoutTimeSlot = await _unitOfWork.Repository<ServiceTimeSlot>().GetEntityByIdAsync(requestDTO.ServiceTimeSlotId);
 
-                if (checkoutService == null || checkoutAddress == null || checkoutTimeSlot == null)
-                {
-                    throw new Exception(CommonConst.NotFoundError);
-                }
+                double? distance = await _goongDistanceService.GetDistanceAsync(checkoutAddress.PlaceId, checkoutService.PlaceId);
+                if (distance == null)
+                    throw new Exception(CommonConst.SomethingWrongMessage);
 
                 var customer = await _userManager.FindByIdAsync(userId);
                 if (customer == null)
@@ -46,8 +47,95 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception(CustomerConst.NotFoundError);
                 }
 
-                double? distance = await _goongDistanceService.GetDistanceAsync(checkoutAddress.PlaceId, checkoutService.PlaceId);
-                if (distance == null) throw new Exception(CommonConst.SomethingWrongMessage);
+                if (checkoutService == null || checkoutAddress == null || checkoutTimeSlot == null)
+                {
+                    throw new Exception(CommonConst.NotFoundError);
+                }
+
+                var checkouts = _unitOfWork.Repository<Checkout>()
+                    .GetAll()
+                    .Include(c => c.CheckoutAdditionalServices)
+                    .AsEnumerable(); 
+                var requestBookingDate = requestDTO.BookingDate.Date;
+
+                var filteredCheckouts = checkouts.Where(c =>
+                    c.CleaningServiceId == requestDTO.ServiceId &&
+                    c.AddressId == requestDTO.AddressId &&
+                    c.TimeSLotId == requestDTO.ServiceTimeSlotId
+                ).ToList();
+
+                if (!filteredCheckouts.Any())
+                {
+                    Console.WriteLine("No matching records found for ServiceId, AddressId, and TimeSlotId.");
+                    return null;
+                }
+
+                filteredCheckouts = filteredCheckouts
+                    .Where(c => c.BookingDate.Date == requestBookingDate)
+                    .ToList();
+
+                if (!filteredCheckouts.Any())
+                {
+                    Console.WriteLine("No matching records found with the same BookingDate.");
+                    return null;
+                }
+
+                var checkExistedCheckout = filteredCheckouts.FirstOrDefault(c =>
+                    (!c.CheckoutAdditionalServices.Any() && !requestDTO.AdditionalServices.Any()) ||
+                    c.CheckoutAdditionalServices
+                        .Select(s => s.AdditionalServiceId)
+                        .OrderBy(id => id)
+                        .SequenceEqual(requestDTO.AdditionalServices
+                            .Select(s => s.AdditionalServiceId)
+                            .OrderBy(id => id))
+                );
+
+
+                if (checkExistedCheckout != null)
+                {
+                    bool isWalletChoosableExisted = (decimal)customer.BalanceWallet >= checkExistedCheckout.TotalPrice;
+                    var paymentMethodsExisted = new List<PaymentMethodDTO>
+                    {
+                        new PaymentMethodDTO { Name = KeyConst.Wallet, IsChoosable = isWalletChoosableExisted },
+                        new PaymentMethodDTO { Name = KeyConst.VNPay, IsChoosable = true }
+                    };
+
+                    return new CheckoutResponseDTO1()
+                    {
+                        PaymentMethods = paymentMethodsExisted,
+                        Distance = $"{distance} km",
+                        CheckoutId = checkExistedCheckout.Id,
+                        CustomerId = checkExistedCheckout.CustomerId,
+                        AdditionalPrice = checkExistedCheckout.AdditionalPrice,
+                        DistancePrice = checkExistedCheckout.DistancePrice,
+                        TotalPrice = checkExistedCheckout.TotalPrice,
+                        AddressId = checkExistedCheckout.AddressId,
+                        AddressLine = checkExistedCheckout.AddressLine,
+                        BookingDate = checkExistedCheckout.BookingDate,
+                        City = checkExistedCheckout.City,
+                        CleaningServiceId = checkExistedCheckout.CleaningServiceId,
+                        CleaningServiceName = checkExistedCheckout.ServiceName,
+                        DateOfWeek = checkExistedCheckout.DayOfWeek,
+                        District = checkExistedCheckout.District,
+                        EndTime = checkExistedCheckout.EndTime,
+                        PlaceId = checkExistedCheckout.PlaceId,
+                        ServicePrice = checkExistedCheckout.ServicePrice,
+                        StartTime = checkExistedCheckout.StartTime,
+                        Status = checkExistedCheckout.Status,
+                        TimeSlotId = checkExistedCheckout.TimeSLotId,
+                        AdditionalServices = checkExistedCheckout.CheckoutAdditionalServices
+                .Select(a => new CheckoutAdditionalServiceResponseDTO
+                {
+                    AdditionalServiceId = a.AdditionalServiceId,
+                    AdditionalServiceName = a.AdditionalServiceName,
+                    Amount = a.Amount,
+                    IsActive = a.IsActive,
+                    Description = a.Description,
+                    Duration = a.Duration,
+                    Url = a.Url
+                }).ToList()
+                    };
+                }
 
                 var pricingRule = await _unitOfWork.Repository<DistancePricingRule>().GetEntityAsync(
                     rule => rule.CleaningServiceId == checkoutService.Id &&
@@ -85,7 +173,6 @@ namespace HCP.Service.Services.CheckoutService
                     TimeSLotId = requestDTO.ServiceTimeSlotId,
                     DistancePrice = distancePrice,
                     TotalPrice = checkoutService.Price + distancePrice,     // Update later with additional services
-
                 };
 
                 await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
@@ -132,7 +219,6 @@ namespace HCP.Service.Services.CheckoutService
                 await _unitOfWork.SaveChangesAsync();
 
                 bool isWalletChoosable = (decimal)customer.BalanceWallet >= checkout.TotalPrice;
-
                 var paymentMethods = new List<PaymentMethodDTO>
                     {
                         new PaymentMethodDTO { Name = KeyConst.Wallet, IsChoosable = isWalletChoosable },

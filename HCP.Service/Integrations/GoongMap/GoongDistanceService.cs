@@ -3,6 +3,7 @@ using HCP.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -92,7 +93,7 @@ public class GoongDistanceService : IGoongDistanceService
             {
                 var lat = geometry.GetProperty("location").GetProperty("lat").GetDouble();
                 var lng = geometry.GetProperty("location").GetProperty("lng").GetDouble();
-                var coordinates = $"{lat},{lng}";
+                var coordinates = string.Format(CultureInfo.InvariantCulture, "{0},{1}", lat, lng);
 
                 _logger.LogInformation("Coordinates retrieved for Place ID {PlaceId}: {Coordinates}", placeId, coordinates);
                 return coordinates;
