@@ -83,8 +83,13 @@ namespace HomeCleaningService.Controllers
         [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> processRefund(Guid refundRequestId, bool action)
         {
-            var refund = await _walletService.StaffProccessRefund(refundRequestId, action, User);
-            return Ok(new AppResponse<RefundRequestDTO>().SetSuccessResponse(refund));
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var refund = await _walletService.StaffProccessRefund(refundRequestId, action, user);
+                return Ok(new AppResponse<RefundRequestDTO>().SetSuccessResponse(refund));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, TransactionConst.RefundFail));
         }
         [HttpPost("processWithdraw")]
         [Authorize(Roles = KeyConst.Staff)]

@@ -166,9 +166,8 @@ namespace HCP.Service.Services.WalletService
 
             return refundRequest;
         }
-        public async Task<RefundRequestDTO> StaffProccessRefund(Guid refundId, bool action, ClaimsPrincipal claims)
+        public async Task<RefundRequestDTO> StaffProccessRefund(Guid refundId, bool action, AppUser staff)
         {
-            var staff = await _userManager.GetUserAsync(claims);
             var refund = _unitOfWork.Repository<RefundRequest>().GetById(refundId);
             if (refund == null) throw new Exception(TransactionConst.RefundProcessFail);
             var booking = _unitOfWork.Repository<Booking>().GetById(refund.BookingId);
