@@ -85,7 +85,7 @@ namespace HCP.Service.Integrations.Vnpay
             vnPay.AddRequestData("vnp_OrderType", "other");
             vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
             vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-            vnPay.AddRequestData("vnp_TxnRef", order.Id.ToString());
+            vnPay.AddRequestData("vnp_TxnRef", body.Id.ToString());
             vnPay.AddRequestData("vnp_Version", "2.1.0");
 
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);

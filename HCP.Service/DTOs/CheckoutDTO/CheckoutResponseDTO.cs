@@ -71,6 +71,7 @@ namespace HCP.Service.DTOs.CheckoutDTO
 
         [JsonPropertyName("payment_methods")]
         public List<PaymentMethodDTO> PaymentMethods { get; set; } = new();
+        public string? PaymentMethod {  get; set; }
     }
 
     public class CheckoutAdditionalServiceResponseDTO

@@ -382,5 +382,6 @@ namespace HCP.Service.Services.CheckoutService
                 PaymentMethods = paymentMethods
             };
         }
+
     }
 }

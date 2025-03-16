@@ -90,7 +90,6 @@ namespace HCP.Service.Services.TemporaryService
                 return JsonConvert.DeserializeObject<Test>(jsonData);
             }
             return null;
-
         }
         public async Task<ConfirmBookingDTO> RetrieveAsync(Guid orderId, ClaimsPrincipal userClaims)
         {
