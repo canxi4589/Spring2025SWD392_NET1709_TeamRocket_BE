@@ -38,7 +38,7 @@ namespace HCP.Service.DTOs.BookingDTO
         // Service Info
         public string ServiceName { get; set; }
         public string ServiceDescription { get; set; }
-        public string ServiceImageUrl { get; set; }
+        public string? ServiceImageUrl { get; set; }
 
         // Customer Info
         public CustomerDto Customer { get; set; }

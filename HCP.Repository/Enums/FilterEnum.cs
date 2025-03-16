@@ -6,8 +6,18 @@ using System.Threading.Tasks;
 
 namespace HCP.Repository.Enums
 {
-    public enum DayOfWeekFilter
+    public enum ViewMode
     {
-        Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+        Month,
+        Week,
+        Day
     }
+
+    public enum NavigationMode
+    {
+        Next,
+        Previous,
+        Today
+    }
+
 }

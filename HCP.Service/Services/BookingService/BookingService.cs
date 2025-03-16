@@ -303,7 +303,7 @@ namespace HCP.Service.Services.BookingService
             var timeSlotRepository = _unitOfWork.Repository<ServiceTimeSlot>();
             var addressRepository = _unitOfWork.Repository<Address>();
             var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
-            var checkout =await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
+            var checkout = await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
             var userId = userClaims.FindFirst("id")?.Value ?? dto.CustomerId;
             if (string.IsNullOrEmpty(userId))
             {
@@ -311,90 +311,6 @@ namespace HCP.Service.Services.BookingService
             }
 
             var user = await userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                throw new KeyNotFoundException("User not found");
-            }
-
-            var service = await serviceRepository.GetEntityByIdAsync(dto.CleaningServiceId);
-            if (service == null)
-                throw new Exception("Service not found");
-
-            var timeSlot = await timeSlotRepository.GetEntityByIdAsync(dto.TimeSlotId);
-            if (timeSlot == null)
-                throw new Exception("Time slot not found");
-
-            var address = await addressRepository.GetEntityByIdAsync(dto.AddressId);
-            if (address == null)
-                throw new Exception("Address not found");
-
-            var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
-                ba => dto.AdditionalServices.Select(a => a.AdditionalServiceId).Contains(ba.Id),
-                orderBy: ba => ba.OrderBy(c => c.Id)
-            );
-
-            double? distance = await _goongDistanceService.GetDistanceAsync(address.PlaceId, service.PlaceId);
-            if (distance == null)
-                throw new Exception("Failed to calculate distance");
-
-            var pricingRule = await distancePricingRepository.GetEntityAsync(
-                rule => rule.CleaningServiceId == service.Id &&
-                        rule.MinDistance <= distance &&
-                        rule.MaxDistance >= distance &&
-                        rule.IsActive
-            );
-
-            if (pricingRule == null)
-                throw new Exception("Service is not available for this distance");
-
-            decimal distancePrice = pricingRule.BaseFee;
-
-            var bookingAdditionals = bookingAdditionals1.Select(c => new BookingAdditional
-            {
-                BookingId = dto.Id,
-                Amount = (double)dto.AdditionalServices.FirstOrDefault(a => a.AdditionalServiceId == c.Id).Amount ,
-                AdditionalServiceId = c.Id,
-            }).ToList();
-
-            var totalAdditionalDuration = bookingAdditionals1.Sum(a => a.Duration);
-            var booking = new Booking
-            {
-                Id = dto.Id,
-                CustomerId = user.Id,
-                CleaningServiceId = service.Id,
-                PreferDateStart = dto.BookingDate,
-                TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
-                CreatedDate = DateTime.UtcNow,
-                Status = BookingStatus.OnGoing.ToString(),
-                TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
-                ServicePrice = service.Price,
-                DistancePrice = distancePrice,
-                AddtionalPrice = (decimal)bookingAdditionals.Sum(a => a.Amount),
-                City = address.City,
-                PlaceId = address.PlaceId,
-                District = address.District,
-                AddressLine = address.AddressLine1,
-                Note = /*dto.Note ??*/ "",
-                BookingAdditionals = bookingAdditionals,
-                
-            };
-
-            await bookingRepository.AddAsync(booking);
-            checkout.Status = CheckoutStatus.Completed.ToString();
-            await _unitOfWork.Complete();
-            return booking;
-        }
-        public async Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid)
-        {
-            var bookingRepository = _unitOfWork.Repository<Booking>();
-            var serviceRepository = _unitOfWork.Repository<CleaningService>();
-            var timeSlotRepository = _unitOfWork.Repository<ServiceTimeSlot>();
-            var addressRepository = _unitOfWork.Repository<Address>();
-            var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
-
-
-            var user = await userManager.FindByIdAsync(uid);
             if (user == null)
             {
                 throw new KeyNotFoundException("User not found");
@@ -448,7 +364,7 @@ namespace HCP.Service.Services.BookingService
                 CleaningServiceId = service.Id,
                 PreferDateStart = dto.BookingDate,
                 TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration),
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
                 CreatedDate = DateTime.UtcNow,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
@@ -465,11 +381,71 @@ namespace HCP.Service.Services.BookingService
             };
 
             await bookingRepository.AddAsync(booking);
+            checkout.Status = CheckoutStatus.Completed.ToString();
+            await _unitOfWork.Complete();
+            return booking;
+        }
+        public async Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid)
+        {
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var serviceRepository = _unitOfWork.Repository<CleaningService>();
+            var checkout = await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
+
+            var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
+
+
+            var user = await userManager.FindByIdAsync(uid);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+
+            var service = await serviceRepository.GetEntityByIdAsync(dto.CleaningServiceId);
+            if (service == null)
+                throw new Exception("Service not found");
+
+            var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
+                ba => dto.AdditionalServices.Select(a => a.AdditionalServiceId).Contains(ba.Id),
+                orderBy: ba => ba.OrderBy(c => c.Id)
+            );
+
+            var bookingAdditionals = bookingAdditionals1.Select(c => new BookingAdditional
+            {
+                BookingId = dto.Id,
+                Amount = (double)dto.AdditionalServices.FirstOrDefault(a => a.AdditionalServiceId == c.Id).Amount,
+                AdditionalServiceId = c.Id,
+            }).ToList();
+
+            var totalAdditionalDuration = bookingAdditionals1.Sum(a => a.Duration);
+            var booking = new Booking
+            {
+                Id = dto.Id,
+                CustomerId = user.Id,
+                CleaningServiceId = dto.CleaningServiceId,
+                PreferDateStart = dto.BookingDate,
+                TimeStart = dto.StartTime,
+                TimeEnd = dto.EndTime,
+                CreatedDate = DateTime.UtcNow,
+                Status = BookingStatus.OnGoing.ToString(),
+                TotalPrice = dto.TotalPrice,
+                ServicePrice = dto.ServicePrice,
+                DistancePrice = dto.DistancePrice,
+                AddtionalPrice = dto.AdditionalPrice,
+                City = dto.City,
+                PlaceId = dto.PlaceId,
+                District = dto.District,
+                AddressLine = dto.AddressLine,
+                Note = /*dto.Note ??*/ "",
+                BookingAdditionals = bookingAdditionals,
+
+            };
+            await bookingRepository.AddAsync(booking);
+            checkout.Status = CheckoutStatus.Completed.ToString();
+
             await _unitOfWork.Complete();
 
             return booking;
         }
-
         public async Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod)
         {
             var paymentRepository = _unitOfWork.Repository<Payment>();
@@ -503,9 +479,12 @@ namespace HCP.Service.Services.BookingService
 
         }
 
-        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize, string? status)
+        public async Task<PaginatedList<BookingListItemDto>> GetHousekeeperBookingsAsync(
+          ClaimsPrincipal userClaims,
+          int page,
+          int pageSize,
+          string? status)
         {
-            var bookingRepository = _unitOfWork.Repository<Booking>();
             var userId = userClaims.FindFirst("id")?.Value;
 
             if (userId == null)
@@ -513,38 +492,32 @@ namespace HCP.Service.Services.BookingService
                 throw new UnauthorizedAccessException("User not authenticated");
             }
 
-            // Fetch bookings with optional status filtering
             var bookingsQuery = await _unitOfWork.Repository<Booking>().ListAsync(
                 filter: c => c.CleaningService.UserId == userId &&
-                             c.Status != "IsDeleted" &&
-                             (string.IsNullOrEmpty(status) || c.Status == status), 
+                             (string.IsNullOrEmpty(status) || c.Status == status),
                 includeProperties: query => query
                     .Include(c => c.CleaningService).ThenInclude(c => c.ServiceImages)
                     .Include(c => c.Payments)
                     .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
                     .Include(c => c.Customer)
-            ) ?? new List<Booking>(); // Ensure it's not null
+            ) ?? new List<Booking>();
 
-            int totalCount = bookingsQuery.Count();
-
-            var bookings = bookingsQuery
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+            var bookingsQueryable = bookingsQuery
                 .Select(b => new BookingListItemDto
                 {
                     Id = b.Id,
                     PreferDateStart = b.PreferDateStart,
                     TimeStart = b.TimeStart,
-                    TimeEnd = b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0)), // Added duration
+                    TimeEnd = b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0)),
                     Status = b.Status,
-                    IsFinishable = b.Status == BookingStatus.OnGoing.ToString(),
+                    IsFinishable = DateTime.Now > (b.PreferDateStart.Date + (b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0)))),
                     TotalPrice = b.TotalPrice,
                     ServicePrice = b.ServicePrice,
                     DistancePrice = b.DistancePrice,
                     AdditionalPrice = b.AddtionalPrice,
                     ServiceName = b.CleaningService.ServiceName,
                     ServiceDescription = b.CleaningService.Description,
-                    ServiceImageUrl = b.CleaningService.ServiceImages.FirstOrDefault()?.LinkUrl,
+                    ServiceImageUrl = b.CleaningService.ServiceImages.FirstOrDefault().LinkUrl,
                     Customer = new CustomerDto
                     {
                         FullName = b.Customer.FullName,
@@ -555,10 +528,9 @@ namespace HCP.Service.Services.BookingService
                     AddressLine1 = b.AddressLine,
                     City = b.City,
                     District = b.District
-                })
-                .ToList();
+                });
 
-            return new BookingListResponseDto { Items = bookings, TotalCount = totalCount };
+            return  PaginatedList<BookingListItemDto>.CreateAsync(bookingsQueryable.ToList(), page, pageSize);
         }
         public async Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto)
         {
@@ -589,12 +561,130 @@ namespace HCP.Service.Services.BookingService
             booking.CompletedAt = DateTime.UtcNow;
 
             await _unitOfWork.Repository<BookingFinishProof>().AddAsync(proof);
-            bookingRepository.Update(booking); 
+            bookingRepository.Update(booking);
             await _unitOfWork.Complete();
 
             return proof;
         }
+        public async Task<CalendarBookingDTO> GetHousekeeperBookings(
+            string housekeeperId,
+            DateTime? referenceDate = null,
+            string navigationMode = "today",
+            string viewMode = "month"
+        )
+        {
+            // Validate inputs
+            if (string.IsNullOrEmpty(housekeeperId))
+            {
+                throw new ArgumentException("Housekeeper ID is required.", nameof(housekeeperId));
+            }
 
+            if (!Enum.TryParse<ViewMode>(viewMode, true, out var parsedViewMode))
+            {
+                throw new ArgumentException("Invalid view mode. Use 'month', 'week', or 'day'.", nameof(viewMode));
+            }
+
+            if (!Enum.TryParse<NavigationMode>(navigationMode, true, out var parsedNavigationMode))
+            {
+                throw new ArgumentException("Invalid navigation mode. Use 'next', 'previous', or 'today'.", nameof(navigationMode));
+            }
+
+            var (startDate, endDate) = CalculateDateRange(referenceDate ?? DateTime.Today, parsedNavigationMode, parsedViewMode);
+
+            var bookings = await _unitOfWork.Repository<Booking>().ListAsync(
+                filter: b => b.CleaningService.UserId == housekeeperId &&
+                             b.PreferDateStart.Date >= startDate.Date &&
+                             b.PreferDateStart.Date <= endDate.Date,
+                orderBy: q => q.OrderBy(b => b.PreferDateStart),
+                includeProperties: q => q
+                    .Include(b => b.Customer)
+                    .Include(b => b.CleaningService)
+            );
+
+            var groupedBookings = bookings
+                .GroupBy(b => b.PreferDateStart.Date)
+                .Select(g => new CalendarDayDTO
+                {
+                    Date = g.Key,
+                    Bookings = g.Select(b => new BookingItemDTO
+                    {
+                        Id = b.Id,
+                        ServiceName = b.CleaningService.ServiceName,
+                        PreferDateStart = b.PreferDateStart,
+                        TimeStart = b.TimeStart,
+                        TimeEnd = b.TimeEnd,
+                        TotalPrice = b.TotalPrice,
+                        CustomerName = b.Customer?.FullName ?? "Unknown",
+                        Address = b.AddressLine
+                    })
+                    .OrderBy(b => b.TimeStart)
+                    .ToList(),
+                    BookingCount = g.Count()
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            return new CalendarBookingDTO
+            {
+                Days = groupedBookings,
+                ViewMode = viewMode.ToLower(),
+                DisplayRange = parsedViewMode switch
+                {
+                    ViewMode.Month => startDate.ToString("MMMM yyyy"),
+                    ViewMode.Week => $"{startDate:MMM d} - {endDate:MMM d, yyyy}",
+                    ViewMode.Day => startDate.ToString("MMMM d, yyyy"),
+                    _ => string.Empty
+                }
+            };
+        }
+
+        private (DateTime StartDate, DateTime EndDate) CalculateDateRange(DateTime baseDate, NavigationMode navigationMode, ViewMode viewMode)
+        {
+            DateTime startDate;
+            DateTime endDate;
+
+            switch (viewMode)
+            {
+                case ViewMode.Month:
+                    var targetMonthDate = navigationMode switch
+                    {
+                        NavigationMode.Next => baseDate.AddMonths(1),
+                        NavigationMode.Previous => baseDate.AddMonths(-1),
+                        _ => DateTime.Today // "today"
+                    };
+                    startDate = new DateTime(targetMonthDate.Year, targetMonthDate.Month, 1);
+                    endDate = startDate.AddMonths(1).AddDays(-1);
+                    break;
+
+                case ViewMode.Week:
+                    var targetWeekDate = navigationMode switch
+                    {
+                        NavigationMode.Next => baseDate.AddDays(7),
+                        NavigationMode.Previous => baseDate.AddDays(-7),
+                        _ => DateTime.Today
+                    };
+                    var daysFromSunday = targetWeekDate.DayOfWeek == DayOfWeek.Sunday ? 0 : (int)targetWeekDate.DayOfWeek;
+                    startDate = targetWeekDate.AddDays(-daysFromSunday);
+                    endDate = startDate.AddDays(6);
+                    break;
+
+                case ViewMode.Day:
+                    var targetDayDate = navigationMode switch
+                    {
+                        NavigationMode.Next => baseDate.AddDays(1),
+                        NavigationMode.Previous => baseDate.AddDays(-1),
+                        _ => DateTime.Today
+                    };
+                    startDate = targetDayDate;
+                    endDate = targetDayDate;
+                    break;
+
+                default:
+                    throw new ArgumentException("Invalid view mode.");
+            }
+
+            return (startDate, endDate);
+        }
 
     }
 }
