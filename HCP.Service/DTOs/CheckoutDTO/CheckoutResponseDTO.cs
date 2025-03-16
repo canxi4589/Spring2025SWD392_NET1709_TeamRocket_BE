@@ -6,7 +6,6 @@ namespace HCP.Service.DTOs.CheckoutDTO
 {
     public class CheckoutResponseDTO1
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
         [JsonPropertyName("checkout_id")]
         public Guid CheckoutId { get; set; }
 
