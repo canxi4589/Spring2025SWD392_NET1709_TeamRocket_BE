@@ -247,7 +247,7 @@ namespace HCP.Service.Services.AdminManService
                     name = category.CategoryName,
                     numberOfBookings = category.CleaningServices
                         .SelectMany(cs => cs.Bookings)
-                        .Count(b => b.Status == BookingStatus.Completed.ToString() &&
+                        .Count(b => (b.Status == BookingStatus.Completed.ToString() || b.Status == BookingStatus.RefundRejected.ToString()) &&
                                    b.CompletedAt.HasValue &&
                                    b.CompletedAt.Value >= startDate.Value &&
                                    b.CompletedAt.Value <= endDate.Value &&
@@ -373,6 +373,14 @@ namespace HCP.Service.Services.AdminManService
                 if (status.Equals(BookingStatus.Refunded.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
+                }
+                if (status.Equals(BookingStatus.OnRefunding.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnRefunding.ToString());
+                }
+                if (status.Equals(BookingStatus.RefundRejected.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.RefundRejected.ToString());
                 }
                 if (status.Equals(BookingStatus.Completed.ToString()))
                 {

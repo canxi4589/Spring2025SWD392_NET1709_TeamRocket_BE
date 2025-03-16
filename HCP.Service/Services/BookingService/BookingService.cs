@@ -58,6 +58,14 @@ namespace HCP.Service.Services.BookingService
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
                 }
+                if (status.Equals(BookingStatus.OnRefunding.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnRefunding.ToString());
+                }
+                if (status.Equals(BookingStatus.RefundRejected.ToString()))
+                {
+                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.RefundRejected.ToString());
+                }
                 if (status.Equals(BookingStatus.Completed.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Completed.ToString());
@@ -254,9 +262,10 @@ namespace HCP.Service.Services.BookingService
             return new BookingCountDTO
             {
                 UpcomingBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.OnGoing.ToString())).Count(),
-                CompletedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Completed.ToString())).Count(),
+                CompletedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Completed.ToString()) || b.Status.Equals(BookingStatus.RefundRejected.ToString())).Count(),
                 CanceledBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Canceled.ToString())).Count(),
-                RefundedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Refunded.ToString())).Count()
+                RefundedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Refunded.ToString())).Count(),
+                AveragePrice = bookingRepository.Count() == 0 ? 0 : (double)bookingRepository.Where(b => b.Status == BookingStatus.Completed.ToString() || b.Status == BookingStatus.RefundRejected.ToString()).Average(b => b.TotalPrice)
             };
         }
         public Booking UpdateStatusBooking(Guid id, string status)

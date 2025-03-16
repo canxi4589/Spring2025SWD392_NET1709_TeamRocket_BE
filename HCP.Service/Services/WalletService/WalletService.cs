@@ -43,15 +43,15 @@ namespace HCP.Service.Services.WalletService
         {
             double expectedRefund = 0;
             double availableWithdraw = 0;
-            var completedBooking = _unitOfWork.Repository<Booking>().GetById(bookingId);
-            if (completedBooking == null) throw new Exception(BookingConst.BookingNotFound);
+            var booking = _unitOfWork.Repository<Booking>().GetById(bookingId);
+            if (booking == null) throw new Exception(BookingConst.BookingNotFound);
 
             var payment = await _unitOfWork.Repository<Payment>().FindAsync(c => c.BookingId == bookingId && c.Status.Equals(TransactionStatus.Done.ToString()));
-            var cleaningService = _unitOfWork.Repository<CleaningService>().GetById(completedBooking.CleaningServiceId);
+            var cleaningService = _unitOfWork.Repository<CleaningService>().GetById(booking.CleaningServiceId);
             var housekeeper = await _userManager.FindByIdAsync(cleaningService.UserId);
             if (housekeeper == null) throw new Exception(CustomerConst.NotFoundError);
 
-            expectedRefund += (double)completedBooking.TotalPrice;
+            expectedRefund += (double)booking.TotalPrice;
             if (housekeeper.BalanceWallet < expectedRefund)
             {
                 throw new Exception("Your refund request is more than the housekeeper's balance!");
@@ -63,14 +63,15 @@ namespace HCP.Service.Services.WalletService
                 Reason = Reason,
                 AcceptBy = null,
                 ProofOfPayment = ProofOfPayment,
-                Booking = completedBooking,
-                BookingId = completedBooking.Id,
+                Booking = booking,
+                BookingId = booking.Id,
                 Staff = null,
                 ResolutionDate = null,
                 Status = RefundRequestStatus.Pending.ToString(),
             };
-
+            booking.Status = BookingStatus.OnRefunding.ToString();
             await _unitOfWork.Repository<RefundRequest>().AddAsync(refund);
+            _unitOfWork.Repository<Booking>().Update(booking);
             await _unitOfWork.SaveChangesAsync();
 
             return new RefundRequestDTO
@@ -112,6 +113,10 @@ namespace HCP.Service.Services.WalletService
             if (!search.IsNullOrEmpty())
             {
                 refundRequests = refundRequests.Where(c => (c.CustomerName.ToLower().Contains(search.ToLower())) || (c.Email.ToLower().Contains(search.ToLower())) || (c.PhoneNumber.ToLower().Contains(search.ToLower()))).ToList();
+            }
+            if (!status.IsNullOrEmpty())
+            {
+                refundRequests = refundRequests.Where(c => c.Status.ToLower().Equals(status.ToLower())).ToList();
             }
             if (pageIndex == null || pageSize == null)
             {
@@ -181,13 +186,15 @@ namespace HCP.Service.Services.WalletService
             if (action)
             {
                 //Approve
-                refund.Status = TransactionStatus.Done.ToString();
+                refund.Status = RefundRequestStatus.Approved.ToString();
                 refund.ResolutionDate = DateTime.Now;
                 refund.AcceptBy = staff.Id;
                 refund.Staff = staff;
+                booking.Status = BookingStatus.Refunded.ToString();
                 user.BalanceWallet += (double)booking.TotalPrice;
                 //Place for system wallet deduce
                 _unitOfWork.Repository<RefundRequest>().Update(refund);
+                _unitOfWork.Repository<Booking>().Update(booking);
                 await _userManager.UpdateAsync(user);
                 await _unitOfWork.SaveChangesAsync();
                 return new RefundRequestDTO
@@ -207,11 +214,13 @@ namespace HCP.Service.Services.WalletService
             else
             {
                 //Reject
-                refund.Status = TransactionStatus.Done.ToString();
+                refund.Status = RefundRequestStatus.Rejected.ToString();
                 refund.ResolutionDate = DateTime.Now;
                 refund.AcceptBy = staff.Id;
                 refund.Staff = staff;
+                booking.Status = BookingStatus.RefundRejected.ToString();
                 _unitOfWork.Repository<RefundRequest>().Update(refund);
+                _unitOfWork.Repository<Booking>().Update(booking);
                 await _unitOfWork.Repository<RefundRequest>().SaveChangesAsync();
                 return new RefundRequestDTO
                 {
@@ -607,7 +616,7 @@ namespace HCP.Service.Services.WalletService
             // Query payments with status "Completed" and include booking
             var payments = await _unitOfWork.Repository<Payment>()
                 .GetAll()
-                .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Completed.ToString()))
+                .Where(p => p.Status == "succeed" && (p.Booking.Status.Equals(BookingStatus.Completed.ToString()) || p.Booking.Status.Equals(BookingStatus.RefundRejected.ToString())))
                 .Include(p => p.Booking).Include(p => p.Booking.CleaningService)
                 .ToListAsync();
             payments = payments.Where(p => p.Booking.CleaningService?.UserId == user.Id).ToList();

@@ -21,6 +21,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public int CompletedBookings { get; set; }
         public int CanceledBookings { get; set; }
         public int RefundedBookings { get; set; }
+        public double AveragePrice { get; set; }
     }
     public class BookingListItemDto
     {
