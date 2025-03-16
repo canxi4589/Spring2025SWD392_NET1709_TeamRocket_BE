@@ -17,6 +17,7 @@ namespace HCP.Service.DTOs.AdminManagementDTO
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
             public string Description { get; set; }
+            public int NumberOfBooking { get; set; }
         }
         public class ServiceCategoryAdminShowListDTO
         {

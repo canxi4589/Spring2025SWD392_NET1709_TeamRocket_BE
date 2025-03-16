@@ -61,13 +61,19 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound();
         }
+        [HttpGet("bookingCountHousekeeper")]
+        [Authorize]
+        public async Task<IActionResult> GetBookingCountByHousekeeper()
+        {
+            var bookingCount = await _bookingService.GetBookingCountHousekeeper(User);
+            return Ok(new AppResponse<BookingCountDTO>().SetSuccessResponse(bookingCount));
+        }
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetHousekeeperBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
         {
             var userClaims = User;
             var response = new AppResponse<BookingListResponseDto>();
-
             try
             {
                 var result = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
@@ -82,6 +88,35 @@ namespace HomeCleaningService.Controllers
                 return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
-
+        [HttpPost("submit-proof")]
+        [Authorize]
+        public async Task<IActionResult> SubmitBookingProof([FromBody] SubmitBookingProofDTO dto)
+        {
+            try
+            {
+                var proof = await _bookingService.SubmitBookingProofAsync(dto);
+                var successResponse = new AppResponse<BookingFinishProof>()
+                    .SetSuccessResponse(proof, KeyConst.BookingProof, BookingConst.ProofSubmittedSuccessfully);
+                return Ok(successResponse);
+            }
+            catch (KeyNotFoundException)
+            {
+                var errorResponse = new AppResponse<BookingFinishProof>()
+                    .SetErrorResponse(KeyConst.Booking, BookingConst.BookingNotFound);
+                return NotFound(errorResponse);
+            }
+            catch (InvalidOperationException)
+            {
+                var errorResponse = new AppResponse<BookingFinishProof>()
+                    .SetErrorResponse(KeyConst.Status, BookingConst.InvalidBookingStatusForProof);
+                return BadRequest(errorResponse);
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new AppResponse<BookingFinishProof>()
+                    .SetErrorResponse(KeyConst.Error, $"{BookingConst.ProofSubmissionFailed}: {ex.Message}");
+                return StatusCode(500, errorResponse);
+            }
+        }
     }
 }

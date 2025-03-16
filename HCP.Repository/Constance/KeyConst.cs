@@ -11,6 +11,7 @@ namespace HCP.Repository.Constance
         //key
         public const string Customer = "Customer";
         public const string Admin = "Admin";
+        public const string Housekeeper = "Housekeeper";
         public const string Rating = "Rating";
         public const string Checkout = "Checkout";
         public const string PendingRequest = "Pending Request";
@@ -26,6 +27,9 @@ namespace HCP.Repository.Constance
         public const string Unathorized = "Unauthorized";
         public const string NotFound = "Not Found";
         public const string Unknown = "Unknown";
+        public const string Booking = "Booking";
+        public const string BookingProof = "Booking Proof";
+        public const string Status = "status";
 
         //others
         public const string VnPay = "Vnpay";

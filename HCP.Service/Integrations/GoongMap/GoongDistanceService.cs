@@ -1,4 +1,5 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -166,7 +167,44 @@ public class GoongDistanceService : IGoongDistanceService
             return new List<CleaningService>();
         }
     }
+    public async Task<List<CleaningService>> GetBookableServicesWithinDistanceAsync(
+    string userPlaceId, List<CleaningService> services)
+    {
+        try
+        {
+            var servicePlaceIds = services.Select(s => s.PlaceId).ToList();
 
+            // Retrieve distances
+            var distances = await GetDistancesAsyncByList(userPlaceId, servicePlaceIds);
+
+            if (distances == null)
+            {
+                _logger.LogError("Failed to retrieve distances.");
+                return new List<CleaningService>();
+            }
+
+            return services
+                .Where(service =>
+                    distances.ContainsKey(service.PlaceId) &&
+                    IsServiceBookable(service, distances[service.PlaceId])) 
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while filtering bookable services.");
+            return new List<CleaningService>();
+        }
+    }
+
+    private bool IsServiceBookable(CleaningService service, double distance)
+    {
+        return service.Status == ServiceStatus.Active.ToString() &&
+               service.ServiceTimeSlots.Any(slot => slot.Status != "hehe") && 
+               service.DistancePricingRules.Any(rule =>
+                   rule.IsActive &&
+                   distance >= rule.MinDistance &&
+                   distance <= rule.MaxDistance); 
+    }
     private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
     {
         const double R = 6371; // Earth radius in km
@@ -191,8 +229,10 @@ public class GoongDistanceService : IGoongDistanceService
             return distances;
         }
 
-        var destinations = string.Join("|", destinationPlaceIds);
-        var url = $"https://rsapi.goong.io/DistanceMatrix?origins=place_id:{originPlaceId}&destinations=place_id:{destinations}&vehicle=car&api_key={GoongApiKey}";
+        var destination = destinationPlaceIds.Select( async c => await GetLatLngFromPlaceId(c));
+        var origin = await GetLatLngFromPlaceId(originPlaceId);
+        var destinations = string.Join("|", destination);
+        var url = $"https://rsapi.goong.io/DistanceMatrix?origins=place_id:{origin}&destinations=place_id:{destinations}&vehicle=car&api_key={GoongApiKey}";
 
         _logger.LogInformation("Calling Goong Distance API: {Url}", url);
 
@@ -222,7 +262,7 @@ public class GoongDistanceService : IGoongDistanceService
                 if (elements[i].TryGetProperty("distance", out var distanceElement))
                 {
                     var distanceInMeters = distanceElement.GetProperty("value").GetDouble();
-                    distances[destinationPlaceIds[i]] = distanceInMeters / 1000.0; // Convert to km
+                    distances[destinationPlaceIds[i]] = distanceInMeters / 1000.0;
                 }
                 else
                 {

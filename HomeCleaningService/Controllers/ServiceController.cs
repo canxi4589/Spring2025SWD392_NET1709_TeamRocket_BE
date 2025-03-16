@@ -42,7 +42,7 @@ namespace HomeCleaningService.Controllers
         {
             var services = await _cleaningService.GetAllServiceItems(
                 request.UserPlaceId,
-                request.MaxDistanceKm,
+                null,
                 request.PageIndex,
                 request.PageSize,
                 request.CategoryIds,
@@ -53,6 +53,18 @@ namespace HomeCleaningService.Controllers
             );
 
             return Ok(new AppResponse<CleaningServiceListDTO>()
+                .SetSuccessResponse(services));
+        }
+        [HttpPost("gettopservices")]
+        public async Task<IActionResult> GetTopServices(bool dayTop, bool weekTop, bool yearTop,
+            int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, 
+            int? dayEnd, int? monthEnd, int? yearEnd, string? search, int? tops = 3)
+        {
+            var services = await _cleaningService.GetTopServiceItems(User, dayTop, weekTop, yearTop, 
+                pageIndex, pageSize, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd,
+                search, tops);
+
+            return Ok(new AppResponse<CleaningServiceTopListDTO>()
                 .SetSuccessResponse(services));
         }
 
@@ -170,7 +182,7 @@ namespace HomeCleaningService.Controllers
 
             try
             {
-                var sasUrls = await _blobStorageService.UploadFilesAsync(files);
+                var sasUrls = await _blobStorageService.UploadFilesAsyncWithoutSAS(files);
                 return Ok(response.SetSuccessResponse(sasUrls, KeyConst.Upload, CommonConst.SuccessTaskMessage));
             }
             catch (Exception ex)

@@ -31,6 +31,7 @@ namespace HCP.Service.DTOs.AdminManagementDTO
             public string? StaffId { get; set; }
             public string? StaffName { get; set; }
             public string FirstImgLinkUrl { get; set; }
+            public int NumberOfBooking { get; set; }
         }
         public class ServiceAdminShowListDTO
         {

@@ -119,6 +119,91 @@ namespace HCP.Service.Services.CleaningService1
 
             return await PaginatedList<CategoryDTO>.CreateAsync(categoryList, pageIndex, pageSize);
         }
+        public async Task<CleaningServiceTopListDTO> GetTopServiceItems(ClaimsPrincipal claims, bool dayTop, bool weekTop, bool yearTop,
+    int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd,
+    string? search, int? tops = 3)
+        {
+            var userId = claims.FindFirst("id")?.Value;
+            var serviceRepo = _unitOfWork.Repository<CleaningService>();
+
+            // Define date range for filtering
+            DateTime? startDate = null;
+            DateTime? endDate = null;
+
+            if (dayTop && dayStart.HasValue && monthStart.HasValue && yearStart.HasValue &&
+                dayEnd.HasValue && monthEnd.HasValue && yearEnd.HasValue)
+            {
+                startDate = new DateTime(yearStart.Value, monthStart.Value, dayStart.Value);
+                endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
+            }
+            else if (weekTop && yearStart.HasValue && monthStart.HasValue)
+            {
+                startDate = new DateTime(yearStart.Value, monthStart.Value, 1);
+                endDate = startDate.Value.AddMonths(1).AddDays(-1);
+            }
+            else if (yearTop && yearStart.HasValue)
+            {
+                startDate = new DateTime(yearStart.Value, 1, 1);
+                endDate = new DateTime(yearStart.Value, 12, 31);
+            }
+
+            // Query services with related data
+            var servicesQuery = await serviceRepo.ListAsync(
+                filter: s =>
+                    s.Status == ServiceStatus.Active.ToString() &&
+                    (string.IsNullOrEmpty(search) || s.ServiceName.Contains(search)) &&
+                    s.UserId.Equals(userId),
+                includeProperties: q => q.Include(s => s.Category)
+                                       .Include(s => s.ServiceImages)
+                                       .Include(s => s.ServiceRatings)
+                                       .Include(s => s.Bookings)
+                                       .ThenInclude(s => s.Payments)
+            );
+
+            // Convert to DTO with revenue calculation
+            var serviceDTOs = servicesQuery.Select(c => new CleaningServiceTopItemsDTO
+            {
+                id = c.Id,
+                name = c.ServiceName,
+                category = c.Category.CategoryName,
+                overallRating = c.Rating,
+                price = c.Price,
+                location = c.AddressLine,
+                CategoryName = c.Category.CategoryName,
+                Url = c.ServiceImages.FirstOrDefault()?.LinkUrl,
+                revenue = c.Bookings
+                    .Where(b => b.Payments != null && b.Payments.Any(p => p.Status == "succeed"))
+                    .SelectMany(b => b.Payments)
+                    .Where(p => p.Status == "succeed" &&
+                               (startDate == null || p.PaymentDate >= startDate) &&
+                               (endDate == null || p.PaymentDate <= endDate))
+                    .Sum(p => p.Amount) * 0.9m,
+                NumberOfBooking = c.Bookings.Count()
+            })
+            .OrderByDescending(dto => dto.revenue)
+            .Take(tops ?? 3);
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<CleaningServiceTopItemsDTO>.CreateAsync(serviceDTOs.ToList(), 1, serviceDTOs.Count());
+                return new CleaningServiceTopListDTO
+                {
+                    Items = temp1,
+                    hasNext = temp1.HasNextPage,
+                    hasPrevious = temp1.HasPreviousPage,
+                    totalCount = temp1.TotalCount,
+                    totalPages = temp1.TotalPages,
+                };
+            }
+            var temp2 = PaginatedList<CleaningServiceTopItemsDTO>.CreateAsync(serviceDTOs.ToList(), (int)pageIndex, (int)pageSize);
+            return new CleaningServiceTopListDTO
+            {
+                Items = temp2,
+                hasNext = temp2.HasNextPage,
+                hasPrevious = temp2.HasPreviousPage,
+                totalCount = serviceDTOs.Count(),
+                totalPages = temp2.TotalPages,
+            };
+        }
         public async Task<CleaningServiceListDTO> GetAllServiceItems(
             string? userPlaceId,
             double? maxDistanceKm,
@@ -146,9 +231,9 @@ namespace HCP.Service.Services.CleaningService1
 
             var filteredServices = servicesQuery.ToList();
 
-            if (!string.IsNullOrEmpty(userPlaceId) && maxDistanceKm.HasValue)
+            if (!string.IsNullOrEmpty(userPlaceId))
             {
-                filteredServices = await goongDistanceService.GetServicesWithinDistanceAsync(userPlaceId, maxDistanceKm.Value, filteredServices);
+                filteredServices = await goongDistanceService.GetBookableServicesWithinDistanceAsync(userPlaceId, filteredServices);
             }
 
             var serviceDTOs = filteredServices.Select(c => new CleaningServiceItemDTO
@@ -261,7 +346,7 @@ namespace HCP.Service.Services.CleaningService1
                 name = service.ServiceName,
                 numOfBooks = service.Bookings?.Count ?? 0,
                 location = $"{service.City}, {service.District}",
-                reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
+                reviews = rating == null ? rating.RatingAvg : 0,
                 numOfReviews = service.ServiceRatings.Count,
                 Price = service.Price,
                 numOfPics = service.ServiceImages.Count,
@@ -299,7 +384,7 @@ namespace HCP.Service.Services.CleaningService1
             );
 
             var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(
-                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart == targetDate,
+                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart.Date == targetDate.Date,
                 orderBy: b => b.OrderBy(c => c.TimeStart)
             );
 

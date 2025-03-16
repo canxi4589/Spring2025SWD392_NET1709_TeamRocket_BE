@@ -4,7 +4,9 @@ using HCP.Repository.Enums;
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
+using HCP.Service.DTOs.CheckoutDTO;
 using HCP.Service.DTOs.CleaningServiceDTO;
+using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Humanizer;
 using Microsoft.AspNetCore.Identity;
@@ -24,11 +26,13 @@ namespace HCP.Service.Services.BookingService
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> userManager;
         private readonly IGoongDistanceService _goongDistanceService;
-        public BookingService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IGoongDistanceService goongDistanceService)
+        private readonly ICustomerService _customerService;
+        public BookingService(ICustomerService customerService, IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IGoongDistanceService goongDistanceService)
         {
             _unitOfWork = unitOfWork;
             this.userManager = userManager;
             _goongDistanceService = goongDistanceService;
+            _customerService = customerService;
         }
         public async Task<BookingHistoryResponseListDTO> GetBookingByUser(AppUser user, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
@@ -42,23 +46,19 @@ namespace HCP.Service.Services.BookingService
             if (status != null)
             {
                 if (status.Equals("Recently")) bookingHistoryList.OrderByDescending(c => c.CreatedDate);
-                if (status.Equals("Ongoing"))
+                if (status.Equals(BookingStatus.OnGoing.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.OnGoing.ToString());
                 }
-                if (status.Equals("Finished"))
-                {
-                    bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Finished.ToString());
-                }
-                if (status.Equals("Canceled"))
+                if (status.Equals(BookingStatus.Canceled.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Canceled.ToString());
                 }
-                if (status.Equals("Refunded"))
+                if (status.Equals(BookingStatus.Refunded.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Refunded.ToString());
                 }
-                if (status.Equals("Completed"))
+                if (status.Equals(BookingStatus.Completed.ToString()))
                 {
                     bookingHistoryList = (IOrderedQueryable<Booking>)bookingHistoryList.Where(c => c.Status == BookingStatus.Completed.ToString());
                 }
@@ -201,10 +201,10 @@ namespace HCP.Service.Services.BookingService
 
             bool isWalletChoosable = (decimal)customer.BalanceWallet >= totalPrice;
 
-            var paymentMethods = new List<PaymentMethodDTO>
+            var paymentMethods = new List<PaymentMethodDTO1>
     {
-        new PaymentMethodDTO { Name = KeyConst.Wallet, IsChoosable = isWalletChoosable },
-        new PaymentMethodDTO { Name = KeyConst.VNPay, IsChoosable = true }
+        new PaymentMethodDTO1 { Name = KeyConst.Wallet, IsChoosable = isWalletChoosable },
+        new PaymentMethodDTO1 { Name = KeyConst.VNPay, IsChoosable = true }
     };
 
             var response = new CheckoutResponseDTO
@@ -242,6 +242,20 @@ namespace HCP.Service.Services.BookingService
             var bookingRepository = await _unitOfWork.Repository<Booking>().GetEntityByIdAsync(id);
             return bookingRepository;
 
+        }
+
+        public async Task<BookingCountDTO> GetBookingCountHousekeeper(ClaimsPrincipal claim)
+        {
+            var user = await _customerService.GetCustomerAsync(claim);
+            var bookingRepository = _unitOfWork.Repository<Booking>().GetAll()
+                .Include(c => c.CleaningService).Where(s => s.CleaningService.UserId == user.Id).ToList();
+            return new BookingCountDTO
+            {
+                UpcomingBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.OnGoing.ToString())).Count(),
+                CompletedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Completed.ToString())).Count(),
+                CanceledBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Canceled.ToString())).Count(),
+                RefundedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Refunded.ToString())).Count()
+            };
         }
         public Booking UpdateStatusBooking(Guid id, string status)
         {
@@ -282,18 +296,15 @@ namespace HCP.Service.Services.BookingService
             await _unitOfWork.Complete(); // Save changes
         }
 
-        public async Task<Booking> CreateBookingAsync(ConfirmBookingDTO dto, ClaimsPrincipal userClaims)
+        public async Task<Booking> CreateBookingAsync(CheckoutResponseDTO1 dto, ClaimsPrincipal userClaims)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();
             var serviceRepository = _unitOfWork.Repository<CleaningService>();
             var timeSlotRepository = _unitOfWork.Repository<ServiceTimeSlot>();
             var addressRepository = _unitOfWork.Repository<Address>();
-            var bookingAdditionalRepository = _unitOfWork.Repository<BookingAdditional>();
-            var paymentRepository = _unitOfWork.Repository<Payment>();
             var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
 
-            var userId = userClaims.FindFirst("id")?.Value;
-            var userEmail = userClaims.FindFirst("email")?.Value;
+            var userId = userClaims.FindFirst("id")?.Value ?? dto.CustomerId;
             if (string.IsNullOrEmpty(userId))
             {
                 throw new UnauthorizedAccessException("User not authenticated");
@@ -304,7 +315,8 @@ namespace HCP.Service.Services.BookingService
             {
                 throw new KeyNotFoundException("User not found");
             }
-            var service = await serviceRepository.GetEntityByIdAsync(dto.ServiceId);
+
+            var service = await serviceRepository.GetEntityByIdAsync(dto.CleaningServiceId);
             if (service == null)
                 throw new Exception("Service not found");
 
@@ -317,10 +329,13 @@ namespace HCP.Service.Services.BookingService
                 throw new Exception("Address not found");
 
             var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
-                ba => dto.BookingAdditionalIds.Contains(ba.Id), orderBy: ba => ba.OrderBy(c => c.Id)
+                ba => dto.AdditionalServices.Select(a => a.AdditionalServiceId).Contains(ba.Id),
+                orderBy: ba => ba.OrderBy(c => c.Id)
             );
+
             double? distance = await _goongDistanceService.GetDistanceAsync(address.PlaceId, service.PlaceId);
-            if (distance == null) throw new Exception("Failed to calculate distance");
+            if (distance == null)
+                throw new Exception("Failed to calculate distance");
 
             var pricingRule = await distancePricingRepository.GetEntityAsync(
                 rule => rule.CleaningServiceId == service.Id &&
@@ -334,21 +349,20 @@ namespace HCP.Service.Services.BookingService
 
             decimal distancePrice = pricingRule.BaseFee;
 
-            Guid id = Guid.NewGuid();
             var bookingAdditionals = bookingAdditionals1.Select(c => new BookingAdditional
             {
-                BookingId = id,
-                Amount = c.Amount,
+                BookingId = dto.Id,
+                Amount = (double)dto.AdditionalServices.FirstOrDefault(a => a.AdditionalServiceId == c.Id).Amount ,
                 AdditionalServiceId = c.Id,
-            });
+            }).ToList();
 
             var totalAdditionalDuration = bookingAdditionals1.Sum(a => a.Duration);
             var booking = new Booking
             {
-                Id = id,
+                Id = dto.Id,
                 CustomerId = user.Id,
                 CleaningServiceId = service.Id,
-                PreferDateStart = dto.StartDate,
+                PreferDateStart = dto.BookingDate,
                 TimeStart = timeSlot.StartTime,
                 TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
                 CreatedDate = DateTime.UtcNow,
@@ -361,10 +375,94 @@ namespace HCP.Service.Services.BookingService
                 PlaceId = address.PlaceId,
                 District = address.District,
                 AddressLine = address.AddressLine1,
-                Note = dto.Note ?? "",
-                BookingAdditionals = bookingAdditionals.ToList()
+                Note = /*dto.Note ??*/ "",
+                BookingAdditionals = bookingAdditionals,
+                
             };
 
+            await bookingRepository.AddAsync(booking);
+            await _unitOfWork.Complete();
+
+            return booking;
+        }
+        public async Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid)
+        {
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var serviceRepository = _unitOfWork.Repository<CleaningService>();
+            var timeSlotRepository = _unitOfWork.Repository<ServiceTimeSlot>();
+            var addressRepository = _unitOfWork.Repository<Address>();
+            var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
+
+
+            var user = await userManager.FindByIdAsync(uid);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+
+            var service = await serviceRepository.GetEntityByIdAsync(dto.CleaningServiceId);
+            if (service == null)
+                throw new Exception("Service not found");
+
+            var timeSlot = await timeSlotRepository.GetEntityByIdAsync(dto.TimeSlotId);
+            if (timeSlot == null)
+                throw new Exception("Time slot not found");
+
+            var address = await addressRepository.GetEntityByIdAsync(dto.AddressId);
+            if (address == null)
+                throw new Exception("Address not found");
+
+            var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
+                ba => dto.AdditionalServices.Select(a => a.AdditionalServiceId).Contains(ba.Id),
+                orderBy: ba => ba.OrderBy(c => c.Id)
+            );
+
+            double? distance = await _goongDistanceService.GetDistanceAsync(address.PlaceId, service.PlaceId);
+            if (distance == null)
+                throw new Exception("Failed to calculate distance");
+
+            var pricingRule = await distancePricingRepository.GetEntityAsync(
+                rule => rule.CleaningServiceId == service.Id &&
+                        rule.MinDistance <= distance &&
+                        rule.MaxDistance >= distance &&
+                        rule.IsActive
+            );
+
+            if (pricingRule == null)
+                throw new Exception("Service is not available for this distance");
+
+            decimal distancePrice = pricingRule.BaseFee;
+
+            var bookingAdditionals = bookingAdditionals1.Select(c => new BookingAdditional
+            {
+                BookingId = dto.Id,
+                Amount = (double)dto.AdditionalServices.FirstOrDefault(a => a.AdditionalServiceId == c.Id).Amount,
+                AdditionalServiceId = c.Id,
+            }).ToList();
+
+            var totalAdditionalDuration = bookingAdditionals1.Sum(a => a.Duration);
+            var booking = new Booking
+            {
+                Id = dto.Id,
+                CustomerId = user.Id,
+                CleaningServiceId = service.Id,
+                PreferDateStart = dto.BookingDate,
+                TimeStart = timeSlot.StartTime,
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
+                CreatedDate = DateTime.UtcNow,
+                Status = BookingStatus.OnGoing.ToString(),
+                TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
+                ServicePrice = service.Price,
+                DistancePrice = distancePrice,
+                AddtionalPrice = (decimal)bookingAdditionals.Sum(a => a.Amount),
+                City = address.City,
+                PlaceId = address.PlaceId,
+                District = address.District,
+                AddressLine = address.AddressLine1,
+                Note = /*dto.Note ??*/ "",
+                BookingAdditionals = bookingAdditionals,
+
+            };
 
             await bookingRepository.AddAsync(booking);
             await _unitOfWork.Complete();
@@ -372,8 +470,7 @@ namespace HCP.Service.Services.BookingService
             return booking;
         }
 
-
-        public async Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay")
+        public async Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod)
         {
             var paymentRepository = _unitOfWork.Repository<Payment>();
 
@@ -463,7 +560,40 @@ namespace HCP.Service.Services.BookingService
 
             return new BookingListResponseDto { Items = bookings, TotalCount = totalCount };
         }
+        public async Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto)
+        {
 
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var booking = await bookingRepository.FindAsync(
+                b => b.Id == dto.BookingId
+            );
+
+            if (booking == null)
+            {
+                throw new KeyNotFoundException("Booking not found");
+            }
+            var validStatuses = new[] { "OnGoing", "Paid" };
+            if (!validStatuses.Contains(booking.Status))
+            {
+                throw new InvalidOperationException("Proof can only be submitted for OnGoing or Paid bookings");
+            }
+
+            var proof = new BookingFinishProof
+            {
+                BookingId = dto.BookingId,
+                Title = dto.Title,
+                ImgUrl = dto.ImgUrl,
+            };
+
+            booking.Status = BookingStatus.Completed.ToString();
+            booking.CompletedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Repository<BookingFinishProof>().AddAsync(proof);
+            bookingRepository.Update(booking); 
+            await _unitOfWork.Complete();
+
+            return proof;
+        }
 
 
     }

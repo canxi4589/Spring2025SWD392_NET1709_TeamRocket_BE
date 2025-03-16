@@ -9,7 +9,6 @@ namespace HCP.Service.DTOs.FilterDTO
     public class ServiceFilterRequest
     {
         public string? UserPlaceId { get; set; }
-        public double? MaxDistanceKm { get; set; }
         public int? PageIndex { get; set; }
         public int? PageSize { get; set; }
         public List<Guid>? CategoryIds { get; set; }

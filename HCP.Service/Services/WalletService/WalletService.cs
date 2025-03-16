@@ -15,8 +15,11 @@ using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Integrations.Currency;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
+using HCP.Service.Services.TemporaryService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 
 namespace HCP.Service.Services.WalletService
 {
@@ -25,12 +28,14 @@ namespace HCP.Service.Services.WalletService
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
         private readonly ICustomerService _customerService;
+        private readonly ITemporaryStorage _temporaryStorage;
 
-        public WalletService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, ICustomerService customerService)
+        public WalletService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, ICustomerService customerService, ITemporaryStorage temporaryStorage)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _customerService = customerService;
+            _temporaryStorage = temporaryStorage;
         }
         public async Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user)
         {
@@ -77,7 +82,8 @@ namespace HCP.Service.Services.WalletService
             var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll().OrderByDescending(c=>c.CreatedDate);
             if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()) 
                 || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) 
-                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) || searchField.Equals(TransactionType.Deposit.ToString()))
+                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) || searchField.Equals(TransactionType.Deposit.ToString())
+                || searchField.Equals(TransactionType.BookingPurchase.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.Id == user.Id);
             }
@@ -91,7 +97,7 @@ namespace HCP.Service.Services.WalletService
             if (searchField.Equals(TransactionType.Deposit.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
 
             if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()))
@@ -112,10 +118,16 @@ namespace HCP.Service.Services.WalletService
                     .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
             }
 
+            if (searchField.Equals(TransactionType.BookingPurchase.ToString()))
+            {
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.BookingPurchase.ToString()));
+            }
+
             if (searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString())));
+                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString())|| c.Type.Equals(TransactionType.BookingPurchase.ToString())));
             }
 
             if (searchField.Equals(TransactionType.ShowHistoryStaff.ToString()))
@@ -236,6 +248,8 @@ namespace HCP.Service.Services.WalletService
                 };
             }
         }
+
+        //This method is used to create a deposit transaction, store it in the temporary storage and return the transaction
         public async Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user)
         {
             Guid id = Guid.NewGuid();
@@ -250,7 +264,7 @@ namespace HCP.Service.Services.WalletService
                 Type = TransactionType.Deposit.ToString(),
                 Status = TransactionStatus.Pending.ToString(),
                 CreatedDate = DateTime.Now
-            };  
+            };
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();
 
@@ -270,6 +284,8 @@ namespace HCP.Service.Services.WalletService
                 Description = "Deposit pending!"
             };
         }
+
+        //This method is used to process the deposit transaction, take the transaction from the temporary storage and process it, including updating the user's balance
         public async Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot)
         {
             if (successOrNot)
@@ -333,12 +349,113 @@ namespace HCP.Service.Services.WalletService
         {
             return user.BalanceWallet;
         }
+        public async Task DeduceFromWallet(ClaimsPrincipal user,decimal amount)
+        {
+            var user1 = await _userManager.GetUserAsync(user);
+            var wTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AfterAmount = 0,
+                Current = (Decimal)user1.BalanceWallet,
+                User = user1,
+                UserId = user1.Id,
+                Amount = amount,
+                Type = TransactionType.BookingPurchase.ToString(),
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.Now
+            };
+            user1.BalanceWallet -=(double)amount;
+            wTransaction.AfterAmount = (Decimal)user1.BalanceWallet;
+            await _userManager.UpdateAsync(user1);
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
+            await _unitOfWork.SaveChangesAsync();
+        }
         public async Task<double> VNDMoneyExchangeFromUSD(decimal amount)
         {
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(amount, CultureInfo.InvariantCulture);
             return Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
+        }
+
+        public async Task<double> getUserBalance(ClaimsPrincipal user)
+        {
+            var user1 = await _userManager.GetUserAsync(user);
+            return user1.BalanceWallet;
+        }
+
+        public async Task<RevenueHousekeeperDatasListShowDTO> GetRevenueHousekeeperDatas(AppUser user, bool dayRevenue, bool weekRevenue, bool yearRevenue, bool yearsRevenue, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
+        {
+            var chartDataList = new List<RevenueHousekeeperDatasShowDTO>();
+
+            // Query payments with status "Completed" and include booking
+            var payments = await _unitOfWork.Repository<Payment>()
+                .GetAll()
+                .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Completed.ToString()))
+                .Include(p => p.Booking).Include(p => p.Booking.CleaningService)
+                .ToListAsync();
+            payments = payments.Where(p => p.Booking.CleaningService?.UserId == user.Id).ToList();
+
+            if (yearRevenue && yearStart.HasValue)
+            {
+                // Year chart - show data for each month in the selected year
+                for (int month = 1; month <= 12; month++)
+                {
+                    // Define the start and end of the month
+                    var monthStartDate = new DateTime(yearStart.Value, month, 1);
+                    var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
+                    var monthlyRevenue = payments.Where(p => p.PaymentDate >= monthStartDate && p.PaymentDate <= monthEndDate).Sum(p => p.Amount) * 0.9m; // 90% of the amount
+                    chartDataList.Add(new RevenueHousekeeperDatasShowDTO
+                    {
+                        name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
+                        revenue = (double)monthlyRevenue // Assuming 'revenued' is the correct property name
+                    });
+                }
+            }
+
+            else if (yearsRevenue && yearStart.HasValue && yearEnd.HasValue)
+            {
+                // Years chart - show data for each year between start and end year
+                for (int year = yearStart.Value; year <= yearEnd.Value; year++)
+                {
+                    var yearStartDate = new DateTime(year, 1, 1);
+                    var yearEndDate = new DateTime(year, 12, 31);
+
+                    var yearlyRevenue = payments
+                        .Where(p => p.PaymentDate >= yearStartDate && p.PaymentDate <= yearEndDate)
+                        .Sum(p => p.Amount) * 0.9m; // 90% of the amount
+
+                    chartDataList.Add(new RevenueHousekeeperDatasShowDTO
+                    {
+                        name = year.ToString(),
+                        revenue = (double)yearlyRevenue
+                    });
+                }
+            }
+            else if (dayRevenue && !weekRevenue && !yearRevenue && !yearsRevenue &&
+                     dayStart.HasValue && monthStart.HasValue && yearStart.HasValue &&
+                     dayEnd.HasValue && monthEnd.HasValue && yearEnd.HasValue)
+            {
+                // Day chart - show data for each day between start and end date
+                var startDate = new DateTime(yearStart.Value, monthStart.Value, dayStart.Value);
+                var endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
+                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    var dailyRevenue = payments
+                        .Where(p => p.PaymentDate.Date == date.Date)
+                        .Sum(p => p.Amount) * 0.9m; // 10% of the amount
+
+                    chartDataList.Add(new RevenueHousekeeperDatasShowDTO
+                    {
+                        name = date.ToString("dd/MM/yyyy"),
+                        revenue = (double)dailyRevenue
+                    });
+                }
+            }
+            return new RevenueHousekeeperDatasListShowDTO
+            {
+                ChartData = chartDataList
+            };
         }
     }
 }

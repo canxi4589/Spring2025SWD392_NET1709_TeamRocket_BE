@@ -1,6 +1,11 @@
 ﻿using HCP.Repository.Entities;
+using HCP.Service.DTOs.CheckoutDTO;
+using HCP.Service.DTOs.PaymentDTO;
+using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Integrations.Currency;
+using HCP.Service.Services.CheckoutService;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,14 +23,15 @@ namespace HCP.Service.Integrations.Vnpay
         private readonly string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
+        private readonly ICheckoutService checkoutService;
 
-
-        public VnPay(IConfiguration configuration, HttpClient httpClient)
+        public VnPay(IConfiguration configuration, HttpClient httpClient, ICheckoutService checkoutService)
         {
             _configuration = configuration;
             _httpClient = httpClient;
             vnp_HashSecret = _configuration["VnPay:HashSecret"];
             vnp_TmnCode = _configuration["VnPay:TmnCode"];
+            this.checkoutService = checkoutService;
         }
 
         private readonly string vnp_HashSecret;
@@ -56,7 +62,34 @@ namespace HCP.Service.Integrations.Vnpay
 
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
             return paymentUrl;
+        }
+        public string CreatePaymentUrl(PaymentBodyDTO body)
+        {
+            string returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
+            ExchangRate exchangRate = new ExchangRate();
+            double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
+            var order = checkoutService.GetCheckoutById(body.Id).Result;
+            var AmountInUsd = Convert.ToDouble(order.TotalPrice, CultureInfo.InvariantCulture);
 
+            double amountInVnd = Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
+
+            var vnPay = new VnPayLibrary();
+
+            vnPay.AddRequestData("vnp_Amount", (amountInVnd * 100).ToString());
+            vnPay.AddRequestData("vnp_Command", "pay");
+            vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnPay.AddRequestData("vnp_CurrCode", "VND");
+            vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            vnPay.AddRequestData("vnp_Locale", "vn");
+            vnPay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang: {order.Id}");
+            vnPay.AddRequestData("vnp_OrderType", "other");
+            vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
+            vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+            vnPay.AddRequestData("vnp_TxnRef", order.Id.ToString());
+            vnPay.AddRequestData("vnp_Version", "2.1.0");
+
+            string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+            return paymentUrl;
         }
         public string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl)
         {
