@@ -556,6 +556,16 @@ namespace HCP.Service.Services.WalletService
         public async Task DeduceFromWallet(ClaimsPrincipal user,decimal amount)
         {
             var user1 = await _userManager.GetUserAsync(user);
+            var wallet = _unitOfWork.Repository<SystemWallet>().GetAll().FirstOrDefault();
+            if (wallet == null)
+            {
+                wallet = new SystemWallet
+                {
+                    Balance = 0.0m, 
+                };
+               await _unitOfWork.Repository<SystemWallet>().AddAsync(wallet);
+            }
+
             var wTransaction = new WalletTransaction
             {
                 Id = Guid.NewGuid(),
@@ -568,8 +578,10 @@ namespace HCP.Service.Services.WalletService
                 Status = TransactionStatus.Done.ToString(),
                 CreatedDate = DateTime.Now
             };
+            
             user1.BalanceWallet -=(double)amount;
             wTransaction.AfterAmount = (Decimal)user1.BalanceWallet;
+            wallet.Balance += amount;
             await _userManager.UpdateAsync(user1);
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();

@@ -69,12 +69,12 @@ namespace HomeCleaningService.Controllers
             var bookingCount = await _bookingService.GetBookingCountHousekeeper(User);
             return Ok(new AppResponse<BookingCountDTO>().SetSuccessResponse(bookingCount));
         }
-        [HttpGet]
+        [HttpGet("GetHousekeeperBookings")]
         [Authorize]
         public async Task<IActionResult> GetHousekeeperBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
         {
             var userClaims = User;
-            var response = new AppResponse<BookingListResponseDto>();
+            var response = new AppResponse<PaginatedList<BookingListItemDto>>();
             try
             {
                 var result = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
@@ -129,6 +129,64 @@ namespace HomeCleaningService.Controllers
                 var errorResponse = new AppResponse<BookingFinishProof>()
                     .SetErrorResponse(KeyConst.Error, $"{BookingConst.ProofSubmissionFailed}: {ex.Message}");
                 return StatusCode(500, errorResponse);
+            }
+        }
+        /// <summary>
+        /// Retrieves the booking calendar for a housekeeper based on the specified view and navigation.
+        /// </summary>
+        /// <param name="housekeeperId">The unique identifier of the housekeeper.</param>
+        /// <param name="referenceDate">The reference date for the calendar (optional, defaults to today).</param>
+        /// <param name="navigationMode">The navigation mode ('next', 'previous', or 'today', defaults to 'today').</param>
+        /// <param name="viewMode">The view mode ('month', 'week', or 'day', defaults to 'month').</param>
+        /// <param name="cancellationToken">Token to cancel the request (optional).</param>
+        /// <returns>A standardized response containing the calendar data or error messages.</returns>
+        /// <response code="200">Returns the calendar data with success status.</response>
+        /// <response code="400">If the request is invalid (e.g., missing housekeeperId or invalid mode).</response>
+        /// <response code="500">If an internal server error occurs.</response>
+        [HttpGet("BookingListCalendar")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetHousekeeperBookings(
+            [FromQuery] string housekeeperId,
+            [FromQuery] DateTime? referenceDate = null,
+            [FromQuery] string navigationMode = "today",
+            [FromQuery] string viewMode = "month"
+            )
+        {
+            var response = new AppResponse<CalendarBookingDTO>();
+
+            try
+            {
+                if (string.IsNullOrEmpty(housekeeperId))
+                {
+                    return BadRequest(response.SetErrorResponse("validation", ["Housekeeper ID is required."]));
+                }
+
+                var result = await _bookingService.GetHousekeeperBookings(
+                    housekeeperId,
+                    referenceDate,
+                    navigationMode,
+                    viewMode
+                );
+
+                return Ok(response.SetSuccessResponse(result));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(response.SetErrorResponse("validation", [ex.Message]));
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    response.SetErrorResponse("error", ["Request was canceled."]));
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (e.g., using ILogger)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    response.SetErrorResponse("error", ["An unexpected error occurred."]));
             }
         }
     }

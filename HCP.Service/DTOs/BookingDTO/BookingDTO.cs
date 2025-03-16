@@ -109,5 +109,29 @@ namespace HCP.Service.DTOs.BookingDTO
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public string Mail { get; set; }
+    public class CalendarBookingDTO
+    {
+        public List<CalendarDayDTO> Days { get; set; }
+        public string ViewMode { get; set; }
+        public string DisplayRange { get; set; }
+    }
+
+    public class CalendarDayDTO
+    {
+        public DateTime Date { get; set; }
+        public List<BookingItemDTO> Bookings { get; set; }
+        public int BookingCount { get; set; }
+    }
+
+    public class BookingItemDTO
+    {
+        public Guid Id { get; set; }
+        public string ServiceName { get; set; }
+        public DateTime PreferDateStart { get; set; }
+        public TimeSpan TimeStart { get; set; }
+        public TimeSpan TimeEnd { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string CustomerName { get; set; }
+        public string Address { get; set; }
     }
 }
