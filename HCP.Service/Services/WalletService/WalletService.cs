@@ -37,6 +37,47 @@ namespace HCP.Service.Services.WalletService
             _customerService = customerService;
             _temporaryStorage = temporaryStorage;
         }
+        public async Task<WalletWithdrawRequestDTO> CreateRefundRequest(Guid bookingId, AppUser user)
+        {
+            double expectedRefund = 0;
+            double availableWithdraw = 0;
+            var completedBooking = _unitOfWork.Repository<Booking>().FindAsync(c => c.Id == bookingId && c.Status.Equals(BookingStatus.Completed.ToString()));
+            if (completedBooking == null) throw new Exception(BookingConst.BookingNotFound);
+            var payment = _unitOfWork.Repository<Payment>().FindAsync(c => c.BookingId == bookingId && c.Status.Equals(TransactionStatus.Done.ToString()));
+            var housekeeper = _userManager.FindByIdAsync(completedBooking.Result.CleaningService.UserId);
+            if (housekeeper == null) throw new Exception(CustomerConst.NotFoundError);
+            expectedRefund += (double)completedBooking.Result.TotalPrice;
+            if (housekeeper.Result.BalanceWallet < expectedRefund)
+            {
+                throw new Exception("Your refund request are more than houskeeper balance!");
+            }
+            var wTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AfterAmount = 0,
+                Current = 0,
+                User = user,
+                UserId = user.Id,
+                Amount = completedBooking.Result.TotalPrice,
+                Type = TransactionType.RefundCustomer.ToString(),
+                Status = TransactionStatus.Pending.ToString(),
+                CreatedDate = DateTime.UtcNow,
+                ReferenceId = completedBooking.Result.Id
+            };
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
+            await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
+            return new WalletWithdrawRequestDTO
+            {
+                Amount = wTransaction.Amount,
+                Type = wTransaction.Type,
+                UserId = wTransaction.UserId,
+                FullName = user.FullName,
+                Mail = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                CreatedDate = wTransaction.CreatedDate,
+                Status = wTransaction.Status
+            };
+        }
         public async Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user)
         {
             double expectedWithdraw = 0;
@@ -59,7 +100,7 @@ namespace HCP.Service.Services.WalletService
                 User = user,
                 UserId = user.Id,
                 Amount = amount,
-                Type = "Withdraw",
+                Type = TransactionType.Withdraw.ToString(),
                 Status = TransactionStatus.Pending.ToString(),
                 CreatedDate = DateTime.UtcNow,
             };
@@ -79,37 +120,49 @@ namespace HCP.Service.Services.WalletService
         }
         public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail)
         {
-            var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll().OrderByDescending(c=>c.CreatedDate);
-            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()) 
-                || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) 
-                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) || searchField.Equals(TransactionType.Deposit.ToString())
+            var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll()
+                .OrderByDescending(c=>c.CreatedDate);
+            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) 
+                || searchField.Equals(TransactionType.WithdrawUser.ToString()) 
+                || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) 
+                || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) 
+                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) 
+                || searchField.Equals(TransactionType.Deposit.ToString())
                 || searchField.Equals(TransactionType.BookingPurchase.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList.Where(c => c.User.Id == user.Id);
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.User.Id == user.Id);
             }
 
-            if (searchField.Equals(TransactionType.WithdrawRequestStaff.ToString()) || searchField.Equals(TransactionType.WithdrawRequestUser.ToString()))
+            if (searchField.Equals(TransactionType.WithdrawRequestStaff.ToString()) 
+                || searchField.Equals(TransactionType.WithdrawRequestUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Pending.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) 
+                    && c.Status.Equals(TransactionStatus.Pending.ToString()));
             }
 
             if (searchField.Equals(TransactionType.Deposit.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.Deposit.ToString())
+                    && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
 
-            if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) || searchField.Equals(TransactionType.WithdrawUser.ToString()))
+            if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) 
+                || searchField.Equals(TransactionType.WithdrawUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Done.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) 
+                    && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
 
-            if (searchField.Equals(TransactionType.WithdrawRejectStaff.ToString()) || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()))
+            if (searchField.Equals(TransactionType.WithdrawRejectStaff.ToString()) 
+                || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) && c.Status.Equals(TransactionStatus.Fail.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) 
+                    && c.Status.Equals(TransactionStatus.Fail.ToString()));
             }
 
             if (searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()))
@@ -395,7 +448,13 @@ namespace HCP.Service.Services.WalletService
                 .Include(p => p.Booking).Include(p => p.Booking.CleaningService)
                 .ToListAsync();
             payments = payments.Where(p => p.Booking.CleaningService?.UserId == user.Id).ToList();
-
+            //payments where booking refunded
+            var paymentsRefunded = await _unitOfWork.Repository<Payment>()
+                .GetAll()
+                .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Refunded.ToString()))
+                .Include(p => p.Booking).Include(p => p.Booking.CleaningService)
+                .ToListAsync();
+            paymentsRefunded = paymentsRefunded.Where(p => p.Booking.CleaningService?.UserId == user.Id).ToList();
             if (yearRevenue && yearStart.HasValue)
             {
                 // Year chart - show data for each month in the selected year
@@ -404,7 +463,8 @@ namespace HCP.Service.Services.WalletService
                     // Define the start and end of the month
                     var monthStartDate = new DateTime(yearStart.Value, month, 1);
                     var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
-                    var monthlyRevenue = payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.9m; // 90% of the amount
+                    var monthlyRevenue = (payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.9m) - 
+                        (paymentsRefunded.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount)); // 90% of the amount
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
                         name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
@@ -421,9 +481,12 @@ namespace HCP.Service.Services.WalletService
                     var yearStartDate = new DateTime(year, 1, 1);
                     var yearEndDate = new DateTime(year, 12, 31);
 
-                    var yearlyRevenue = payments
+                    var yearlyRevenue = (payments
                         .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
-                        .Sum(p => p.Amount) * 0.9m; // 90% of the amount
+                        .Sum(p => p.Amount) * 0.9m) -
+                        (paymentsRefunded
+                        .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
+                        .Sum(p => p.Amount)); // 90% of the amount
 
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
@@ -441,9 +504,12 @@ namespace HCP.Service.Services.WalletService
                 var endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
                 for (var date = startDate; date <= endDate; date = date.AddDays(1))
                 {
-                    var dailyRevenue = payments
+                    var dailyRevenue = (payments
                         .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
-                        .Sum(p => p.Amount) * 0.9m; // 10% of the amount
+                        .Sum(p => p.Amount) * 0.9m) -
+                        (paymentsRefunded
+                        .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
+                        .Sum(p => p.Amount)); // 10% of the amount
 
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {

@@ -61,8 +61,8 @@ namespace HCP.Service.Services
             var pendingDeposits = unitOfWork.Repository<WalletTransaction>()
                 .GetAll()
                 .Where(t => t.Type == TransactionType.Deposit.ToString() &&
-                            t.Status == TransactionStatus.Pending.ToString() &&
-                            t.CreatedDate <= expirationThreshold) // Compare directly
+                            ((t.Status == TransactionStatus.Pending.ToString() &&
+                            t.CreatedDate <= expirationThreshold) || t.Status == TransactionStatus.Fail.ToString())) // Compare directly
                 .ToList();
 
             if (!pendingDeposits.Any())
@@ -79,10 +79,8 @@ namespace HCP.Service.Services
                 {
                     _logger.LogInformation($"Processing transaction {transaction.Id}, CreatedDate: {transaction.CreatedDate}, Age: {(now - transaction.CreatedDate).TotalMinutes} minutes");
 
-                    transaction.Status = TransactionStatus.Fail.ToString();
-                    transaction.AfterAmount = transaction.Current;
 
-                    unitOfWork.Repository<WalletTransaction>().Update(transaction);
+                    unitOfWork.Repository<WalletTransaction>().Delete(transaction);
                     await unitOfWork.SaveChangesAsync();
 
                     _logger.LogInformation($"Expired deposit transaction {transaction.Id} for user {transaction.UserId}");

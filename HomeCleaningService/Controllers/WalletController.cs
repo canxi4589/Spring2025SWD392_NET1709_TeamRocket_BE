@@ -52,6 +52,25 @@ namespace HomeCleaningService.Controllers
             }
             return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
+        [HttpPost("sendRefundRequest")]
+        [Authorize]
+        public async Task<IActionResult> createRefundRequest(Guid bookingId)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var refundRequest = await _walletService.CreateRefundRequest(bookingId, user);
+                return Ok(new AppResponse<WalletWithdrawRequestDTO>().SetSuccessResponse(refundRequest));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, TransactionConst.RefundFail));
+        }
+        //[HttpPost("processRefund")]
+        //[Authorize(Roles = KeyConst.Staff)]
+        //public async Task<IActionResult> processRefund(Guid transId, bool action)
+        //{
+        //    var withdraw = await _walletService.StaffProccessWithdraw(transId, action);
+        //    return Ok(new AppResponse<WalletTransactionWithdrawResponseDTO>().SetSuccessResponse(withdraw));
+        //}
         [HttpPost("processWithdraw")]
         [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> processWithdraw(Guid transId, bool action)

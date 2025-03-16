@@ -281,7 +281,7 @@ namespace HCP.Service.Services.AdminManService
             // Query payments with status "Completed" and include booking
             var payments = _unitOfWork.Repository<Payment>()
                 .GetAll()
-                .Where(p => p.Status == "succeed" && p.Booking.Status.Equals(BookingStatus.Completed.ToString()))
+                .Where(p => p.Status == "succeed" && (p.Booking.Status.Equals(BookingStatus.Completed.ToString()) || p.Booking.Status.Equals(BookingStatus.Refunded.ToString())))
                 .Include(p => p.Booking)
                 .ToList();
 

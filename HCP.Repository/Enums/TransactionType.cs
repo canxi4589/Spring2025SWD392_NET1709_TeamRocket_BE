@@ -10,6 +10,12 @@ namespace HCP.Repository.Enums
     public enum TransactionType
     {
 
+        [Description("Refund transaction from customer")]
+        RefundCustomer,
+
+        [Description("Refund transaction from system")]
+        RefundHousekeeper,
+
         [Description("Money taken from wallet for booking action transaction")]
         BookingPurchase,
 

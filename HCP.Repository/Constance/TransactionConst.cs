@@ -11,6 +11,7 @@ namespace HCP.Repository.Constance
         //Error
         public const string NotFoundError = "Transaction Not Found";
         public const string DepositFail = "Cannot deposit";
+        public const string RefundFail = "Cannot refund";
 
         //Success
         public const string SuccessTaskMessage = "Task done successfully";

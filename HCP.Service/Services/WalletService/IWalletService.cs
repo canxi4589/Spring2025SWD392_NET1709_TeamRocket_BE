@@ -11,6 +11,7 @@ namespace HCP.Service.Services.WalletService
         Task<double> getUserBalance(ClaimsPrincipal user);
 
         Task<double> VNDMoneyExchangeFromUSD(decimal amount);
+        Task<WalletWithdrawRequestDTO> CreateRefundRequest(Guid bookingId, AppUser user);
         Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user);
         Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user);
         Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot);
