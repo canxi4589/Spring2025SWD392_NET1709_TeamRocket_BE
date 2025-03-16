@@ -17,5 +17,14 @@ namespace HCP.Service.DTOs.AdminManagementDTO
         {
             public List<ChartDataAdminShowDTO> ChartData { get; set; }
         }
+        public class ChartCategoryDataAdminShowDTO
+        {
+            public int numberOfBookings { get; set; }
+            public string name { get; set; }
+        }
+        public class ChartCategoryDataAdminShowListDTO
+        {
+            public List<ChartCategoryDataAdminShowDTO> ChartData { get; set; }
+        }
     }
 }

@@ -119,7 +119,7 @@ namespace HCP.Service.Services.CleaningService1
 
             return await PaginatedList<CategoryDTO>.CreateAsync(categoryList, pageIndex, pageSize);
         }
-        public async Task<CleaningServiceTopListDTO> GetTopServiceItems(ClaimsPrincipal claims, bool dayTop, bool weekTop, bool yearTop,
+        public async Task<CleaningServiceTopListDTO> GetTopServiceItems(ClaimsPrincipal claims, bool dayTop, bool monthTop, bool yearTop,
     int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd,
     string? search, int? tops = 3)
         {
@@ -136,7 +136,7 @@ namespace HCP.Service.Services.CleaningService1
                 startDate = new DateTime(yearStart.Value, monthStart.Value, dayStart.Value);
                 endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
             }
-            else if (weekTop && yearStart.HasValue && monthStart.HasValue)
+            else if (monthTop && yearStart.HasValue && monthStart.HasValue)
             {
                 startDate = new DateTime(yearStart.Value, monthStart.Value, 1);
                 endDate = startDate.Value.AddMonths(1).AddDays(-1);

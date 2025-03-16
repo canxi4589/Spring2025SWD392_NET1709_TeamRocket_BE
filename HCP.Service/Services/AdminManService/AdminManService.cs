@@ -203,6 +203,77 @@ namespace HCP.Service.Services.AdminManService
                 totalPages = temp2.TotalPages,
             };
         }
+        //Get data for admin category chart base on completed date of booking and booking status and payment status 
+        public async Task<ChartCategoryDataAdminShowListDTO> GetCategoryChart(
+    bool dayChart, bool yearChart, bool yearsChart,
+    int? dayStart, int? monthStart, int? yearStart,
+    int? dayEnd, int? monthEnd, int? yearEnd)
+        {
+            var categories = await _unitOfWork.Repository<ServiceCategory>().GetAll()
+                .Include(c => c.CleaningServices)
+                .ThenInclude(cs => cs.Bookings)
+                .ThenInclude(b => b.Payments)
+                .ToListAsync();
+            var chartDataList = new List<ChartCategoryDataAdminShowDTO>();
+            DateTime? startDate = null;
+            DateTime? endDate = null;
+
+            if (yearChart && yearStart.HasValue)
+            {
+                // For year chart, cover the entire year
+                startDate = new DateTime(yearStart.Value, 1, 1);
+                endDate = new DateTime(yearStart.Value, 12, 31);
+            }
+            else if (yearsChart && yearStart.HasValue && yearEnd.HasValue)
+            {
+                // For years chart, cover the range of years
+                startDate = new DateTime(yearStart.Value, 1, 1);
+                endDate = new DateTime(yearEnd.Value, 12, 31);
+            }
+            else if (dayChart && !yearChart && !yearsChart &&
+                     dayStart.HasValue && monthStart.HasValue && yearStart.HasValue &&
+                     dayEnd.HasValue && monthEnd.HasValue && yearEnd.HasValue)
+            {
+                // For day chart, cover the specified date range
+                startDate = new DateTime(yearStart.Value, monthStart.Value, dayStart.Value);
+                endDate = new DateTime(yearEnd.Value, monthEnd.Value, dayEnd.Value);
+            }
+
+            // Create the category list based on the date range (or no range for default case)
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                chartDataList = categories.Select(category => new ChartCategoryDataAdminShowDTO
+                {
+                    name = category.CategoryName,
+                    numberOfBookings = category.CleaningServices
+                        .SelectMany(cs => cs.Bookings)
+                        .Count(b => b.Status == BookingStatus.Completed.ToString() &&
+                                   b.CompletedAt.HasValue &&
+                                   b.CompletedAt.Value >= startDate.Value &&
+                                   b.CompletedAt.Value <= endDate.Value &&
+                                   b.Payments.Any(p => p.Status == "succeed"))
+                }).ToList();
+            }
+            else
+            {
+                // Default case: no specific time filter, count all completed bookings with successful payments
+                chartDataList = categories.Select(category => new ChartCategoryDataAdminShowDTO
+                {
+                    name = category.CategoryName,
+                    numberOfBookings = category.CleaningServices
+                        .SelectMany(cs => cs.Bookings)
+                        .Count(b => b.Status == BookingStatus.Completed.ToString() &&
+                                   b.CompletedAt.HasValue &&
+                                   b.Payments.Any(p => p.Status == "succeed"))
+                }).ToList();
+            }
+
+            return new ChartCategoryDataAdminShowListDTO
+            {
+                ChartData = chartDataList
+            };
+        }
+        //Get data for admin revenue chart base on completed date of booking and booking status and payment status 
         public async Task<ChartDataAdminShowListDTO> GetRevenueChartDatas(bool dayChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
         {
             var chartDataList = new List<ChartDataAdminShowDTO>();
@@ -222,11 +293,11 @@ namespace HCP.Service.Services.AdminManService
                     // Define the start and end of the month
                     var monthStartDate = new DateTime(yearStart.Value, month, 1);
                     var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
-                    var monthlyRevenue = payments.Where(p => p.PaymentDate >= monthStartDate && p.PaymentDate <= monthEndDate).Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                    var monthlyRevenue = payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.1m; // 10% of the amount
                     chartDataList.Add(new ChartDataAdminShowDTO
                     {
                         name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
-                        revenue = (double)monthlyRevenue // Assuming 'revenued' is the correct property name
+                        revenue = (double)monthlyRevenue
                     });
                 }
             }
@@ -240,7 +311,7 @@ namespace HCP.Service.Services.AdminManService
                     var yearEndDate = new DateTime(year, 12, 31);
 
                     var yearlyRevenue = payments
-                        .Where(p => p.PaymentDate >= yearStartDate && p.PaymentDate <= yearEndDate)
+                        .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
                         .Sum(p => p.Amount) * 0.1m; // 10% of the amount
 
                     chartDataList.Add(new ChartDataAdminShowDTO
@@ -261,7 +332,7 @@ namespace HCP.Service.Services.AdminManService
                 for (var date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     var dailyRevenue = payments
-                        .Where(p => p.PaymentDate.Date == date.Date)
+                        .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
                         .Sum(p => p.Amount) * 0.1m; // 10% of the amount
 
                     chartDataList.Add(new ChartDataAdminShowDTO
@@ -276,6 +347,7 @@ namespace HCP.Service.Services.AdminManService
                 ChartData = chartDataList
             };
         }
+        //Get all booking base on preferdate
         public async Task<BookingHistoryResponseListDTO> GetAllBookingByCateAndServiceAdmin(bool isService, bool isCategory, Guid Id, int? pageIndex, int? pageSize, string? status, int? day, int? month, int? year)
         {
 

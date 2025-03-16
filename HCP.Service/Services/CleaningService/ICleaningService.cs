@@ -32,7 +32,7 @@ namespace HCP.Service.Services.CleaningService1
             List<decimal>? ratings = null,
             string? search = null);
         Task<ServiceFilterOptionsDTO> GetFilterOptionsAsync();
-        Task<CleaningServiceTopListDTO> GetTopServiceItems(ClaimsPrincipal claims, bool dayTop, bool weekTop, bool yearTop,
+        Task<CleaningServiceTopListDTO> GetTopServiceItems(ClaimsPrincipal claims, bool dayTop, bool monthTop, bool yearTop,
     int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd,
     string? search, int? tops = 3);
     }

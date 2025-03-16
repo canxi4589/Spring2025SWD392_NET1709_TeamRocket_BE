@@ -51,6 +51,13 @@ namespace HomeCleaningService.Controllers
             var categories = await _adminManService.GetAllServiceCategoriesAsync(search, pageIndex, pageSize, day, month, year);
             return Ok(new AppResponse<ServiceCategoryAdminShowListDTO>().SetSuccessResponse(categories));
         }
+        [HttpGet("serviceCategoryChart")]
+        [Authorize(Roles = KeyConst.Admin)]
+        public async Task<IActionResult> GetCategoriesChart(bool dayChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
+        {
+            var categories = await _adminManService.GetCategoryChart(dayChart, yearChart, yearsChart, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd);
+            return Ok(new AppResponse<ChartCategoryDataAdminShowListDTO>().SetSuccessResponse(categories));
+        }
         [HttpGet("revenueChartData")]
         [Authorize(Roles = KeyConst.Admin)]
         public async Task<IActionResult> GetRevenueChartData(bool dayChart, bool weekChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
