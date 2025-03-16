@@ -614,8 +614,8 @@ namespace HCP.Service.Services.WalletService
                     // Define the start and end of the month
                     var monthStartDate = new DateTime(yearStart.Value, month, 1);
                     var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
-                    var monthlyRevenue = (payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.9m) - 
-                        (paymentsRefunded.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount)); // 90% of the amount
+                    var monthlyRevenue = (payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.9m)/* - 
+                        (paymentsRefunded.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount))*/; // 90% of the amount
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
                         name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
@@ -634,10 +634,10 @@ namespace HCP.Service.Services.WalletService
 
                     var yearlyRevenue = (payments
                         .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
-                        .Sum(p => p.Amount) * 0.9m) -
+                        .Sum(p => p.Amount) * 0.9m)/* -
                         (paymentsRefunded
                         .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
-                        .Sum(p => p.Amount)); // 90% of the amount
+                        .Sum(p => p.Amount))*/; // 90% of the amount
 
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
@@ -657,10 +657,10 @@ namespace HCP.Service.Services.WalletService
                 {
                     var dailyRevenue = (payments
                         .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
-                        .Sum(p => p.Amount) * 0.9m) -
+                        .Sum(p => p.Amount) * 0.9m)/* -
                         (paymentsRefunded
                         .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
-                        .Sum(p => p.Amount)); // 10% of the amount
+                        .Sum(p => p.Amount))*/; // 10% of the amount
 
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
