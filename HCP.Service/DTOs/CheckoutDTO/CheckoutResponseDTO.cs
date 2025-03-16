@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Org.BouncyCastle.Bcpg.OpenPgp;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -72,6 +73,7 @@ namespace HCP.Service.DTOs.CheckoutDTO
 
         [JsonPropertyName("payment_methods")]
         public List<PaymentMethodDTO> PaymentMethods { get; set; } = new();
+        public string? PaymentMethod {  get; set; }
     }
 
     public class CheckoutAdditionalServiceResponseDTO

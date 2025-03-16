@@ -303,7 +303,7 @@ namespace HCP.Service.Services.BookingService
             var timeSlotRepository = _unitOfWork.Repository<ServiceTimeSlot>();
             var addressRepository = _unitOfWork.Repository<Address>();
             var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
-
+            var checkout =await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
             var userId = userClaims.FindFirst("id")?.Value ?? dto.CustomerId;
             if (string.IsNullOrEmpty(userId))
             {
@@ -381,8 +381,8 @@ namespace HCP.Service.Services.BookingService
             };
 
             await bookingRepository.AddAsync(booking);
+            checkout.Status = CheckoutStatus.Completed.ToString();
             await _unitOfWork.Complete();
-
             return booking;
         }
         public async Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid)
@@ -448,7 +448,7 @@ namespace HCP.Service.Services.BookingService
                 CleaningServiceId = service.Id,
                 PreferDateStart = dto.BookingDate,
                 TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration),
                 CreatedDate = DateTime.UtcNow,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
@@ -517,7 +517,7 @@ namespace HCP.Service.Services.BookingService
             var bookingsQuery = await _unitOfWork.Repository<Booking>().ListAsync(
                 filter: c => c.CleaningService.UserId == userId &&
                              c.Status != "IsDeleted" &&
-                             (string.IsNullOrEmpty(status) || c.Status == status), // Status filter
+                             (string.IsNullOrEmpty(status) || c.Status == status), 
                 includeProperties: query => query
                     .Include(c => c.CleaningService).ThenInclude(c => c.ServiceImages)
                     .Include(c => c.Payments)

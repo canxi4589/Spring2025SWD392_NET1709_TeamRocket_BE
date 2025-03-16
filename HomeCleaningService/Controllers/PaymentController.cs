@@ -28,20 +28,18 @@ namespace HomeCleaningService.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly Ivnpay ivnpay;
         private readonly IEmailSenderService _emailSenderService;
-        private readonly string _vnpHashSecret;
         private readonly IWalletService _walletService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICustomerService _customerService;
         private readonly ITemporaryStorage _tempStorage;
         private readonly ICheckoutService _checkoutService;
 
-        public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, string vnpHashSecret, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage, ICheckoutService checkoutService)
+        public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage, ICheckoutService checkoutService)
         {
             _bookingService = bookingService;
             _userManager = userManager;
             this.ivnpay = ivnpay;
             _emailSenderService = emailSenderService;
-            _vnpHashSecret = vnpHashSecret;
             _walletService = walletService;
             _unitOfWork = unitOfWork;
             _customerService = customerService;
@@ -103,6 +101,11 @@ namespace HomeCleaningService.Controllers
                 return StatusCode(500, new AppResponse<string>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
+        [HttpGet("GetStore")]
+        public IActionResult getStore(Guid id)
+        {
+            return Ok(_tempStorage.RetrieveAsync(id).Result);
+        }
         [HttpPost("CreatePayment")]
         [Authorize]
         public async Task<IActionResult> CreatePayment([FromBody] PaymentBodyDTO dto)
@@ -129,8 +132,6 @@ namespace HomeCleaningService.Controllers
                 }
                 else 
                 {
-                    await _tempStorage.StoreAsync(dto);
-                    dto.Uid = userClaims.FindFirst("id")?.Value;
                     string paymentUrl = ivnpay.CreatePaymentUrl(dto);
                     return Ok(new { url = paymentUrl });
                 }
@@ -158,11 +159,10 @@ namespace HomeCleaningService.Controllers
             {
                 if (paymentStatus == PaymentConst.SuccessCode)
                 {
-                    var dto =await _tempStorage.RetrieveAsync(Id);
                     var body =await _checkoutService.GetCheckoutById(Id);
-                    var booking = await _bookingService.CreateBookingAsync1(body,dto.Uid);
-                    await _bookingService.CreatePayment(booking.Id,booking.TotalPrice,dto.PaymentMethod);
-                    var user = await _userManager.FindByIdAsync(dto.Uid);
+                    var booking = await _bookingService.CreateBookingAsync1(body,body.CustomerId);
+                    await _bookingService.CreatePayment(booking.Id,booking.TotalPrice,"VnPay");
+                    var user = await _userManager.FindByIdAsync(body.CustomerId);
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
                     //return Redirect("https://www.google.com/");                                 
                     return Redirect("http://localhost:5173/service/Checkout/success");
@@ -176,16 +176,15 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> PaymentDepositReturn()
         {
             string queryString = Request.QueryString.Value;
-            var vnp_HashSecret = _vnpHashSecret;
             if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid transactId))
             {
                 if (true)
                 {
                     var paymentStatus = Request.Query["vnp_ResponseCode"];
-                    if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
+                    if (paymentStatus == PaymentConst.SuccessCode)                                
                     {
                         await _walletService.processDepositTransaction(transactId, true);
-                        //return Redirect("https://www.google.com/");                                   // Redirect to success page
+                        //return Redirect("https://www.google.com/");                               
                         return Redirect("http://localhost:5173/wallet/deposit/success");
                     }
                     else

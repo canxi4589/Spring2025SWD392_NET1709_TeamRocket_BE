@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 public class GoongDistanceService : IGoongDistanceService
 {
     private readonly HttpClient _httpClient;
-    private const string GoongApiKey = "N9JxG9aqmBVPRdSlAJxvCgFp7VeDMcuH3a9YmD5H";
+    private const string GoongApiKey = "hvloh0IRgo8MWKFNF0wtIGtRnKBYpbfCWNb7XLdm";
     private const string GoongApiUrl = "https://rsapi.goong.io/DistanceMatrix";
     private readonly ILogger<GoongDistanceService> _logger; // Inject ILogger in the constructor
     private readonly IUnitOfWork _unitOfWork;
@@ -182,11 +182,11 @@ public class GoongDistanceService : IGoongDistanceService
                 _logger.LogError("Failed to retrieve distances.");
                 return new List<CleaningService>();
             }
-
+              //.Where(service =>
+              //      distances.ContainsKey(service.PlaceId) &&
+              //      IsServiceBookable(service, distances[service.PlaceId]))
             return services
-                .Where(service =>
-                    distances.ContainsKey(service.PlaceId) &&
-                    IsServiceBookable(service, distances[service.PlaceId])) 
+              
                 .ToList();
         }
         catch (Exception ex)
@@ -229,15 +229,33 @@ public class GoongDistanceService : IGoongDistanceService
             return distances;
         }
 
-        var destination = destinationPlaceIds.Select( async c => await GetLatLngFromPlaceId(c));
-        var origin = await GetLatLngFromPlaceId(originPlaceId);
-        var destinations = string.Join("|", destination);
-        var url = $"https://rsapi.goong.io/DistanceMatrix?origins=place_id:{origin}&destinations=place_id:{destinations}&vehicle=car&api_key={GoongApiKey}";
-
-        _logger.LogInformation("Calling Goong Distance API: {Url}", url);
-
         try
         {
+            var origin = await GetLatLngFromPlaceId(originPlaceId);
+            if (string.IsNullOrEmpty(origin))
+            {
+                _logger.LogWarning("Invalid origin coordinates for Place ID: {OriginPlaceId}", originPlaceId);
+                return distances;
+            }
+
+            var destinationTasks = destinationPlaceIds.Select(async id => (id, await GetLatLngFromPlaceId(id))).ToList();
+            var destinationResults = await Task.WhenAll(destinationTasks);
+
+            var validDestinations = destinationResults
+                .Where(r => !string.IsNullOrEmpty(r.Item2))
+                .Select(r => r.Item2)
+                .ToList();
+            if (!validDestinations.Any())
+            {
+                _logger.LogWarning("No valid destination coordinates retrieved.");
+                return distances;
+            }
+
+            var destinations = string.Join("|", validDestinations);
+            var url = $"https://rsapi.goong.io/DistanceMatrix?origins={origin}&destinations={destinations}&vehicle=car&api_key={GoongApiKey}";
+            _logger.LogInformation("Calling Goong Distance API: {Url}", url);
+
+            // Make the API call
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
@@ -245,6 +263,7 @@ public class GoongDistanceService : IGoongDistanceService
                 return distances;
             }
 
+            // Parse the response
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
@@ -257,16 +276,21 @@ public class GoongDistanceService : IGoongDistanceService
             }
 
             var elements = rows[0].GetProperty("elements");
-            for (int i = 0; i < elements.GetArrayLength(); i++)
+            var validDestinationPlaceIds = destinationResults
+                .Where(r => !string.IsNullOrEmpty(r.Item2))
+                .Select(r => r.id)
+                .ToList();
+
+            for (int i = 0; i < elements.GetArrayLength() && i < validDestinationPlaceIds.Count; i++)
             {
                 if (elements[i].TryGetProperty("distance", out var distanceElement))
                 {
                     var distanceInMeters = distanceElement.GetProperty("value").GetDouble();
-                    distances[destinationPlaceIds[i]] = distanceInMeters / 1000.0;
+                    distances[validDestinationPlaceIds[i]] = distanceInMeters / 1000.0;
                 }
                 else
                 {
-                    _logger.LogWarning("No distance found for destination: {Destination}", destinationPlaceIds[i]);
+                    _logger.LogWarning("No distance found for destination: {Destination}", validDestinationPlaceIds[i]);
                 }
             }
         }
@@ -277,5 +301,4 @@ public class GoongDistanceService : IGoongDistanceService
 
         return distances;
     }
-
 }

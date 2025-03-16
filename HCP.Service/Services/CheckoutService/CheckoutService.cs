@@ -52,44 +52,33 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception(CommonConst.NotFoundError);
                 }
 
+                Checkout? checkExistedCheckout = null;
+
                 var checkouts = _unitOfWork.Repository<Checkout>()
                     .GetAll()
                     .Include(c => c.CheckoutAdditionalServices)
-                    .AsEnumerable(); 
+                    .Where(c =>
+                        c.CleaningServiceId == requestDTO.ServiceId &&
+                        c.AddressId == requestDTO.AddressId &&
+                        c.TimeSLotId == requestDTO.ServiceTimeSlotId)
+                    .AsEnumerable();
+
                 var requestBookingDate = requestDTO.BookingDate.Date;
 
-                var filteredCheckouts = checkouts.Where(c =>
-                    c.CleaningServiceId == requestDTO.ServiceId &&
-                    c.AddressId == requestDTO.AddressId &&
-                    c.TimeSLotId == requestDTO.ServiceTimeSlotId
-                ).ToList();
+                var filteredCheckouts = checkouts.Where(c => c.BookingDate.Date == requestBookingDate).ToList();
 
-                if (!filteredCheckouts.Any())
+                if (filteredCheckouts.Count != 0)
                 {
-                    Console.WriteLine("No matching records found for ServiceId, AddressId, and TimeSlotId.");
-                    return null;
-                }
-
-                filteredCheckouts = filteredCheckouts
-                    .Where(c => c.BookingDate.Date == requestBookingDate)
-                    .ToList();
-
-                if (!filteredCheckouts.Any())
-                {
-                    Console.WriteLine("No matching records found with the same BookingDate.");
-                    return null;
-                }
-
-                var checkExistedCheckout = filteredCheckouts.FirstOrDefault(c =>
-                    (!c.CheckoutAdditionalServices.Any() && !requestDTO.AdditionalServices.Any()) ||
-                    c.CheckoutAdditionalServices
-                        .Select(s => s.AdditionalServiceId)
-                        .OrderBy(id => id)
-                        .SequenceEqual(requestDTO.AdditionalServices
+                    checkExistedCheckout = filteredCheckouts.FirstOrDefault(c =>
+                        (c.CheckoutAdditionalServices.Count == 0 && requestDTO.AdditionalServices.Count == 0) ||
+                        c.CheckoutAdditionalServices
                             .Select(s => s.AdditionalServiceId)
-                            .OrderBy(id => id))
-                );
-
+                            .OrderBy(id => id)
+                            .SequenceEqual(requestDTO.AdditionalServices
+                                .Select(s => s.AdditionalServiceId)
+                                .OrderBy(id => id))
+                    );
+                }
 
                 if (checkExistedCheckout != null)
                 {
@@ -145,7 +134,7 @@ namespace HCP.Service.Services.CheckoutService
                 );
                 if (pricingRule == null)
                 {
-                    throw new Exception("Service is not available for this distance");
+                    throw new Exception(CleaningServiceConst.ServiceNotAvailableDistance);
                 }
 
                 var distancePrice = pricingRule.BaseFee;
@@ -393,5 +382,6 @@ namespace HCP.Service.Services.CheckoutService
                 PaymentMethods = paymentMethods
             };
         }
+
     }
 }
