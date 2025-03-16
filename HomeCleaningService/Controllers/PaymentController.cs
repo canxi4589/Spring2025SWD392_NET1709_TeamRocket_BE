@@ -181,10 +181,10 @@ namespace HomeCleaningService.Controllers
                 if (true)
                 {
                     var paymentStatus = Request.Query["vnp_ResponseCode"];
-                    if (paymentStatus == PaymentConst.SuccessCode)                                  //"00" means success
+                    if (paymentStatus == PaymentConst.SuccessCode)                                
                     {
                         await _walletService.processDepositTransaction(transactId, true);
-                        //return Redirect("https://www.google.com/");                                   // Redirect to success page
+                        //return Redirect("https://www.google.com/");                               
                         return Redirect("http://localhost:5173/wallet/deposit/success");
                     }
                     else
