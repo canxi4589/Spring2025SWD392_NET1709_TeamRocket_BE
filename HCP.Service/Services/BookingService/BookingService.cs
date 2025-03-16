@@ -448,7 +448,7 @@ namespace HCP.Service.Services.BookingService
                 CleaningServiceId = service.Id,
                 PreferDateStart = dto.BookingDate,
                 TimeStart = timeSlot.StartTime,
-                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
+                TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration),
                 CreatedDate = DateTime.UtcNow,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
@@ -517,7 +517,7 @@ namespace HCP.Service.Services.BookingService
             var bookingsQuery = await _unitOfWork.Repository<Booking>().ListAsync(
                 filter: c => c.CleaningService.UserId == userId &&
                              c.Status != "IsDeleted" &&
-                             (string.IsNullOrEmpty(status) || c.Status == status), // Status filter
+                             (string.IsNullOrEmpty(status) || c.Status == status), 
                 includeProperties: query => query
                     .Include(c => c.CleaningService).ThenInclude(c => c.ServiceImages)
                     .Include(c => c.Payments)
