@@ -52,7 +52,7 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception(CommonConst.NotFoundError);
                 }
 
-                Checkout checkExistedCheckout = null;
+                Checkout? checkExistedCheckout = null;
 
                 var checkouts = _unitOfWork.Repository<Checkout>()
                     .GetAll()
@@ -70,7 +70,7 @@ namespace HCP.Service.Services.CheckoutService
                 if (filteredCheckouts.Count != 0)
                 {
                     checkExistedCheckout = filteredCheckouts.FirstOrDefault(c =>
-                        (!c.CheckoutAdditionalServices.Any() && !requestDTO.AdditionalServices.Any()) ||
+                        (c.CheckoutAdditionalServices.Count == 0 && requestDTO.AdditionalServices.Count == 0) ||
                         c.CheckoutAdditionalServices
                             .Select(s => s.AdditionalServiceId)
                             .OrderBy(id => id)
@@ -134,7 +134,7 @@ namespace HCP.Service.Services.CheckoutService
                 );
                 if (pricingRule == null)
                 {
-                    throw new Exception("Service is not available for this distance");
+                    throw new Exception(CleaningServiceConst.ServiceNotAvailableDistance);
                 }
 
                 var distancePrice = pricingRule.BaseFee;

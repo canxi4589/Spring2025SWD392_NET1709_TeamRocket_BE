@@ -10,6 +10,7 @@ namespace HCP.Repository.Constance
     {
         //message
         public const string ServiceNotFound = "Cleaning Service Not Found!";
+        public const string ServiceNotAvailableDistance = "Cleaning Service Not Available for this Distance!";
         public const string AddError = "Failed to add new Service!";
     }
 }
