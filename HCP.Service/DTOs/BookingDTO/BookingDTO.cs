@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HCP.Repository.Entities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -90,5 +91,23 @@ namespace HCP.Service.DTOs.BookingDTO
         public Guid BookingId { get; set; }
         public List<BookingProofDTO> Proofs { get; set; }
     }
-
+    public class BookingCancelDTO
+    {
+        public Guid BookingId { get; set; }
+        public string BookingStatus { get; set; }
+        public string Title { get; set; }
+    }
+    public class RefundRequestDTO
+    {
+        public Guid Id { get; set; }
+        public Guid BookingId { get; set; }
+        public string Reason { get; set; }
+        public string Status { get; set; }
+        public string ProofOfPayment { get; set; }
+        public string AcceptBy { get; set; }
+        public DateTime? ResolutionDate { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Mail { get; set; }
+    }
 }

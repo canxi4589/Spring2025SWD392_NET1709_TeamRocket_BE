@@ -3,6 +3,7 @@ using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CustomerDTO;
+using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
@@ -87,6 +88,18 @@ namespace HomeCleaningService.Controllers
             {
                 return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.Message));
             }
+        }
+        [HttpDelete("cancelBooking")]
+        [Authorize]
+        public async Task<IActionResult> cancelBooking(Guid bookingId)
+        {
+            var user = await _customerService.GetCustomerAsync(User);
+            if (user != null)
+            {
+                var cancelBooking = await _bookingService.cancelBooking(bookingId, user);
+                return Ok(new AppResponse<BookingCancelDTO>().SetSuccessResponse(cancelBooking));
+            }
+            return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, TransactionConst.RefundFail));
         }
         [HttpPost("submit-proof")]
         [Authorize]

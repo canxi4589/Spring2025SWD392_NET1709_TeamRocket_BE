@@ -392,7 +392,10 @@ namespace HCP.Service.Services.AdminManService
                 ServiceName = c.CleaningService.ServiceName,
                 CleaningServiceDuration = c.CleaningService.Duration,
                 isRating = c.isRating,
-                CleaningServiceId = c.CleaningServiceId
+                CleaningServiceId = c.CleaningServiceId,
+                isCancelable = c.Status.Equals(BookingStatus.OnGoing.ToString()) &&
+                  c.PreferDateStart >= DateTime.Today &&
+                  c.PreferDateStart <= DateTime.Today.AddDays(3)
             });
             if (pageIndex == null || pageSize == null)
             {

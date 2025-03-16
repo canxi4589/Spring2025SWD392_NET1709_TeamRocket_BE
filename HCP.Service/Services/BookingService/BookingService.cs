@@ -502,7 +502,6 @@ namespace HCP.Service.Services.BookingService
             return payment;
 
         }
-
         public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize, string? status)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();
@@ -559,6 +558,38 @@ namespace HCP.Service.Services.BookingService
                 .ToList();
 
             return new BookingListResponseDto { Items = bookings, TotalCount = totalCount };
+        }
+        public async Task<BookingCancelDTO> cancelBooking(Guid bookingId, AppUser user)
+        {
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var booking = bookingRepository.GetById(bookingId);
+            if (booking == null)
+            {
+                throw new KeyNotFoundException(BookingConst.BookingNotFound);
+            }
+            if (booking.Status != BookingStatus.OnGoing.ToString())
+            {
+                throw new InvalidOperationException(BookingConst.BookingCancellationFailed);
+            }
+            booking.Status = BookingStatus.Canceled.ToString();
+            user.BalanceWallet += (double)booking.TotalPrice;
+            //var refundRequest = new RefundRequest
+            //{
+            //    Amount = booking.TotalPrice,
+            //    UserId = user.Id,
+            //    BookingId = booking.Id,
+            //    Status = WalletWithdrawStatus.Pending.ToString()
+            //};
+            //await _unitOfWork.Repository<WalletWithdrawRequest>().AddAsync(refundRequest);
+            _unitOfWork.Repository<Booking>().Update(booking);
+            await userManager.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+            return new BookingCancelDTO
+            {
+                BookingId = booking.Id,
+                BookingStatus = booking.Status,
+                Title = BookingConst.BookingCancelledSuccessfully
+            };
         }
         public async Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto)
         {

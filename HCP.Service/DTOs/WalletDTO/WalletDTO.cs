@@ -93,4 +93,41 @@ namespace HCP.Service.DTOs.WalletDTO
     {
         public List<RevenueHousekeeperDatasShowDTO> ChartData { get; set; }
     }
+    public class RefundRequestShowDTO
+    {
+        public Guid Id { get; set; }
+        public Guid BookingId { get; set; }
+        public string CustomerId { get; set; }
+        public string? CustomerName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Email { get; set; }
+        public string Reason { get; set; }
+        public string Status { get; set; }
+        public string? AcceptBy { get; set; }
+        public DateTime? ResolutionDate { get; set; }
+        public decimal TotalPrice { get; set; }
+    }
+    public class RefundRequestShowListDTO
+    {
+        public List<RefundRequestShowDTO> Items { get; set; }
+        public int totalCount { get; set; }
+        public int totalPages { get; set; }
+        public bool hasNext { get; set; }
+        public bool hasPrevious { get; set; }
+    }
+    public class RefundRequestShowDetailDTO
+    {
+        public Guid Id { get; set; }
+        public Guid BookingId { get; set; }
+        public string CustomerId { get; set; }
+        public string CustomerName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Email { get; set; }
+        public string Reason { get; set; }
+        public string Status { get; set; }
+        public string ProofOfPayment { get; set; }
+        public string AcceptBy { get; set; }
+        public DateTime? ResolutionDate { get; set; }
+        public decimal TotalPrice { get; set; }
+    }
 }

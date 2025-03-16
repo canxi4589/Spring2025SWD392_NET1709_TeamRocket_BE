@@ -10,6 +10,7 @@ using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
+using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Integrations.Currency;
@@ -19,6 +20,7 @@ using HCP.Service.Services.TemporaryService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 
 namespace HCP.Service.Services.WalletService
@@ -37,47 +39,197 @@ namespace HCP.Service.Services.WalletService
             _customerService = customerService;
             _temporaryStorage = temporaryStorage;
         }
-        public async Task<WalletWithdrawRequestDTO> CreateRefundRequest(Guid bookingId, AppUser user)
+        public async Task<RefundRequestDTO> CreateRefundRequest(Guid bookingId, string ProofOfPayment, string Reason, AppUser user)
         {
             double expectedRefund = 0;
             double availableWithdraw = 0;
-            var completedBooking = _unitOfWork.Repository<Booking>().FindAsync(c => c.Id == bookingId && c.Status.Equals(BookingStatus.Completed.ToString()));
+            var completedBooking = _unitOfWork.Repository<Booking>().GetById(bookingId);
             if (completedBooking == null) throw new Exception(BookingConst.BookingNotFound);
-            var payment = _unitOfWork.Repository<Payment>().FindAsync(c => c.BookingId == bookingId && c.Status.Equals(TransactionStatus.Done.ToString()));
-            var housekeeper = _userManager.FindByIdAsync(completedBooking.Result.CleaningService.UserId);
+
+            var payment = await _unitOfWork.Repository<Payment>().FindAsync(c => c.BookingId == bookingId && c.Status.Equals(TransactionStatus.Done.ToString()));
+            var cleaningService = _unitOfWork.Repository<CleaningService>().GetById(completedBooking.CleaningServiceId);
+            var housekeeper = await _userManager.FindByIdAsync(cleaningService.UserId);
             if (housekeeper == null) throw new Exception(CustomerConst.NotFoundError);
-            expectedRefund += (double)completedBooking.Result.TotalPrice;
-            if (housekeeper.Result.BalanceWallet < expectedRefund)
+
+            expectedRefund += (double)completedBooking.TotalPrice;
+            if (housekeeper.BalanceWallet < expectedRefund)
             {
-                throw new Exception("Your refund request are more than houskeeper balance!");
+                throw new Exception("Your refund request is more than the housekeeper's balance!");
             }
-            var wTransaction = new WalletTransaction
+
+            var refund = new RefundRequest
             {
                 Id = Guid.NewGuid(),
-                AfterAmount = 0,
-                Current = 0,
-                User = user,
-                UserId = user.Id,
-                Amount = completedBooking.Result.TotalPrice,
-                Type = TransactionType.RefundCustomer.ToString(),
-                Status = TransactionStatus.Pending.ToString(),
-                CreatedDate = DateTime.UtcNow,
-                ReferenceId = completedBooking.Result.Id
+                Reason = Reason,
+                AcceptBy = null,
+                ProofOfPayment = ProofOfPayment,
+                Booking = completedBooking,
+                BookingId = completedBooking.Id,
+                Staff = null,
+                ResolutionDate = null,
+                Status = RefundRequestStatus.Pending.ToString(),
             };
-            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
-            await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
-            return new WalletWithdrawRequestDTO
+
+            await _unitOfWork.Repository<RefundRequest>().AddAsync(refund);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new RefundRequestDTO
             {
-                Amount = wTransaction.Amount,
-                Type = wTransaction.Type,
-                UserId = wTransaction.UserId,
+                Id = refund.Id,
+                Status = refund.Status,
+                BookingId = refund.BookingId,
+                Reason = refund.Reason,
+                ProofOfPayment = refund.ProofOfPayment,
+                ResolutionDate = refund.ResolutionDate,
                 FullName = user.FullName,
                 Mail = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                CreatedDate = wTransaction.CreatedDate,
-                Status = wTransaction.Status
+                AcceptBy = refund.AcceptBy,
             };
         }
+
+        public async Task<RefundRequestShowListDTO> GetRefundRequestsAsync(string? search, int? pageIndex, int? pageSize, string? status)
+        {
+            var refundRequests = await _unitOfWork.Repository<RefundRequest>()
+                .GetAll()
+                .Include(rr => rr.Booking)
+                    .ThenInclude(b => b.Customer) // Include Customer for name, phone, email
+                .Select(rr => new RefundRequestShowDTO
+                {
+                    Id = rr.Id,
+                    BookingId = rr.BookingId,
+                    CustomerId = rr.Booking.CustomerId,
+                    CustomerName = rr.Booking.Customer.FullName,
+                    PhoneNumber = rr.Booking.Customer.PhoneNumber,
+                    Email = rr.Booking.Customer.Email,
+                    Reason = rr.Reason,
+                    Status = rr.Status,
+                    AcceptBy = rr.AcceptBy,
+                    ResolutionDate = rr.ResolutionDate,
+                    TotalPrice = rr.Booking.TotalPrice
+                })
+                .ToListAsync();
+            if (!search.IsNullOrEmpty())
+            {
+                refundRequests = refundRequests.Where(c => (c.CustomerName.ToLower().Contains(search.ToLower())) || (c.Email.ToLower().Contains(search.ToLower())) || (c.PhoneNumber.ToLower().Contains(search.ToLower()))).ToList();
+            }
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<RefundRequestShowDTO>.CreateAsync(refundRequests, 1, refundRequests.Count());
+                return new RefundRequestShowListDTO
+                {
+                    Items = temp1,
+                    hasNext = temp1.HasNextPage,
+                    hasPrevious = temp1.HasPreviousPage,
+                    totalCount = temp1.TotalCount,
+                    totalPages = temp1.TotalPages,
+                };
+            }
+            var temp2 = PaginatedList<RefundRequestShowDTO>.CreateAsync(refundRequests, (int)pageIndex, (int)pageSize);
+            return new RefundRequestShowListDTO
+            {
+                Items = temp2,
+                hasNext = temp2.HasNextPage,
+                hasPrevious = temp2.HasPreviousPage,
+                totalCount = refundRequests.Count(),
+                totalPages = temp2.TotalPages,
+            };
+        }
+        public async Task<RefundRequestShowDetailDTO> GetRefundRequestByIdAsync(Guid refundRequestId)
+        {
+            var refundRequest = await _unitOfWork.Repository<RefundRequest>()
+                .GetAll()
+                .Include(rr => rr.Booking)
+                    .ThenInclude(b => b.Customer)
+                .Where(rr => rr.Id == refundRequestId)
+                .Select(rr => new RefundRequestShowDetailDTO
+                {
+                    Id = rr.Id,
+                    BookingId = rr.BookingId,
+                    CustomerId = rr.Booking.CustomerId,
+                    CustomerName = rr.Booking.Customer.FullName,
+                    PhoneNumber = rr.Booking.Customer.PhoneNumber,
+                    Email = rr.Booking.Customer.Email,
+                    Reason = rr.Reason,
+                    Status = rr.Status,
+                    ProofOfPayment = rr.ProofOfPayment,
+                    AcceptBy = rr.AcceptBy,
+                    ResolutionDate = rr.ResolutionDate,
+                    TotalPrice = rr.Booking.TotalPrice
+                })
+                .FirstOrDefaultAsync();
+
+            if (refundRequest == null)
+            {
+                throw new Exception(TransactionConst.NotFoundError);
+            }
+
+            return refundRequest;
+        }
+        public async Task<RefundRequestDTO> StaffProccessRefund(Guid refundId, bool action, ClaimsPrincipal claims)
+        {
+            var staff = await _userManager.GetUserAsync(claims);
+            var refund = _unitOfWork.Repository<RefundRequest>().GetById(refundId);
+            if (refund == null) throw new Exception(TransactionConst.RefundProcessFail);
+            var booking = _unitOfWork.Repository<Booking>().GetById(refund.BookingId);
+            if (booking == null) throw new Exception(BookingConst.BookingNotFound);
+            var user = await _userManager.FindByIdAsync(booking.CustomerId);
+            if (user == null) throw new Exception(CustomerConst.NotFoundError);
+            if (refund.Status != RefundRequestStatus.Pending.ToString())
+            {
+                throw new Exception(TransactionConst.RefundProcessSuccessfully);
+            }
+            if (action)
+            {
+                //Approve
+                refund.Status = TransactionStatus.Done.ToString();
+                refund.ResolutionDate = DateTime.Now;
+                refund.AcceptBy = staff.Id;
+                refund.Staff = staff;
+                user.BalanceWallet += (double)booking.TotalPrice;
+                //Place for system wallet deduce
+                _unitOfWork.Repository<RefundRequest>().Update(refund);
+                await _userManager.UpdateAsync(user);
+                await _unitOfWork.SaveChangesAsync();
+                return new RefundRequestDTO
+                {
+                    Id = refund.Id,
+                    Status = refund.Status,
+                    BookingId = refund.BookingId,
+                    Reason = refund.Reason,
+                    ProofOfPayment = refund.ProofOfPayment,
+                    ResolutionDate = refund.ResolutionDate,
+                    FullName = user.FullName,
+                    Mail = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    AcceptBy = refund.AcceptBy,
+                };
+            }
+            else
+            {
+                //Reject
+                refund.Status = TransactionStatus.Done.ToString();
+                refund.ResolutionDate = DateTime.Now;
+                refund.AcceptBy = staff.Id;
+                refund.Staff = staff;
+                _unitOfWork.Repository<RefundRequest>().Update(refund);
+                await _unitOfWork.Repository<RefundRequest>().SaveChangesAsync();
+                return new RefundRequestDTO
+                {
+                    Id = refund.Id,
+                    Status = refund.Status,
+                    BookingId = refund.BookingId,
+                    Reason = refund.Reason,
+                    ProofOfPayment = refund.ProofOfPayment,
+                    ResolutionDate = refund.ResolutionDate,
+                    FullName = user.FullName,
+                    Mail = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    AcceptBy = refund.AcceptBy,
+                };
+            }
+        }
+
         public async Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user)
         {
             double expectedWithdraw = 0;

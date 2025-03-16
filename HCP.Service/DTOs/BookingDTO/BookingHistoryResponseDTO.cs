@@ -22,6 +22,7 @@ namespace HCP.Service.DTOs.BookingDTO
         public Guid BookingId { get; set; }
         public bool isRating { get; set; }
         public Guid CleaningServiceId { get; set; }
+        public bool? isCancelable { get; set; }
     }
     public class BookingHistoryResponseListDTO
     {

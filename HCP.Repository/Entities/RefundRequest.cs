@@ -15,12 +15,11 @@ namespace HCP.Repository.Entities
         public string Status { get; set; }
         public string ProofOfPayment { get; set; }
         [ForeignKey("Staff")]
-        public string AcceptBy { get; set; }
+        public string? AcceptBy { get; set; }
         public DateTime? ResolutionDate { get; set; }
 
         // Navigation properties
         public Booking Booking { get; set; }
-        public AppUser Staff { get; set; }
-
+        public AppUser? Staff { get; set; }
     }
 }

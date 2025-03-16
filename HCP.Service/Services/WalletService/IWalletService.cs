@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using HCP.Repository.Entities;
+using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.WalletDTO;
 
 namespace HCP.Service.Services.WalletService
@@ -11,7 +12,10 @@ namespace HCP.Service.Services.WalletService
         Task<double> getUserBalance(ClaimsPrincipal user);
 
         Task<double> VNDMoneyExchangeFromUSD(decimal amount);
-        Task<WalletWithdrawRequestDTO> CreateRefundRequest(Guid bookingId, AppUser user);
+        Task<RefundRequestDTO> CreateRefundRequest(Guid bookingId, string ProofOfPayment, string Reason, AppUser user);
+        Task<RefundRequestShowListDTO> GetRefundRequestsAsync(string? search, int? pageIndex, int? pageSize, string? status);
+        Task<RefundRequestShowDetailDTO> GetRefundRequestByIdAsync(Guid refundRequestId);
+        Task<RefundRequestDTO> StaffProccessRefund(Guid refundId, bool action, ClaimsPrincipal claims);
         Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user);
         Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user);
         Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot);

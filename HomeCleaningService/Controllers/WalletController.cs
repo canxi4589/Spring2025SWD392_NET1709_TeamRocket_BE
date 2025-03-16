@@ -2,6 +2,7 @@
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
+using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Services.CustomerService;
@@ -53,24 +54,38 @@ namespace HomeCleaningService.Controllers
             return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
         }
         [HttpPost("sendRefundRequest")]
-        [Authorize]
-        public async Task<IActionResult> createRefundRequest(Guid bookingId)
+        [Authorize(Roles = KeyConst.Customer)]
+        public async Task<IActionResult> createRefundRequest(Guid bookingId, string ProofOfPayment, string Reason)
         {
             var user = await _customerService.GetCustomerAsync(User);
             if (user != null)
             {
-                var refundRequest = await _walletService.CreateRefundRequest(bookingId, user);
-                return Ok(new AppResponse<WalletWithdrawRequestDTO>().SetSuccessResponse(refundRequest));
+                var refundRequest = await _walletService.CreateRefundRequest(bookingId, ProofOfPayment, Reason, user);
+                return Ok(new AppResponse<RefundRequestDTO>().SetSuccessResponse(refundRequest));
             }
             return NotFound(new AppResponse<string>().SetErrorResponse(KeyConst.Error, TransactionConst.RefundFail));
         }
-        //[HttpPost("processRefund")]
-        //[Authorize(Roles = KeyConst.Staff)]
-        //public async Task<IActionResult> processRefund(Guid transId, bool action)
-        //{
-        //    var withdraw = await _walletService.StaffProccessWithdraw(transId, action);
-        //    return Ok(new AppResponse<WalletTransactionWithdrawResponseDTO>().SetSuccessResponse(withdraw));
-        //}
+        [HttpGet("getRefundRequest")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> getRefundPaging(string? search, int? pageIndex, int? pageSize, string? status)
+        {
+            var list = await _walletService.GetRefundRequestsAsync(search, pageIndex, pageSize, status);
+            return Ok(new AppResponse<RefundRequestShowListDTO>().SetSuccessResponse(list));
+        }
+        [HttpGet("getRefundRequestDetail")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> getRefundDetail(Guid refundRequestId)
+        {
+            var list = await _walletService.GetRefundRequestByIdAsync(refundRequestId);
+            return Ok(new AppResponse<RefundRequestShowDetailDTO>().SetSuccessResponse(list));
+        }
+        [HttpPost("processRefund")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> processRefund(Guid refundRequestId, bool action)
+        {
+            var refund = await _walletService.StaffProccessRefund(refundRequestId, action, User);
+            return Ok(new AppResponse<RefundRequestDTO>().SetSuccessResponse(refund));
+        }
         [HttpPost("processWithdraw")]
         [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> processWithdraw(Guid transId, bool action)
