@@ -81,11 +81,11 @@ namespace HCP.Service.Integrations.Vnpay
             vnPay.AddRequestData("vnp_CurrCode", "VND");
             vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
             vnPay.AddRequestData("vnp_Locale", "vn");
-            vnPay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang: {body.Id}");
+            vnPay.AddRequestData("vnp_OrderInfo", body.Id.ToString());
             vnPay.AddRequestData("vnp_OrderType", "other");
             vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
             vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-            vnPay.AddRequestData("vnp_TxnRef", body.Id.ToString());
+            vnPay.AddRequestData("vnp_TxnRef", order.Id.ToString());
             vnPay.AddRequestData("vnp_Version", "2.1.0");
 
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);

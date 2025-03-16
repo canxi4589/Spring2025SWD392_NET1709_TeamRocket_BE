@@ -20,8 +20,18 @@ namespace HCP.Service.Services.BookingService
         Task DeleteBooking(Guid id);
         Task<Payment> CreatePayment(Guid bookingId, decimal amount, string paymentMethod = "VNPay");
         Task<Payment> UpdatePaymentStatusAsync(Guid paymentId, string status);
-        Task<BookingListResponseDto> GetHousekeeperBookingsAsync(ClaimsPrincipal userClaims, int page, int pageSize, string? Status);
+        Task<PaginatedList<BookingListItemDto>> GetHousekeeperBookingsAsync(
+                  ClaimsPrincipal userClaims,
+                  int page,
+                  int pageSize,
+                  string? status);
         Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid);
         Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto);
+        Task<CalendarBookingDTO> GetHousekeeperBookings(
+    string housekeeperId,
+    DateTime? referenceDate = null,
+    string navigationMode = "today",
+    string viewMode = "month"
+    );
     }
 }

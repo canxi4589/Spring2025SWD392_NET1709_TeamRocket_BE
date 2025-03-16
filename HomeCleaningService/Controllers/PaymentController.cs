@@ -126,6 +126,12 @@ namespace HomeCleaningService.Controllers
                             .SetErrorResponse("INSUFFICIENT_FUNDS", "Not enough funds in wallet"));
 
                     await _walletService.DeduceFromWallet(User, dto.Amount);
+                    var body = await _checkoutService.GetCheckoutById(dto.Id);
+                    var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
+                    await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
+                    var user = await _userManager.FindByIdAsync(body.CustomerId);
+                    _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
+
                     //de transaction cho Thinh lam (xong roy nhe)
 
                     return Ok(new { url = $"http://localhost:5173/service/Checkout/success" });
@@ -155,13 +161,13 @@ namespace HomeCleaningService.Controllers
         {
             string queryString = Request.QueryString.Value;
             var paymentStatus = Request.Query["vnp_ResponseCode"];
-            if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid Id))
+            if (Guid.TryParse(Request.Query["vnp_OrderInfo"], out Guid Id))
             {
                 if (paymentStatus == PaymentConst.SuccessCode)
                 {
-                    var body =await _checkoutService.GetCheckoutById(Id);
-                    var booking = await _bookingService.CreateBookingAsync1(body,body.CustomerId);
-                    await _bookingService.CreatePayment(booking.Id,booking.TotalPrice,"VnPay");
+                    var body = await _checkoutService.GetCheckoutById(Id);
+                    var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
+                    await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     var user = await _userManager.FindByIdAsync(body.CustomerId);
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
                     //return Redirect("https://www.google.com/");                                 
@@ -169,8 +175,6 @@ namespace HomeCleaningService.Controllers
                 }
             }
             return Redirect("http://localhost:5173/service/Checkout/fail");
-
-
         }
         [HttpGet("PaymentDepositReturn-VNPAY")]
         public async Task<IActionResult> PaymentDepositReturn()

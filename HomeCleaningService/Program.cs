@@ -163,7 +163,7 @@ await app.AddAutoMigrateAndSeedDatabase();
 app.UseCors("AllowAnyOrigin");
 
 app.UseHttpsRedirection();
-
+app.UseHangfireDashboard();
 app.UseAuthorization();
 app.UseSession();
 
