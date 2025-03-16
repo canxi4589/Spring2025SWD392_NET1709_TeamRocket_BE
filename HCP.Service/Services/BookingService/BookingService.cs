@@ -304,6 +304,8 @@ namespace HCP.Service.Services.BookingService
             var addressRepository = _unitOfWork.Repository<Address>();
             var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
             var checkout = await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
+            var wallet = _unitOfWork.Repository<SystemWallet>().GetAll().FirstOrDefault();
+
             var userId = userClaims.FindFirst("id")?.Value ?? dto.CustomerId;
             if (string.IsNullOrEmpty(userId))
             {
@@ -379,7 +381,15 @@ namespace HCP.Service.Services.BookingService
                 BookingAdditionals = bookingAdditionals,
 
             };
-
+            if (wallet == null)
+            {
+                wallet = new SystemWallet
+                {
+                    Balance = 0.0m,
+                };
+                await _unitOfWork.Repository<SystemWallet>().AddAsync(wallet);
+            }
+            wallet.Balance += booking.TotalPrice;
             await bookingRepository.AddAsync(booking);
             checkout.Status = CheckoutStatus.Completed.ToString();
             await _unitOfWork.Complete();
