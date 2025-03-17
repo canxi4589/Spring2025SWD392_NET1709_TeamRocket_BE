@@ -1,7 +1,9 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Service.DTOs;
+using HCP.Service.DTOs.HousekeeperDTOs;
 using HCP.Service.Services;
 using HCP.Service.Services.EmailService;
+using AuthService = HCP.Service.Services.AuthenticationService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -10,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Security.Claims;
 using static System.Net.WebRequestMethods;
+using HCP.Repository.Constance;
 
 namespace HomeCleaningService.Controllers
 {
@@ -23,18 +26,20 @@ namespace HomeCleaningService.Controllers
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender;
         private readonly IEmailSenderService _emailSenderService;
+        private readonly AuthService.IAuthenticationService _authenticationService;
         public string frontendurl;
 
         public AuthenticationController(ILogger<AuthenticationController> logger, UserManager<AppUser> userManager, 
-            ITokenHelper tokenHelper, IConfiguration configuration, IEmailSender emailSender, IEmailSenderService emailSenderService)
+            ITokenHelper tokenHelper, IConfiguration configuration, IEmailSender emailSender, IEmailSenderService emailSenderService, AuthService.IAuthenticationService authenticationService)
         {
             _logger = logger;
             _userManager = userManager;
             _tokenHelper = tokenHelper;
             _configuration = configuration;
             _emailSender = emailSender;
-            frontendurl = configuration["Url:Frontend"] ?? "https://www.youtube.com/";
+            frontendurl = configuration["Url:Frontend"] ?? "";
             _emailSenderService = emailSenderService;
+            _authenticationService = authenticationService;
         }
 
         //[HttpPost("register")]
@@ -200,8 +205,8 @@ namespace HomeCleaningService.Controllers
                 g => g.Select(e => e.Description).ToArray()
             );
             return BadRequest(new AppResponse<object>().SetErrorResponse(identityErrors));
-
         }
+
         [HttpPost("registerTest")]
         public async Task<IActionResult> Register1([FromBody] RegisterDto model)
         {
@@ -248,6 +253,34 @@ namespace HomeCleaningService.Controllers
 
             return BadRequest(new AppResponse<object>().SetErrorResponse("IdentityErrors", result.Errors.Select(e => e.Description).ToArray()));
         }
+
+        [HttpPost("register/housekeeper")]
+        public async Task<IActionResult> Register([FromBody] HousekeeperRegisterRequestDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.ModelState, errors));
+            }
+            try
+            {
+                var housekeeperResponse = await _authenticationService.HousekeeperRegister(model);
+                if (housekeeperResponse == null)
+                {
+                    return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
+                }
+                return Ok(new AppResponse<HousekeeperRegisterResponseDTO>().SetSuccessResponse(housekeeperResponse));
+            }
+            catch (InvalidOperationException ex) 
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Validate, ex.Message));
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, ex.Message));
+            }
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {

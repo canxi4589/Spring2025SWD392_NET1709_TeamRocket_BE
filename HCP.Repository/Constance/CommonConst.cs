@@ -21,5 +21,6 @@ namespace HCP.Repository.Constance
 
         //Filter
         public const string All = "All";
+        
     }
 }

@@ -25,6 +25,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 using HCP.Repository.Repository;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -145,6 +146,7 @@ builder.Services.AddScoped<IBookingTransactionService, BookingTransactionService
 builder.Services.AddScoped<IGoongDistanceService, GoongDistanceService>();
 builder.Services.AddScoped<IAdminManService, AdminManService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<HCP.Service.Services.AuthenticationService.IAuthenticationService, HCP.Service.Services.AuthenticationService.AuthenticationService>();
 builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();

@@ -15,7 +15,6 @@ namespace HCP.Repository.Entities
         public string HousekeeperId { get; set; }
         public string Status { get; set; }
         public int SkillLevel { get; set; }
-
         public AppUser Housekeeper { get; set; }
         public ServiceCategory ServiceCategory { get; set; }
     }
