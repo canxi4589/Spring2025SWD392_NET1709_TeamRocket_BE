@@ -1,20 +1,13 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.CheckoutDTO;
-using HCP.Service.DTOs.PaymentDTO;
-using HCP.Service.DTOs.WalletDTO;
+﻿using HCP.DTOs.DTOs.PaymentDTO;
+using HCP.Repository.Entities;
 using HCP.Service.Integrations.Currency;
 using HCP.Service.Services.CheckoutService;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Service.Integrations.Vnpay
 {
@@ -47,7 +40,7 @@ namespace HCP.Service.Integrations.Vnpay
 
             var vnPay = new VnPayLibrary();
 
-            vnPay.AddRequestData("vnp_Amount", (amountInVnd*100).ToString());
+            vnPay.AddRequestData("vnp_Amount", (amountInVnd * 100).ToString());
             vnPay.AddRequestData("vnp_Command", "pay");
             vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             vnPay.AddRequestData("vnp_CurrCode", "VND");

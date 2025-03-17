@@ -1,6 +1,6 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

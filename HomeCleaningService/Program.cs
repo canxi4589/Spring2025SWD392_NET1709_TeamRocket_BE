@@ -1,9 +1,12 @@
 using Hangfire;
+using HCP.Repository.DatabaseExtension;
 using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
+using HCP.Repository.Repository;
 using HCP.Service.Integrations.BlobStorage;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services;
+using HCP.Service.Services.AdminManService;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CheckoutService;
 using HCP.Service.Services.CleaningService1;
@@ -11,21 +14,15 @@ using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.EmailService;
 using HCP.Service.Services.RatingService;
 using HCP.Service.Services.RequestService;
-using HCP.Service.Services.AdminManService;
 using HCP.Service.Services.TemporaryService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.Host;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using System.Text.Json.Serialization;
-using HCP.Repository.Repository;
-using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -99,7 +96,7 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(secretKey)
         };
     });
-   
+
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
@@ -133,15 +130,15 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<ITokenHelper, TokenHelper>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<ICleaningService1,CleaningService1>();
+builder.Services.AddScoped<ICleaningService1, CleaningService1>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IHandleRequestService, HandleRequestService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<IBlobStorageService,BlobStorageService>();
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
-builder.Services.AddScoped<Ivnpay,VnPay>();
+builder.Services.AddScoped<Ivnpay, VnPay>();
 builder.Services.AddScoped<IBookingTransactionService, BookingTransactionService>();
 builder.Services.AddScoped<IGoongDistanceService, GoongDistanceService>();
 builder.Services.AddScoped<IAdminManService, AdminManService>();

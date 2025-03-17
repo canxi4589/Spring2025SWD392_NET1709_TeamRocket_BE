@@ -1,10 +1,9 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs;
+using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.PaymentDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
-using HCP.Service.DTOs.PaymentDTO;
 using HCP.Service.Integrations.Vnpay;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CheckoutService;
@@ -16,7 +15,6 @@ using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace HomeCleaningService.Controllers
 {
@@ -136,7 +134,7 @@ namespace HomeCleaningService.Controllers
 
                     return Ok(new { url = $"http://localhost:5173/service/Checkout/success" });
                 }
-                else 
+                else
                 {
                     string paymentUrl = ivnpay.CreatePaymentUrl(dto);
                     return Ok(new { url = paymentUrl });
@@ -185,7 +183,7 @@ namespace HomeCleaningService.Controllers
                 if (true)
                 {
                     var paymentStatus = Request.Query["vnp_ResponseCode"];
-                    if (paymentStatus == PaymentConst.SuccessCode)                                
+                    if (paymentStatus == PaymentConst.SuccessCode)
                     {
                         await _walletService.processDepositTransaction(transactId, true);
                         //return Redirect("https://www.google.com/");                               

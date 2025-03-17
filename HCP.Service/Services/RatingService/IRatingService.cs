@@ -1,11 +1,5 @@
-﻿using HCP.Repository.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using static HCP.Service.DTOs.RatingDTO.RatingDTO;
+﻿using System.Security.Claims;
+using static HCP.DTOs.DTOs.RatingDTO.RatingDTO;
 
 namespace HCP.Service.Services.RatingService
 {

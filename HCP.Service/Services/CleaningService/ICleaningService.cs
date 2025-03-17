@@ -1,6 +1,6 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.CleaningServiceDTO;
-using HCP.Service.DTOs.FilterDTO;
+﻿using HCP.DTOs.DTOs.CleaningServiceDTO;
+using HCP.DTOs.DTOs.FilterDTO;
+using HCP.Repository.Entities;
 using HCP.Service.Services.ListService;
 using System.Security.Claims;
 

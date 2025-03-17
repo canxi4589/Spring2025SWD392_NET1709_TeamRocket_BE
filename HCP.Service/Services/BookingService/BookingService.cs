@@ -1,23 +1,14 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
-using HCP.Repository.GenericRepository;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
-using HCP.Service.DTOs.CleaningServiceDTO;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
-using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Service.Services.BookingService
 {
@@ -551,7 +542,7 @@ namespace HCP.Service.Services.BookingService
                     District = b.District
                 });
 
-            return  PaginatedList<BookingListItemDto>.CreateAsync(bookingsQueryable.ToList(), page, pageSize);
+            return PaginatedList<BookingListItemDto>.CreateAsync(bookingsQueryable.ToList(), page, pageSize);
         }
         public async Task<BookingCancelDTO> cancelBooking(Guid bookingId, AppUser user)
         {

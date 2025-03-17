@@ -1,6 +1,6 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.Repository.Entities;
 using HCP.Service.Services.ListService;
 using System.Security.Claims;
 using System.Threading.Tasks;

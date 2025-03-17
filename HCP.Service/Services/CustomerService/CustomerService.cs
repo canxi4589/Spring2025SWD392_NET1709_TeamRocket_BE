@@ -1,6 +1,6 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.DTOs.DTOs.CustomerDTO;
+using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.CustomerDTO;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;

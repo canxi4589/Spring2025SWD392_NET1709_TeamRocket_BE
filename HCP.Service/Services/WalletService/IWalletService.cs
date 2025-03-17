@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
+using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.WalletDTO;
 using HCP.Repository.Entities;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.WalletDTO;
 
 namespace HCP.Service.Services.WalletService
 {

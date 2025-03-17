@@ -1,5 +1,5 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.CheckoutDTO;
+﻿using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.Repository.Entities;
 using System.Security.Claims;
 
 namespace HCP.Service.Services.CheckoutService

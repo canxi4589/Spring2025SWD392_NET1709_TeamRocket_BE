@@ -1,18 +1,15 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.CustomerDTO;
-using HCP.Service.DTOs.AdminManagementDTO;
+﻿using HCP.DTOs.DTOs.AdminManagementDTO;
+using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Service.Services.AdminManService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
-using HCP.Service.DTOs.CleaningServiceDTO;
-using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
-using HCP.Repository.Constance;
-using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
-using HCP.Service.DTOs.BookingDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ChartDataAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 
 namespace HomeCleaningService.Controllers
 {

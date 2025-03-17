@@ -1,18 +1,12 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs;
-using HCP.Service.DTOs.HousekeeperDTOs;
 using HCP.Service.Services.EmailService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Org.BouncyCastle.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Service.Services.AuthenticationService
 {
@@ -71,9 +65,9 @@ namespace HCP.Service.Services.AuthenticationService
             var housekeeperSkill = requestDTO.HousekeeperCategories.Select(categoryId => new HousekeeperSkill
             {
                 HousekeeperId = housekeeper.Id,
-                CategoryId = categoryId, 
-                Status = string.Empty, 
-                SkillLevel = 1 
+                CategoryId = categoryId,
+                Status = string.Empty,
+                SkillLevel = 1
             }).ToList();
 
             await _unitOfWork.Repository<HousekeeperSkill>().AddRangeAsync(housekeeperSkill);

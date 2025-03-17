@@ -1,12 +1,5 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.CheckoutDTO;
-using HCP.Service.DTOs.PaymentDTO;
-using HCP.Service.DTOs.WalletDTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using HCP.DTOs.DTOs.PaymentDTO;
+using HCP.Repository.Entities;
 using static HCP.Service.Integrations.Vnpay.VnPay;
 
 namespace HCP.Service.Integrations.Vnpay
