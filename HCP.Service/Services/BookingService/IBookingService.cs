@@ -29,10 +29,10 @@ namespace HCP.Service.Services.BookingService
         Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto);
         Task<BookingCancelDTO> cancelBooking(Guid bookingId, AppUser user);
         Task<CalendarBookingDTO> GetHousekeeperBookings(
-    string housekeeperId,
-    DateTime? referenceDate = null,
-    string navigationMode = "today",
-    string viewMode = "month"
-    );
+            ClaimsPrincipal userClaims,
+            DateTime? referenceDate = null,
+            string navigationMode = "today",
+            string viewMode = "month"
+        );
     }
 }
