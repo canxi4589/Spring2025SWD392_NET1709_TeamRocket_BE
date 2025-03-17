@@ -620,12 +620,14 @@ namespace HCP.Service.Services.BookingService
             return proof;
         }
         public async Task<CalendarBookingDTO> GetHousekeeperBookings(
-            string housekeeperId,
+            ClaimsPrincipal userClaims,
             DateTime? referenceDate = null,
             string navigationMode = "today",
             string viewMode = "month"
         )
         {
+            var housekeeperId = userClaims.FindFirst("id")?.Value;
+
             // Validate inputs
             if (string.IsNullOrEmpty(housekeeperId))
             {
