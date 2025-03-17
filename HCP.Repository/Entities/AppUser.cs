@@ -21,6 +21,9 @@ namespace HCP.Repository.Entities
 
         [DataType(DataType.Text)]
         public string? PDF { get; set; }
+        public string? IdCardFront { get; set; }
+        public string? IdCardBack { get; set; }
+        public bool? IsHousekeeperVerified { get; set; }
         public bool Gender { get; set; }
         public double BalanceWallet { get; set; } = 0;
         public ICollection<Booking> Bookings { get; set; }

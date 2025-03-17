@@ -21,5 +21,6 @@ namespace HCP.Repository.Entities
         // Navigation properties
         public Booking Booking { get; set; }
         public AppUser? Staff { get; set; }
+
     }
 }

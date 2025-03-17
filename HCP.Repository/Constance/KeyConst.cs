@@ -35,6 +35,8 @@ namespace HCP.Repository.Constance
         public const string VnPay = "Vnpay";
         public const string VNPay = "VNPay";
         public const string Wallet = "Wallet";
+        public const string ModelState = "ModelState";
+        public const string Validate = "Validate";
 
     }
 }
