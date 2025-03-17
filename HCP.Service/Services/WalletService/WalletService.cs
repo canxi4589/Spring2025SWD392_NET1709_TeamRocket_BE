@@ -1,27 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using Azure;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.WalletDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CustomerDTO;
-using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Integrations.Currency;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using HCP.Service.Services.TemporaryService;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
+using System.Globalization;
+using System.Security.Claims;
 
 namespace HCP.Service.Services.WalletService
 {
@@ -242,14 +233,14 @@ namespace HCP.Service.Services.WalletService
         {
             double expectedWithdraw = 0;
             double availableWithdraw = 0;
-            var pendingTransact = _unitOfWork.Repository<WalletTransaction>().GetAll().Where(c=>(c.User == user && c.Status.Equals(TransactionStatus.Pending.ToString())));
-            foreach (var transaction in pendingTransact) 
+            var pendingTransact = _unitOfWork.Repository<WalletTransaction>().GetAll().Where(c => (c.User == user && c.Status.Equals(TransactionStatus.Pending.ToString())));
+            foreach (var transaction in pendingTransact)
             {
                 expectedWithdraw += (double)transaction.Amount;
             }
-            if (user.BalanceWallet<(expectedWithdraw+(double)amount))
+            if (user.BalanceWallet < (expectedWithdraw + (double)amount))
             {
-                availableWithdraw = user.BalanceWallet-(expectedWithdraw);
+                availableWithdraw = user.BalanceWallet - (expectedWithdraw);
                 throw new Exception($"You're having pending withdraw requests that total more than your balance! @The amount reccomended is {availableWithdraw}");
             }
             if (user.BalanceWallet < (double)amount) throw new Exception("Your balance is lower than the amount you want to withdraw!");
@@ -281,12 +272,12 @@ namespace HCP.Service.Services.WalletService
         public async Task<GetWalletWithdrawRequestListDTO> GetTransacts(AppUser user, int? pageIndex, int? pageSize, string searchField, string? fullname, string? phonenumber, string? mail)
         {
             var wTransactionList = _unitOfWork.Repository<WalletTransaction>().GetAll()
-                .OrderByDescending(c=>c.CreatedDate);
-            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString()) 
-                || searchField.Equals(TransactionType.WithdrawUser.ToString()) 
-                || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()) 
-                || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()) 
-                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString()) 
+                .OrderByDescending(c => c.CreatedDate);
+            if (searchField.Equals(TransactionType.WithdrawRequestUser.ToString())
+                || searchField.Equals(TransactionType.WithdrawUser.ToString())
+                || searchField.Equals(TransactionType.WithdrawRejectUser.ToString())
+                || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString())
+                || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString())
                 || searchField.Equals(TransactionType.Deposit.ToString())
                 || searchField.Equals(TransactionType.BookingPurchase.ToString()))
             {
@@ -294,11 +285,11 @@ namespace HCP.Service.Services.WalletService
                     .Where(c => c.User.Id == user.Id);
             }
 
-            if (searchField.Equals(TransactionType.WithdrawRequestStaff.ToString()) 
+            if (searchField.Equals(TransactionType.WithdrawRequestStaff.ToString())
                 || searchField.Equals(TransactionType.WithdrawRequestUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) 
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString())
                     && c.Status.Equals(TransactionStatus.Pending.ToString()));
             }
 
@@ -309,19 +300,19 @@ namespace HCP.Service.Services.WalletService
                     && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
 
-            if (searchField.Equals(TransactionType.WithdrawStaff.ToString()) 
+            if (searchField.Equals(TransactionType.WithdrawStaff.ToString())
                 || searchField.Equals(TransactionType.WithdrawUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) 
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString())
                     && c.Status.Equals(TransactionStatus.Done.ToString()));
             }
 
-            if (searchField.Equals(TransactionType.WithdrawRejectStaff.ToString()) 
+            if (searchField.Equals(TransactionType.WithdrawRejectStaff.ToString())
                 || searchField.Equals(TransactionType.WithdrawRejectUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()) 
+                    .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString())
                     && c.Status.Equals(TransactionStatus.Fail.ToString()));
             }
 
@@ -340,7 +331,7 @@ namespace HCP.Service.Services.WalletService
             if (searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString())|| c.Type.Equals(TransactionType.BookingPurchase.ToString())));
+                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString()) || c.Type.Equals(TransactionType.BookingPurchase.ToString())));
             }
 
             if (searchField.Equals(TransactionType.ShowHistoryStaff.ToString()))
@@ -562,7 +553,7 @@ namespace HCP.Service.Services.WalletService
         {
             return user.BalanceWallet;
         }
-        public async Task DeduceFromWallet(ClaimsPrincipal user,decimal amount)
+        public async Task DeduceFromWallet(ClaimsPrincipal user, decimal amount)
         {
             var user1 = await _userManager.GetUserAsync(user);
             var wallet = _unitOfWork.Repository<SystemWallet>().GetAll().FirstOrDefault();
@@ -570,9 +561,9 @@ namespace HCP.Service.Services.WalletService
             {
                 wallet = new SystemWallet
                 {
-                    Balance = 0.0m, 
+                    Balance = 0.0m,
                 };
-               await _unitOfWork.Repository<SystemWallet>().AddAsync(wallet);
+                await _unitOfWork.Repository<SystemWallet>().AddAsync(wallet);
             }
 
             var wTransaction = new WalletTransaction
@@ -587,8 +578,8 @@ namespace HCP.Service.Services.WalletService
                 Status = TransactionStatus.Done.ToString(),
                 CreatedDate = DateTime.Now
             };
-            
-            user1.BalanceWallet -=(double)amount;
+
+            user1.BalanceWallet -= (double)amount;
             wTransaction.AfterAmount = (Decimal)user1.BalanceWallet;
             wallet.Balance += amount;
             await _userManager.UpdateAsync(user1);

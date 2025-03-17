@@ -1,18 +1,14 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CustomerDTO;
-using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using HCP.Service.Services.TemporaryService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 
 namespace HomeCleaningService.Controllers
 {
@@ -149,7 +145,6 @@ namespace HomeCleaningService.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetHousekeeperBookings(
-            [FromQuery] string housekeeperId,
             [FromQuery] DateTime? referenceDate = null,
             [FromQuery] string navigationMode = "today",
             [FromQuery] string viewMode = "month"
@@ -159,13 +154,10 @@ namespace HomeCleaningService.Controllers
 
             try
             {
-                if (string.IsNullOrEmpty(housekeeperId))
-                {
-                    return BadRequest(response.SetErrorResponse("validation", ["Housekeeper ID is required."]));
-                }
+
 
                 var result = await _bookingService.GetHousekeeperBookings(
-                    housekeeperId,
+                    User,
                     referenceDate,
                     navigationMode,
                     viewMode

@@ -1,5 +1,5 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.BookingDTO;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Entities;
 
 namespace HCP.Service.Services.BookingService
 {

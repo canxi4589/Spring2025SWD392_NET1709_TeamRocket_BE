@@ -1,5 +1,4 @@
 ﻿using HCP.Service.Services.RatingService;
-using HCP.Service.DTOs.RatingDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,7 @@ using System.Security.Claims;
 using System;
 using System.Threading.Tasks;
 using HomeCleaningService.Helpers;
-using static HCP.Service.DTOs.RatingDTO.RatingDTO;
+using static HCP.DTOs.DTOs.RatingDTO.RatingDTO;
 using Azure;
 using Microsoft.IdentityModel.Tokens;
 

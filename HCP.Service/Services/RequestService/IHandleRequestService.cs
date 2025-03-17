@@ -1,5 +1,5 @@
-﻿using HCP.Service.DTOs.CleaningServiceDTO;
-using HCP.Service.DTOs.RequestDTO;
+﻿using HCP.DTOs.DTOs.CleaningServiceDTO;
+using HCP.DTOs.DTOs.RequestDTO;
 using System.Security.Claims;
 
 namespace HCP.Service.Services.RequestService

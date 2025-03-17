@@ -1,6 +1,6 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.Repository.Entities;
 using HCP.Service.Services.ListService;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -29,10 +29,10 @@ namespace HCP.Service.Services.BookingService
         Task<BookingFinishProof> SubmitBookingProofAsync(SubmitBookingProofDTO dto);
         Task<BookingCancelDTO> cancelBooking(Guid bookingId, AppUser user);
         Task<CalendarBookingDTO> GetHousekeeperBookings(
-    string housekeeperId,
-    DateTime? referenceDate = null,
-    string navigationMode = "today",
-    string viewMode = "month"
-    );
+            ClaimsPrincipal userClaims,
+            DateTime? referenceDate = null,
+            string navigationMode = "today",
+            string viewMode = "month"
+        );
     }
 }

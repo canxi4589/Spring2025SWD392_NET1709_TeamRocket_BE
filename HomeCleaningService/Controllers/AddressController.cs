@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
+using HCP.DTOs.DTOs.CustomerDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
-using HCP.Service.DTOs.CustomerDTO;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;

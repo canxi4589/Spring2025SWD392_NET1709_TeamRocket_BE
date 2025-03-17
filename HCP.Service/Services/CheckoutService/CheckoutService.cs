@@ -1,8 +1,8 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.CheckoutDTO;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;

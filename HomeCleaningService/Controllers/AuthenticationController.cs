@@ -1,6 +1,4 @@
 ﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs;
-using HCP.Service.DTOs.HousekeeperDTOs;
 using HCP.Service.Services;
 using HCP.Service.Services.EmailService;
 using AuthService = HCP.Service.Services.AuthenticationService;
@@ -13,6 +11,8 @@ using System.Diagnostics;
 using System.Security.Claims;
 using static System.Net.WebRequestMethods;
 using HCP.Repository.Constance;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
+using HCP.DTOs.DTOs;
 
 namespace HomeCleaningService.Controllers
 {

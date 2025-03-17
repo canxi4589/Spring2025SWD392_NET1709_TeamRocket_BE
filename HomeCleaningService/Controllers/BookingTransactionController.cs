@@ -1,9 +1,7 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
-using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;

@@ -1,11 +1,8 @@
-﻿using HCP.Repository.Constance;
-using HCP.Repository.Entities;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
+﻿using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.Repository.Constance;
 using HCP.Service.Services.CheckoutService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -73,7 +70,7 @@ namespace HomeCleaningService.Controllers
                 .SetSuccessResponse(CheckoutConst.UpdateCheckoutSuccess);
             return Ok(successResponse);
         }
-        
+
         [HttpGet("{checkoutId}")]
         [Authorize]
         public async Task<IActionResult> GetCheckoutById(Guid checkoutId)

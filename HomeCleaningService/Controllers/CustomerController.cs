@@ -1,5 +1,5 @@
-﻿using HCP.Repository.Constance;
-using HCP.Service.DTOs.CustomerDTO;
+﻿using HCP.DTOs.DTOs.CustomerDTO;
+using HCP.Repository.Constance;
 using HCP.Service.Services.CustomerService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;

@@ -1,7 +1,5 @@
-﻿using HCP.Repository.Entities;
-using HCP.Service.DTOs.CleaningServiceDTO;
-using HCP.Service.DTOs.CustomerDTO;
-using HCP.Service.Services.ListService;
+﻿using HCP.DTOs.DTOs.CustomerDTO;
+using HCP.Repository.Entities;
 using System.Security.Claims;
 
 namespace HCP.Service.Services.CustomerService

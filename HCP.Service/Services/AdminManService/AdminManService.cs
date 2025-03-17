@@ -1,19 +1,19 @@
 ﻿using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.AdminManagementDTO;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Data;
-using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 using System.Globalization;
-using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
-using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 using HCP.Repository.Enums;
-using HCP.Service.DTOs.BookingDTO;
 using System.Security.Claims;
+using HCP.DTOs.DTOs.AdminManagementDTO;
+using HCP.DTOs.DTOs.BookingDTO;
 
 namespace HCP.Service.Services.AdminManService
 {

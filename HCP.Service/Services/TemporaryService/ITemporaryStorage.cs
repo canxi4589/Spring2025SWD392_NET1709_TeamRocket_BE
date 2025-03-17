@@ -1,7 +1,6 @@
-﻿using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
-using HCP.Service.DTOs.PaymentDTO;
-using HCP.Service.DTOs.WalletDTO;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.PaymentDTO;
+using HCP.DTOs.DTOs.WalletDTO;
 using System.Security.Claims;
 
 namespace HCP.Service.Services.TemporaryService
