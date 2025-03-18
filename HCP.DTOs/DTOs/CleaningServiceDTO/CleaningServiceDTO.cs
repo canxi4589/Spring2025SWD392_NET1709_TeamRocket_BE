@@ -160,7 +160,6 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
         public bool HasPrevious { get; set; }
     }
 
-
     public class ServiceStatusUpdateDto
     {
         [JsonPropertyName("service_id")]

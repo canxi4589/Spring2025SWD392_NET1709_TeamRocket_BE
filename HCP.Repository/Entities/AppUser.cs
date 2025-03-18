@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using HCP.Repository.Enums;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -23,7 +24,8 @@ namespace HCP.Repository.Entities
         public string? PDF { get; set; }
         public string? IdCardFront { get; set; }
         public string? IdCardBack { get; set; }
-        public bool? IsHousekeeperVerified { get; set; }
+        public string HousekeeperStatus { get; set; } = HousekeeperRequestStatus.Pending.ToString();
+        public string? HousekeeperVerifiedBy { get; set; }
         public bool Gender { get; set; }
         public double BalanceWallet { get; set; } = 0;
         public ICollection<Booking> Bookings { get; set; }

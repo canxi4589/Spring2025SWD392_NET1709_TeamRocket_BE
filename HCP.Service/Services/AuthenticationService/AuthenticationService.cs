@@ -2,6 +2,7 @@
 using HCP.DTOs.DTOs.HousekeeperDTOs;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
+using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.Services.EmailService;
 using Microsoft.AspNetCore.Identity;
@@ -53,7 +54,8 @@ namespace HCP.Service.Services.AuthenticationService
                 PDF = requestDTO.Pdf,
                 IdCardFront = requestDTO.IdCardFront,
                 IdCardBack = requestDTO.IdCardBack,
-                IsHousekeeperVerified = false
+                HousekeeperStatus = HousekeeperRequestStatus.Pending.ToString(),
+                HousekeeperVerifiedBy = null
             };
 
             var result = await _userManager.CreateAsync(housekeeper, requestDTO.Password);
@@ -112,7 +114,8 @@ namespace HCP.Service.Services.AuthenticationService
                 City = requestDTO.City,
                 District = requestDTO.District,
                 PlaceId = requestDTO.PlaceId,
-                Title = requestDTO.Title
+                Title = requestDTO.Title,
+                Status = housekeeper.HousekeeperStatus
             };
         }
     }
