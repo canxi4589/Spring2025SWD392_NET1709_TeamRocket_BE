@@ -118,6 +118,26 @@ namespace HomeCleaningService.Controllers
             return BadRequest(new AppResponse<object>().SetErrorResponse("IdentityErrors", result.Errors.Select(e => e.Description).ToArray()));
         }
 
+        [HttpPost("email-check")]
+        public async Task<IActionResult> IsEmailTaken(string email)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.ModelState, errors));
+            }
+            try
+            {
+                await _authenticationService.IsEmailTaken(email);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, AuthenticationConst.EmailTaken));
+            }
+
+            return Ok(new AppResponse<object>().SetSuccessResponse(AuthenticationConst.EmailNotTaken));
+        }
+
         [HttpPost("register/housekeeper")]
         public async Task<IActionResult> Register([FromBody] HousekeeperRegisterRequestDTO model)
         {

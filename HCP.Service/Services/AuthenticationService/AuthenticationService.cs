@@ -27,6 +27,11 @@ namespace HCP.Service.Services.AuthenticationService
             _emailSenderService = emailSenderService;
         }
 
+        public async Task IsEmailTaken(string email)
+        {
+            if (await _userManager.FindByEmailAsync(email) != null)  throw new InvalidOperationException(AuthenticationConst.EmailTaken);
+        } 
+
         public async Task<HousekeeperRegisterResponseDTO?> HousekeeperRegister(HousekeeperRegisterRequestDTO requestDTO)
         {
             if (await _userManager.FindByEmailAsync(requestDTO.Email) != null)

@@ -37,6 +37,7 @@ namespace HCP.Repository.Constance
         public const string Wallet = "Wallet";
         public const string ModelState = "ModelState";
         public const string Validate = "Validate";
+        public const string Success = "Success";
 
     }
 }
