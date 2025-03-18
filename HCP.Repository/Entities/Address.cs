@@ -10,7 +10,6 @@ namespace HCP.Repository.Entities
 {
     public class Address : BaseEntity
     {
-
         [MaxLength(255)]
         public string AddressLine1 { get; set; }
 
@@ -35,7 +34,5 @@ namespace HCP.Repository.Entities
 
         [MaxLength(50)]
         public string? Title { get; set; }
-
     }
-
 }

@@ -1,6 +1,8 @@
-﻿using System;
+﻿using HCP.Repository.Entities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -35,10 +37,6 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
         public string ConfirmPassword { get; set; }
 
         [Required]
-        [JsonPropertyName("avatar")]
-        public string Avatar { get; set; }
-
-        [Required]
         [JsonPropertyName("certificate_picture")]
         public string Pdf { get; set; }
 
@@ -52,5 +50,27 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
 
         [JsonPropertyName("housekeeper_categories")]
         public List<Guid> HousekeeperCategories { get; set; }
+
+        [MaxLength(255)]
+        [JsonPropertyName("housekeeper_address_line")]
+        public string AddressLine1 { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [JsonPropertyName("housekeeper_city")]
+        public string City { get; set; }
+
+        [Required]
+        [JsonPropertyName("housekeeper_place_id")]
+        public string PlaceId { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [JsonPropertyName("housekeeper_district")]
+        public string District { get; set; }
+
+        [MaxLength(50)]
+        [JsonPropertyName("housekeeper_address_title")]
+        public string? Title { get; set; }
     }
 }

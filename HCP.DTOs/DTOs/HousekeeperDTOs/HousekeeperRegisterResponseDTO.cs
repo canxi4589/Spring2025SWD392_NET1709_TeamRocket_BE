@@ -44,6 +44,25 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
 
         [JsonPropertyName("housekeeper_categories")]
         public List<Guid> HousekeeperCategories { get; set; }
+
+        [MaxLength(255)]
+        [JsonPropertyName("housekeeper_address_line")]
+        public string AddressLine1 { get; set; }
+
+        [MaxLength(100)]
+        [JsonPropertyName("housekeeper_city")]
+        public string City { get; set; }
+
+        [JsonPropertyName("housekeeper_place_id")]
+        public string PlaceId { get; set; }
+
+        [MaxLength(100)]
+        [JsonPropertyName("housekeeper_district")]
+        public string District { get; set; }
+
+        [MaxLength(50)]
+        [JsonPropertyName("housekeeper_address_title")]
+        public string? Title { get; set; }
     }
 }
 

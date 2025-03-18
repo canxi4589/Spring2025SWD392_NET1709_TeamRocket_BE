@@ -1,18 +1,14 @@
-﻿using HCP.Repository.Entities;
+﻿using HCP.DTOs.DTOs;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
+using HCP.Repository.Constance;
+using HCP.Repository.Entities;
 using HCP.Service.Services;
 using HCP.Service.Services.EmailService;
-using AuthService = HCP.Service.Services.AuthenticationService;
 using HomeCleaningService.Helpers;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Security.Claims;
-using static System.Net.WebRequestMethods;
-using HCP.Repository.Constance;
-using HCP.DTOs.DTOs.HousekeeperDTOs;
-using HCP.DTOs.DTOs;
+using AuthService = HCP.Service.Services.AuthenticationService;
 
 namespace HomeCleaningService.Controllers
 {
@@ -29,7 +25,7 @@ namespace HomeCleaningService.Controllers
         private readonly AuthService.IAuthenticationService _authenticationService;
         public string frontendurl;
 
-        public AuthenticationController(ILogger<AuthenticationController> logger, UserManager<AppUser> userManager, 
+        public AuthenticationController(ILogger<AuthenticationController> logger, UserManager<AppUser> userManager,
             ITokenHelper tokenHelper, IConfiguration configuration, IEmailSender emailSender, IEmailSenderService emailSenderService, AuthService.IAuthenticationService authenticationService)
         {
             _logger = logger;
@@ -42,145 +38,13 @@ namespace HomeCleaningService.Controllers
             _authenticationService = authenticationService;
         }
 
-        //[HttpPost("register")]
-        //public async Task<IActionResult> Register([FromBody] RegisterDto model)
-        //{
-        //    if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        //    var user = new AppUser { UserName = model.Email, Email = model.Email,PhoneNumber = model.PhoneNumber,FullName = model.FullName };
-        //    var result = await _userManager.CreateAsync(user, model.Password);
-
-        //    if (result.Succeeded)
-        //    {
-        //        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        //        var confirmationLink = $"{frontendurl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-
-        //        await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Click <a href='{confirmationLink}'>here</a> to confirm your email.");
-
-        //        return Ok(new { Message = "Registration successful. Check your email to confirm your account." });
-        //    }
-
-        //    return BadRequest(result.Errors);
-        //}
-        //[HttpPost("testmail")]
-        //public async Task<IActionResult> testmail([FromBody] string email)
-        //{
-        //    await _emailSender.SendEmailAsync(email, "Confirm your email", $"Click <a href='{"https://www.youtube.com/watch?v=pxwm3sqAytE"}'>here</a> to confirm your email.");
-        //    return Ok();
-        //}
-
-        //[HttpGet("confirm-email")]
-        //public async Task<IActionResult> ConfirmEmail(string userId, string token)
-        //{
-        //    var user = await _userManager.FindByIdAsync(userId);
-        //    if (user == null) return BadRequest("Invalid user.");
-
-        //    var result = await _userManager.ConfirmEmailAsync(user, token);
-        //    if (!result.Succeeded) return BadRequest("Email confirmation failed.");
-
-        //    return Ok("Email confirmed successfully.");
-        //}
-        //[HttpPost("login")]
-        //public async Task<IActionResult> Login([FromBody] LoginDto model)
-        //{
-        //    var user = await _userManager.FindByEmailAsync(model.Email);
-        //    if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
-        //        return Unauthorized("Invalid credentials.");
-
-        //    if (!await _userManager.IsEmailConfirmedAsync(user))
-        //        return Unauthorized("Email not confirmed.");
-
-        //    var roles = await _userManager.GetRolesAsync(user);
-        //    var role = await _userManager.GetRolesAsync(user);
-
-        //    var accessToken = _tokenHelper.GenerateJwtToken(user, role.FirstOrDefault());
-        //    var refreshToken = await _tokenHelper.GenerateRefreshToken(user);
-
-        //    return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
-        //}
-
-        //[HttpPost("signin-google")]
-        //public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto model)
-        //{
-        //    var settings = new GoogleJsonWebSignature.ValidationSettings()
-        //    {
-        //        Audience = new List<string> { _configuration["GoogleAuth:ClientId"] }
-        //    };
-
-        //    GoogleJsonWebSignature.Payload payload;
-        //    try
-        //    {
-        //        payload = await GoogleJsonWebSignature.ValidateAsync(model.IdToken, settings);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return Unauthorized(new { message = "Invalid Google token" });
-        //    }
-
-        //    var user = await _userManager.FindByEmailAsync(payload.Email);
-        //    if (user == null)
-        //    {
-        //        user = new AppUser
-        //        {
-        //            UserName = payload.Name,
-        //            Email = payload.Email,
-        //            FullName = payload.Name,
-        //        };
-
-        //        var result = await _userManager.CreateAsync(user);
-        //        if (!result.Succeeded)
-        //            return BadRequest(result.Errors);
-
-        //        await _userManager.AddToRoleAsync(user, "Customer"); 
-        //    }
-
-        //    var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-        //    var accessToken = _tokenHelper.GenerateJwtToken(user, role);
-        //    var refreshToken = await _tokenHelper.GenerateRefreshToken(user);
-
-        //    return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
-        //}
-
-        //[HttpPost("refresh-token")]
-        //public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto model)
-        //{
-        //    var principal = _tokenHelper.GetPrincipalFromExpiredToken(model.Token);
-        //    if (principal == null)
-        //        return Unauthorized(new { Message = "Invalid token" });
-
-        //    var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //    if (string.IsNullOrEmpty(userId))
-        //        return Unauthorized(new { Message = "Invalid token claims" });
-
-        //    var user = await _userManager.FindByIdAsync(userId);
-        //    if (user == null)
-        //        return Unauthorized(new { Message = "User not found" });
-
-        //    var storedRefreshToken = await _userManager.GetAuthenticationTokenAsync(user, "MyApp", "RefreshToken");
-        //    if (storedRefreshToken != model.RefreshToken)
-        //        return Unauthorized(new { Message = "Invalid refresh token" });
-
-        //    var roles = await _userManager.GetRolesAsync(user);
-        //    var newAccessToken = _tokenHelper.GenerateJwtToken(user, roles.FirstOrDefault());
-        //    var newRefreshToken = await _tokenHelper.GenerateRefreshToken(user);
-
-        //    return Ok(new { Token = newAccessToken, RefreshToken = newRefreshToken });
-        //}
-        //[HttpPost("TestClaim")]
-        //public async Task<IActionResult> TestClaim([FromBody] RefreshTokenDto1 model)
-        //{
-        //    var principal = _tokenHelper.GetPrincipalFromExpiredToken(model.Token);
-        //    var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //    return Ok(userId);
-        //}
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new AppResponse<object>().SetErrorResponse("ModelState", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray()));
 
-            var user = new AppUser {UserName = model.Email,Email = model.Email, PhoneNumber = model.PhoneNumber, FullName = model.FullName };
+            var user = new AppUser { UserName = model.Email, Email = model.Email, PhoneNumber = model.PhoneNumber, FullName = model.FullName };
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
@@ -229,7 +93,7 @@ namespace HomeCleaningService.Controllers
             if (result.Succeeded)
             {
                 stopwatch.Restart();
-               
+
                 stopwatch.Stop();
                 Console.WriteLine($"[INFO] Assigning role took: {stopwatch.ElapsedMilliseconds} ms");
 
@@ -271,11 +135,11 @@ namespace HomeCleaningService.Controllers
                 }
                 return Ok(new AppResponse<HousekeeperRegisterResponseDTO>().SetSuccessResponse(housekeeperResponse));
             }
-            catch (InvalidOperationException ex) 
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Validate, ex.Message));
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
@@ -284,7 +148,7 @@ namespace HomeCleaningService.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            
+
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return Unauthorized(new AppResponse<object>().SetErrorResponse("Credentials", "Invalid credentials."));
@@ -298,13 +162,14 @@ namespace HomeCleaningService.Controllers
             var accessToken = _tokenHelper.GenerateJwtToken(user, role!);
             var refreshToken = await _tokenHelper.GenerateRefreshToken(user);
 
-            return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = accessToken, RefreshToken = refreshToken}));
+            return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = accessToken, RefreshToken = refreshToken }));
         }
+
         [HttpPost("loginTest")]
         public async Task<IActionResult> Login1([FromBody] LoginDto model)
         {
             model.Email = "customer1@example.com";
-            model.Password = "123456"; 
+            model.Password = "123456";
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return Unauthorized(new AppResponse<object>().SetErrorResponse("Credentials", "Invalid credentials."));
@@ -318,8 +183,9 @@ namespace HomeCleaningService.Controllers
             var accessToken = _tokenHelper.GenerateJwtToken(user, role!);
             var refreshToken = await _tokenHelper.GenerateRefreshToken(user);
 
-            return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = accessToken, RefreshToken = refreshToken}));
+            return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = accessToken, RefreshToken = refreshToken }));
         }
+
         [HttpGet("confirm-email")]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
@@ -333,47 +199,7 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Email confirmed successfully."));
         }
-        //[HttpPost("signin-google")]
-        //public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto model)
-        //{
-        //    var settings = new GoogleJsonWebSignature.ValidationSettings()
-        //    {
-        //        Audience = new List<string> { _configuration["GoogleAuth:ClientId"]! }
-        //    };
 
-        //    GoogleJsonWebSignature.Payload payload;
-        //    try
-        //    {
-        //        payload = await GoogleJsonWebSignature.ValidateAsync(model.IdToken, settings);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return Unauthorized(new AppResponse<object>().SetErrorResponse("GoogleAuth", "Invalid Google token."));
-        //    }
-
-        //    var user = await _userManager.FindByEmailAsync(payload.Email);
-        //    if (user == null)
-        //    {
-        //        user = new AppUser
-        //        {
-        //            UserName = payload.Name,
-        //            Email = payload.Email,
-        //            FullName = payload.Name,
-        //        };
-
-        //        var result = await _userManager.CreateAsync(user);
-        //        if (!result.Succeeded)
-        //            return BadRequest(new AppResponse<object>().SetErrorResponse("IdentityErrors", result.Errors.Select(e => e.Description).ToArray()));
-
-        //        await _userManager.AddToRoleAsync(user, "Customer");
-        //    }
-
-        //    var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-        //    var accessToken = _tokenHelper.GenerateJwtToken(user, role!);
-        //    var refreshToken = await _tokenHelper.GenerateRefreshToken(user);
-
-        //    return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = accessToken, RefreshToken = refreshToken, Role = role }));
-        //}
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto model)
         {
@@ -400,6 +226,7 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = newAccessToken, RefreshToken = newRefreshToken }));
         }
+
         [HttpPost("resend-confirmation")]
         public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationDto model)
         {
@@ -452,10 +279,10 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> TestMail([FromBody] string email)
         {
             //await _emailSender.SendEmailAsync(email, "Confirm your email", $"Click <a href='https://www.youtube.com/watch?v=pxwm3sqAytE'>here</a> to confirm your email.");
-            var lmao = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", email, "https://www.youtube.com/watch?v=pxwm3sqAytE");
+            var body = EmailBodyTemplate.GetRegistrationConfirmationEmail("https://picsum.photos/300/500", email, "https://www.youtube.com/watch?v=pxwm3sqAytE");
 
-            _emailSenderService.SendEmail(email, "Confirm your email", lmao);
-            
+            _emailSenderService.SendEmail(email, "Confirm your email", body);
+
             return Ok(new AppResponse<object>().SetSuccessResponse(null!, "Message", "Test email sent successfully."));
         }
 

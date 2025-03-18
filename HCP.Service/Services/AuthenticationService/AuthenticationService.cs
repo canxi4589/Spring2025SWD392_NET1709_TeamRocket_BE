@@ -45,7 +45,6 @@ namespace HCP.Service.Services.AuthenticationService
                 Email = requestDTO.Email,
                 PhoneNumber = requestDTO.PhoneNumber,
                 FullName = requestDTO.FullName,
-                Avatar = requestDTO.Avatar,
                 PDF = requestDTO.Pdf,
                 IdCardFront = requestDTO.IdCardFront,
                 IdCardBack = requestDTO.IdCardBack,
@@ -73,6 +72,20 @@ namespace HCP.Service.Services.AuthenticationService
             await _unitOfWork.Repository<HousekeeperSkill>().AddRangeAsync(housekeeperSkill);
             await _unitOfWork.Repository<HousekeeperSkill>().SaveChangesAsync();
 
+            var housekeeperAdress = new Address()
+            {
+                AddressLine1 = requestDTO.AddressLine1,
+                City = requestDTO.City,
+                District = requestDTO.District,
+                IsDefault = true,
+                PlaceId = requestDTO.PlaceId,
+                Title = requestDTO.Title,
+                UserId = housekeeper.Id
+            };
+
+            await _unitOfWork.Repository<Address>().AddAsync(housekeeperAdress);
+            await _unitOfWork.Repository<Address>().SaveChangesAsync();
+
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(housekeeper);
             var confirmationLink = $"{_frontendurl}/confirm-email?userId={housekeeper.Id}&token={Uri.EscapeDataString(token)}";
 
@@ -89,7 +102,12 @@ namespace HCP.Service.Services.AuthenticationService
                 Pdf = housekeeper.PDF,
                 IdCardFront = housekeeper.IdCardFront,
                 IdCardBack = housekeeper.IdCardBack,
-                HousekeeperCategories = requestDTO.HousekeeperCategories
+                HousekeeperCategories = requestDTO.HousekeeperCategories,
+                AddressLine1 = requestDTO.AddressLine1,
+                City = requestDTO.City,
+                District = requestDTO.District,
+                PlaceId = requestDTO.PlaceId,
+                Title = requestDTO.Title
             };
         }
     }
