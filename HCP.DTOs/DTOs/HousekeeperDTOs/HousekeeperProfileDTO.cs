@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.HousekeeperDTOs
 {
-    public class HousekeeperRegisterResponseDTO
+    public class HousekeeperProfileDTO
     {
         [JsonPropertyName("housekeeper_id")]
         public string HousekeeperId { get; set; }
@@ -23,12 +23,6 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
         [Phone]
         [JsonPropertyName("phone_number")]
         public string PhoneNumber { get; set; }
-
-        [JsonPropertyName("password")]
-        public string Password { get; set; }
-
-        [JsonPropertyName("confirm_password")]
-        public string ConfirmPassword { get; set; }
 
         [JsonPropertyName("avatar")]
         public string Avatar { get; set; }
@@ -61,7 +55,9 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
         public string? Title { get; set; }
 
         [JsonPropertyName("housekeeper_status")]
-        public string Status{ get; set; }
+        public string Status { get; set; }
+
+        [JsonPropertyName("approved_by")]
+        public string ApprovedBy { get; set; } = null!;
     }
 }
-
