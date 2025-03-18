@@ -5,9 +5,8 @@ using HCP.Repository.Interfaces;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using MimeKit.Cryptography;
 using System.Security.Claims;
-using static HCP.Service.DTOs.RatingDTO.RatingDTO;
+using static HCP.DTOs.DTOs.RatingDTO.RatingDTO;
 
 namespace HCP.Service.Services.RatingService
 {
@@ -218,11 +217,11 @@ namespace HCP.Service.Services.RatingService
             };
         }
 
-        public async Task<HousekeperRatingDTO> GetHousekeeperRatingAsync (string userId)
+        public async Task<HousekeperRatingDTO> GetHousekeeperRatingAsync(string userId)
         {
             var housekeeper = await _userManager.FindByIdAsync(userId);
 
-            if(housekeeper == null)
+            if (housekeeper == null)
             {
                 return new();
             }

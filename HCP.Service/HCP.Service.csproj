@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HCP.DTOs\HCP.DTOs.csproj" />
     <ProjectReference Include="..\HCP.Repository\HCP.Repository.csproj" />
   </ItemGroup>
 

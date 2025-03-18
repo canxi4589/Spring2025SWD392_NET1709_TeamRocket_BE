@@ -1,18 +1,14 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CustomerDTO;
-using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Services.BookingService;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using HCP.Service.Services.TemporaryService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 
 namespace HomeCleaningService.Controllers
 {
@@ -158,7 +154,7 @@ namespace HomeCleaningService.Controllers
 
             try
             {
-                
+
 
                 var result = await _bookingService.GetHousekeeperBookings(
                     User,

@@ -1,28 +1,14 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs.CleaningServiceDTO;
+using HCP.DTOs.DTOs.FilterDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
-using HCP.Service.DTOs.CleaningServiceDTO;
- 
-using HCP.Service.DTOs.RequestDTO;
-
-using HCP.Service.DTOs.FilterDTO;
-
 using HCP.Service.Services.ListService;
 using HCP.Service.Services.RatingService;
-using MailKit.Search;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using static HCP.Service.DTOs.RatingDTO.RatingDTO;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HCP.Service.Services.CleaningService1
 {
@@ -220,7 +206,7 @@ namespace HCP.Service.Services.CleaningService1
             var servicesQuery = await serviceRepo.ListAsync(
             filter: s =>
                 s.Status == ServiceStatus.Active.ToString() &&
-                (string.IsNullOrEmpty(search) || s.ServiceName.Contains(search)) && 
+                (string.IsNullOrEmpty(search) || s.ServiceName.Contains(search)) &&
                 (categoryIds == null || !categoryIds.Any() || categoryIds.Contains(s.CategoryId)) &&
                 (!minPrice.HasValue || s.Price >= minPrice.Value) &&
                 (!maxPrice.HasValue || s.Price <= maxPrice.Value) &&
@@ -288,7 +274,7 @@ namespace HCP.Service.Services.CleaningService1
 
         private async Task<CleaningServiceListDTO> PaginateResults(IEnumerable<CleaningServiceItemDTO> serviceDTOs, int? pageIndex, int? pageSize)
         {
-            int totalCount =  serviceDTOs.Count();
+            int totalCount = serviceDTOs.Count();
 
             if (!pageIndex.HasValue || !pageSize.HasValue || totalCount == 0)
             {
@@ -303,7 +289,7 @@ namespace HCP.Service.Services.CleaningService1
                 };
             }
 
-            var paginatedItems =  serviceDTOs
+            var paginatedItems = serviceDTOs
                 .Skip((pageIndex.Value - 1) * pageSize.Value)
                 .Take(pageSize.Value)
                 .ToList();
@@ -467,7 +453,7 @@ namespace HCP.Service.Services.CleaningService1
                     : null
             }).ToList();
         }
-        
+
         public async Task<ServiceOverviewListDTO> GetServiceByUserFilter(string? status, ClaimsPrincipal userClaims, int? pageIndex, int? pageSize)
         {
             var userId = userClaims.FindFirst("id")?.Value;
@@ -481,7 +467,7 @@ namespace HCP.Service.Services.CleaningService1
                     AddressLine = cs.AddressLine,
                     Description = cs.Description,
                     Id = cs.Id,
-                    Images = cs.ServiceImages.Select(si => new ImgDTO { id = si.Id , url = si.LinkUrl}).ToList(),
+                    Images = cs.ServiceImages.Select(si => new ImgDTO { id = si.Id, url = si.LinkUrl }).ToList(),
                     Name = cs.ServiceName,
                     NumOfBooking = cs.Bookings.Count(),
                     NumOfRatings = cs.RatingCount,
@@ -496,7 +482,7 @@ namespace HCP.Service.Services.CleaningService1
                     services = services.Where(c => c.Status == status);
                 }
             }
-            
+
             if (services == null || !services.Any())
                 return new ServiceOverviewListDTO
                 {

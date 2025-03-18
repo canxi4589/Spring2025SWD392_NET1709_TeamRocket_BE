@@ -1,17 +1,13 @@
-﻿using System.Security.Claims;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.WalletDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
-using HCP.Repository.Enums;
-using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CustomerDTO;
-using HCP.Service.DTOs.WalletDTO;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 
 namespace HomeCleaningService.Controllers
 {

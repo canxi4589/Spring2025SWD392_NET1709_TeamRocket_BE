@@ -1,22 +1,16 @@
-﻿using HCP.Repository.Constance;
+﻿using HCP.DTOs.DTOs;
+using HCP.DTOs.DTOs.CleaningServiceDTO;
+using HCP.DTOs.DTOs.RequestDTO;
+using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Repository.Repository;
-using HCP.Service.DTOs;
-using HCP.Service.DTOs.CleaningServiceDTO;
-using HCP.Service.DTOs.RequestDTO;
 using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.EmailService;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Service.Services.RequestService
 {
@@ -45,7 +39,7 @@ namespace HCP.Service.Services.RequestService
             var categories = await _unitOfWork.Repository<ServiceCategory>()
                 .GetAll()
                 .Where(sc => categoryIds.Contains(sc.Id))
-                .ToDictionaryAsync(sc => sc.Id); 
+                .ToDictionaryAsync(sc => sc.Id);
 
             var pendingRequestsDTO = new List<PendingRequestDTO>();
 
@@ -73,19 +67,19 @@ namespace HCP.Service.Services.RequestService
                 };
 
                 item.AdditionalServices = pendingRequest.AdditionalServices
-                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
+                    .Select(a => new DTOs.DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
                     .ToList();
 
                 item.ServiceImages = pendingRequest.ServiceImages
-                    .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .Select(si => new DTOs.DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
                     .ToList();
 
                 item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
-                    .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
                     .ToList();
 
                 item.ServiceDistanceRule = pendingRequest.DistancePricingRules
-                    .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
+                    .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
                     {
                         MinDistance = dpr.MinDistance,
                         MaxDistance = dpr.MaxDistance,
@@ -96,7 +90,7 @@ namespace HCP.Service.Services.RequestService
             }
             return pendingRequestsDTO;
         }
-        
+
         public async Task<PendingRequestDTO> GetPendingCreateServiceDetailAsync(Guid id)
         {
             var pendingRequests = await _unitOfWork.Repository<CleaningService>()
@@ -112,7 +106,7 @@ namespace HCP.Service.Services.RequestService
             var categories = await _unitOfWork.Repository<ServiceCategory>()
                 .GetAll()
                 .Where(sc => categoryIds.Contains(sc.Id))
-                .ToDictionaryAsync(sc => sc.Id); 
+                .ToDictionaryAsync(sc => sc.Id);
 
             var pendingRequestsDTO = new List<PendingRequestDTO>();
 
@@ -140,19 +134,19 @@ namespace HCP.Service.Services.RequestService
                 };
 
                 item.AdditionalServices = pendingRequest.AdditionalServices
-                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
+                    .Select(a => new DTOs.DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
                     .ToList();
 
                 item.ServiceImages = pendingRequest.ServiceImages
-                    .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .Select(si => new DTOs.DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
                     .ToList();
 
                 item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
-                    .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
                     .ToList();
 
                 item.ServiceDistanceRule = pendingRequest.DistancePricingRules
-                    .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
+                    .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
                     {
                         MinDistance = dpr.MinDistance,
                         MaxDistance = dpr.MaxDistance,
@@ -187,7 +181,7 @@ namespace HCP.Service.Services.RequestService
             if (!dto.IsApprove)
             {
                 var rejectedEmailBody = EmailBodyTemplate.GetRejectionEmail(housekeeperName, dto.Reason, dto.ServiceId, service.ServiceName);
-                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject , rejectedEmailBody);
+                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject, rejectedEmailBody);
             }
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
@@ -264,19 +258,19 @@ namespace HCP.Service.Services.RequestService
                 };
 
                 item.AdditionalServices = pendingRequest.AdditionalServices
-                    .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
+                    .Select(a => new DTOs.DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
                     .ToList();
 
                 item.ServiceImages = pendingRequest.ServiceImages
-                    .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .Select(si => new DTOs.DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
                     .ToList();
 
                 item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
-                    .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
                     .ToList();
 
                 item.ServiceDistanceRule = pendingRequest.DistancePricingRules
-                    .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
+                    .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
                     {
                         MinDistance = dpr.MinDistance,
                         MaxDistance = dpr.MaxDistance,

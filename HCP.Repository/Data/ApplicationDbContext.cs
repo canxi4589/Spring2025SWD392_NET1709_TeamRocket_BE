@@ -1,12 +1,6 @@
 ﻿using HCP.Repository.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Repository.Data
 {
@@ -38,7 +32,7 @@ namespace HCP.Repository.Data
 
         // Pricing & Transactions
         public DbSet<Package> Packages { get; set; }
-        public DbSet<DistancePricingRule> DistancePricingRules {  get; set; }
+        public DbSet<DistancePricingRule> DistancePricingRules { get; set; }
         public DbSet<Commissions> Commissions { get; set; }
         public DbSet<SystemWallet> SystemWallets { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
@@ -110,7 +104,7 @@ namespace HCP.Repository.Data
     .HasForeignKey(ba => ba.BookingId)
     .OnDelete(DeleteBehavior.Restrict); // Prevents cascading delete
 
-           
+
             builder.Entity<RefundRequest>()
     .HasOne(rr => rr.Booking)
     .WithMany()

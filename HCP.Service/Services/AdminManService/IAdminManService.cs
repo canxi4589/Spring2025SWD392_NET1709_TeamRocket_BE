@@ -1,9 +1,9 @@
-﻿using HCP.Service.DTOs.AdminManagementDTO;
-using HCP.Service.DTOs.BookingDTO;
+﻿using HCP.DTOs.DTOs.AdminManagementDTO;
+using HCP.DTOs.DTOs.BookingDTO;
 using Microsoft.AspNetCore.Mvc;
-using static HCP.Service.DTOs.AdminManagementDTO.ChartDataAdminDTO;
-using static HCP.Service.DTOs.AdminManagementDTO.ServiceAdminDTO;
-using static HCP.Service.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ChartDataAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceAdminDTO;
+using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
 
 namespace HCP.Service.Services.AdminManService
 {

@@ -1,4 +1,4 @@
-﻿using HCP.Service.DTOs.HousekeeperDTOs;
+﻿using HCP.DTOs.DTOs.HousekeeperDTOs;
 
 namespace HCP.Service.Services.AuthenticationService
 {

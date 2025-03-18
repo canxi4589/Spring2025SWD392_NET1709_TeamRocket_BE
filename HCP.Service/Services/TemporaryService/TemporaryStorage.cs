@@ -1,15 +1,10 @@
-﻿using HCP.Service.DTOs.BookingDTO;
-using HCP.Service.DTOs.CheckoutDTO;
-using HCP.Service.DTOs.PaymentDTO;
-using HCP.Service.DTOs.WalletDTO;
+﻿using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.PaymentDTO;
+using HCP.DTOs.DTOs.WalletDTO;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HCP.Service.Services.TemporaryService
 {
