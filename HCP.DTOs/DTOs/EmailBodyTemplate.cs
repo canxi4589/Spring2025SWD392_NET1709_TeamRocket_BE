@@ -269,5 +269,62 @@ namespace HCP.DTOs.DTOs
 </html>";
         }
 
+        public static string GetApprovalEmailForHousekeeper(string userName)
+        {
+            return $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Housekeeper Registration Approved</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #ffffff;
+            background-color: #28a745;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }}
+        .button:hover {{
+            background-color: #218838;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='content'>
+            <h2>Housekeeper Registration Approved</h2>
+            <p>Dear {userName},</p>
+            <p>Congratulations! Your application to become a housekeeper has been approved.</p>
+            <p>You can now log in and visit your dashboard to start receiving job requests.</p>
+            <a href='[YOUR_LOGIN_URL]' class='button'>Go to Dashboard</a>
+            <p>Best regards,<br> The Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
     }
 }

@@ -370,11 +370,14 @@ namespace HCP.Service.Services.RequestService
             {
                 var rejectedHousekeeperEmailBody = EmailBodyTemplate.GetRejectionEmailForHousekeeper(housekeeperName, dto.Reason);
                 _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject, rejectedHousekeeperEmailBody);
+            } else
+            {
+                var approvedHousekeeperEmailBody = EmailBodyTemplate.GetApprovalEmailForHousekeeper(housekeeperName);
+                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject, approvedHousekeeperEmailBody);
             }
 
             await _userManager.UpdateAsync(housekeeper);
             return (true, RequestConst.UpdateRequestSuccess);
         }
-
     }
 }
