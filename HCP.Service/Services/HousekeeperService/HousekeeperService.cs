@@ -31,7 +31,7 @@ namespace HCP.Service.Services.HousekeeperService
             var housekeeperAddress = await _unitOfWork
                 .Repository<Address>()
                 .FindAsync(c => c.UserId.Equals(housekeeperId)) ?? throw new KeyNotFoundException(CommonConst.HousekeeperDefaultAddress);
-            var housekeeperCategories = _unitOfWork.Repository<HousekeeperSkill>().GetAll().Where(c => c.HousekeeperId == housekeeperId).Select(c => c.Id).ToList();
+            var housekeeperCategories = _unitOfWork.Repository<HousekeeperSkill>().GetAll().Where(c => c.HousekeeperId == housekeeperId).Select(c => c.CategoryId).ToList();
 
             return new HousekeeperProfileDTO
             {

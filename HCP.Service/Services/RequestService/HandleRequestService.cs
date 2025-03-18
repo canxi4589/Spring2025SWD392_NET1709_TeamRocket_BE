@@ -278,7 +278,7 @@ namespace HCP.Service.Services.RequestService
             {
                 var categories = (await _unitOfWork.Repository<HousekeeperSkill>()
                     .FindAllAsync(c => c.HousekeeperId == item.Id))
-                    .Select(c => c.Id)
+                    .Select(c => c.CategoryId)
                     .ToList();
 
                 RegistrationRequestDTO registrationRequestDTO = new()
@@ -328,7 +328,7 @@ namespace HCP.Service.Services.RequestService
 
             var housekeeperCategories = (await _unitOfWork.Repository<HousekeeperSkill>()
                 .FindAllAsync(c => c.HousekeeperId == housekeeperDetail.Id))
-                .Select(c => c.Id)
+                .Select(c => c.CategoryId)
                 .ToList();
 
             return new RegistrationRequestDetailDTO()
@@ -392,7 +392,7 @@ namespace HCP.Service.Services.RequestService
             {
                 var categories = (await _unitOfWork.Repository<HousekeeperSkill>()
                     .FindAllAsync(c => c.HousekeeperId == item.Id))
-                    .Select(c => c.Id)
+                    .Select(c => c.CategoryId)
                     .ToList();
 
                 RegistrationRequestDTO registrationRequestDTO = new()

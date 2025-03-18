@@ -35,6 +35,24 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<List<ApprovalServiceDTO>>().SetSuccessResponse(result));
         }
 
+
+        [HttpGet("staff-approval-registration")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> GetApprovalRegistrationByStaff(int? pageIndex, int? pageSize, string? status)
+        {
+            var response = new AppResponse<string>();
+            try
+            {
+                var result = await _handleRequestService.GetStaffRegistrationApproval(User, pageIndex, pageSize, status);
+
+                return Ok(new AppResponse<RegistrationRequestListDTO>().SetSuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.ToString()));
+            }
+        }
+
         //[HttpGet("staff-requests-approved/{id}")]
         //public async Task<IActionResult> GetPendingCreateRequestDetail(Guid id)
         //{
