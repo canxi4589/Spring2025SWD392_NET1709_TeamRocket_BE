@@ -5,5 +5,6 @@ namespace HCP.Service.Services.AuthenticationService
     public interface IAuthenticationService
     {
         Task<HousekeeperRegisterResponseDTO?> HousekeeperRegister(HousekeeperRegisterRequestDTO requestDTO);
+        Task IsEmailTaken(string email);
     }
 }

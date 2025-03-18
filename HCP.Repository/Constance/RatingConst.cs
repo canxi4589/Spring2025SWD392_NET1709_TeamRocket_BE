@@ -9,7 +9,6 @@ namespace HCP.Repository.Constance
     public static class RatingConst
     {
         //Error
-
         public const string NotFoundError = "No Ratings Found!";
     }
 }
