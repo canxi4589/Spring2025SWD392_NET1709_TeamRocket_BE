@@ -21,6 +21,10 @@ namespace HCP.Repository.Constance
 
         //Filter
         public const string All = "All";
+
+        //Entites
+        public const string HousekeeperNotFound = "No Housekeeper match this id";
+        public const string HousekeeperDefaultAddress = "This Housekeeper have no dafault address";
         
     }
 }

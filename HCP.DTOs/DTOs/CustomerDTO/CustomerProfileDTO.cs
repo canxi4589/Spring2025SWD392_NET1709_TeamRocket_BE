@@ -9,6 +9,24 @@ using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.CustomerDTO
 {
+    public class HousekeeperProfileDTO
+    {
+        [JsonPropertyName("full_name")]
+        public string? FullName { get; set; }
+
+        [JsonPropertyName("birth_date")]
+        public DateTime? Birthday { get; set; }
+
+        [JsonPropertyName("gender")]
+        public bool? Gender { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("phone")]
+        public string? PhoneNumber { get; set; }
+    }
+    
     public class CustomerProfileDTO
     {
         [JsonPropertyName("full_name")]

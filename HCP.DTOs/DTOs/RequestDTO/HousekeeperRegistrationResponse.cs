@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static HCP.DTOs.DTOs.RatingDTO.RatingDTO;
 
-namespace HCP.DTOs.DTOs.HousekeeperDTOs
+namespace HCP.DTOs.DTOs.RequestDTO
 {
-    public class HousekeeperRegisterResponseDTO
+    public class RegistrationRequestDetailDTO
     {
         [JsonPropertyName("housekeeper_id")]
         public string HousekeeperId { get; set; }
@@ -23,12 +24,6 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
         [Phone]
         [JsonPropertyName("phone_number")]
         public string PhoneNumber { get; set; }
-
-        [JsonPropertyName("password")]
-        public string Password { get; set; }
-
-        [JsonPropertyName("confirm_password")]
-        public string ConfirmPassword { get; set; }
 
         [JsonPropertyName("avatar")]
         public string Avatar { get; set; }
@@ -66,7 +61,59 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
 
         [MaxLength(50)]
         [JsonPropertyName("housekeeper_status")]
-        public string Status{ get; set; }
+        public string? Status { get; set; }
     }
-}
 
+    public class RegistrationRequestDTO
+    {
+        [JsonPropertyName("housekeeper_id")]
+        public string HousekeeperId { get; set; }
+
+        [JsonPropertyName("full_name")]
+        public string FullName { get; set; }
+
+        [EmailAddress]
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        [JsonPropertyName("avatar")]
+        public string Avatar { get; set; }
+
+        [JsonPropertyName("categories")]
+        public List<Guid> HousekeeperCatgories { get; set; }
+
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+    }
+
+    public class RegistrationRequestListDTO
+    {
+        [JsonPropertyName("registration_requests")]
+        public List<RegistrationRequestDTO> Items { get; set; }
+
+        [JsonPropertyName("total_count")]
+        public int TotalCount { get; set; }
+
+        [JsonPropertyName("total_page")]
+        public int TotalPages { get; set; }
+
+        [JsonPropertyName("has_next")]
+        public bool HasNext { get; set; }
+
+        [JsonPropertyName("has_previous")]
+        public bool HasPrevious { get; set; }
+    }
+
+    public class RegistrationRequestStatusUpdateDto
+    {
+        [JsonPropertyName("housekeeper_id")]
+        public string HousekeeperId { get; set; }
+
+        [JsonPropertyName("is_approve")]
+        public bool IsApprove { get; set; }   // True = "active", False = "rejected"
+
+        [JsonPropertyName("reason")]
+        public string? Reason { get; set; }
+    }
+
+}

@@ -47,6 +47,18 @@ namespace HCP.Service.Services.ListService
             return new PaginatedList<T>(items, pageIndex, totalPages);
         }
 
+        public static PaginatedList<T> CreateAsyncWithList(
+            List<T> source,
+            int pageIndex,
+            int pageSize
+        )
+        {
+            var count = source.Count();
+            var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+            var totalPages = (int)Math.Ceiling(count / (double)pageSize);
+            return new PaginatedList<T>(items, pageIndex, totalPages);
+        }
+
         public static PaginatedList<T> Create(IQueryable<T> source, int pageIndex, int pageSize)
         {
             var count = source.Count();

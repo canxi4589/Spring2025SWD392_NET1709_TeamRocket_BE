@@ -14,5 +14,8 @@ namespace HCP.Repository.Constance
 
         //email subject
         public const string RejectEmailSubject = "Information about rejecting Service Creation...";
+
+        //status
+        public const string Pending = "Pending";
     }
 }

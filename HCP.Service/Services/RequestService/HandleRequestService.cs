@@ -8,9 +8,12 @@ using HCP.Repository.Interfaces;
 using HCP.Repository.Repository;
 using HCP.Service.Services.CleaningService1;
 using HCP.Service.Services.EmailService;
+using HCP.Service.Services.ListService;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using static HCP.DTOs.DTOs.RatingDTO.RatingDTO;
 
 namespace HCP.Service.Services.RequestService
 {
@@ -188,23 +191,6 @@ namespace HCP.Service.Services.RequestService
             return (true, RequestConst.UpdateRequestSuccess);
         }
 
-        //public async Task<CreateCleaningServiceDTO> GetAllPendingService()
-        //{
-        //    var services = _unitOfWork.Repository<CleaningService>().GetAll().Where(cs => cs.Status == "Pending");
-        //    var pendingServices = new List<CreateCleaningServiceDTO>();
-        //    foreach (var service in services)
-        //    {
-        //        var user = await _userManager.FindByIdAsync(service.UserId);
-        //        var serviceDetail = new CreateCleaningServiceDTO
-        //        {
-        //            AdditionalServices = service.AdditionalServices,
-
-        //        };
-        //        pendingServices.Services.Add(serviceDetail);
-        //    }
-        //    return pendingServices;
-        //}
-
         private async Task<string> GetUserNameByIdAsync(string userId)
         {
             if (string.IsNullOrEmpty(userId))
@@ -282,73 +268,113 @@ namespace HCP.Service.Services.RequestService
             return approvalRequestsDTO;
         }
 
-        //public async Task<ApprovalServiceDTO> GetApprovalServiceDTODetailAsync(Guid id)
-        //{
-        //    var pendingRequests = await _unitOfWork.Repository<CleaningService>()
-        //        .GetAll()
-        //        .Where(cs => cs.Id == id)
-        //        .Include(cs => cs.AdditionalServices)
-        //        .Include(cs => cs.ServiceImages)
-        //        .Include(cs => cs.ServiceTimeSlots)
-        //        .Include(cs => cs.DistancePricingRules)
-        //        .ToListAsync();
+        public async Task<RegistrationRequestListDTO> GetPendingHousekeeperRegistrationRequestsAsync(int? pageIndex, int? pageSize)
+        {
+            var pendingHousekeeper = (await _userManager.GetUsersInRoleAsync(KeyConst.Housekeeper))
+                                            .Where(c => c.HousekeeperStatus == HousekeeperRequestStatus.Pending.ToString()).ToList().AsEnumerable();
+            var pendingHousekeeperList = new List<RegistrationRequestDTO>();
 
-        //    var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
-        //    var categories = await _unitOfWork.Repository<ServiceCategory>()
-        //        .GetAll()
-        //        .Where(sc => categoryIds.Contains(sc.Id))
-        //        .ToDictionaryAsync(sc => sc.Id);
+            foreach (var item in pendingHousekeeper)
+            {
+                var categories = (await _unitOfWork.Repository<HousekeeperSkill>()
+                    .FindAllAsync(c => c.HousekeeperId == item.Id))
+                    .Select(c => c.Id)
+                    .ToList();
 
-        //    var approvalRequestsDTO = new List<ApprovalServiceDTO>();
+                RegistrationRequestDTO registrationRequestDTO = new()
+                {
+                    Avatar = item.Avatar,
+                    Email = item.Email,
+                    FullName = item.FullName,
+                    HousekeeperCatgories = categories,
+                    HousekeeperId = item.Id,
+                    Status = item.HousekeeperStatus
+                };
+                pendingHousekeeperList.Add(registrationRequestDTO);
+            }
 
-        //    foreach (var pendingRequest in pendingRequests)
-        //    {
-        //        var item = new ApprovalServiceDTO
-        //        {
-        //            ServiceId = pendingRequest.Id,
-        //            ServiceName = pendingRequest.ServiceName,
-        //            CategoryId = pendingRequest.CategoryId,
-        //            CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
-        //            PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
-        //            Description = pendingRequest.Description,
-        //            Status = pendingRequest.Status,
-        //            Price = pendingRequest.Price,
-        //            City = pendingRequest.City,
-        //            District = pendingRequest.District,
-        //            PlaceId = pendingRequest.PlaceId,
-        //            AddressLine = pendingRequest.AddressLine,
-        //            Duration = pendingRequest.Duration,
-        //            CreatedAt = pendingRequest.CreatedAt,
-        //            UpdatedAt = pendingRequest.UpdatedAt,
-        //            UserId = pendingRequest.UserId,
-        //            UserName = await GetUserNameByIdAsync(pendingRequest.UserId)
-        //        };
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<RegistrationRequestDTO>.CreateAsyncWithList(pendingHousekeeperList, 1, pendingHousekeeperList.Count());
+                return new RegistrationRequestListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = PaginatedList<RegistrationRequestDTO>.CreateAsync(pendingHousekeeperList, (int)pageIndex, (int)pageSize);
+            return new RegistrationRequestListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = pendingHousekeeperList.Count,
+                TotalPages = temp2.TotalPages,
+            };
+        }
 
-        //        item.AdditionalServices = pendingRequest.AdditionalServices
-        //            .Select(a => new DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount })
-        //            .ToList();
+        public async Task<RegistrationRequestDetailDTO> GetPendingHousekeeperRegistrationRequestDetailAsync(ClaimsPrincipal staff, string housekeeperId)
+        {
+            var staffId = staff.FindFirst("id")?.Value;
+            var housekeeperDetail = await _userManager.FindByIdAsync(housekeeperId) ?? throw new KeyNotFoundException(CommonConst.HousekeeperNotFound);
 
-        //        item.ServiceImages = pendingRequest.ServiceImages
-        //            .Select(si => new DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
-        //            .ToList();
+            var housekeeperAddress =
+                _unitOfWork
+                .Repository<Address>()
+                .Find(c => c.UserId.Equals(housekeeperDetail.Id) && c.IsDefault == true) ?? throw new KeyNotFoundException(CommonConst.HousekeeperDefaultAddress);
 
-        //        item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
-        //            .Select(sts => new DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
-        //            .ToList();
+            var housekeeperCategories = (await _unitOfWork.Repository<HousekeeperSkill>()
+                .FindAllAsync(c => c.HousekeeperId == housekeeperDetail.Id))
+                .Select(c => c.Id)
+                .ToList();
 
-        //        item.ServiceDistanceRule = pendingRequest.DistancePricingRules
-        //            .Select(dpr => new DTOs.RequestDTO.DistanceRuleDTO
-        //            {
-        //                MinDistance = dpr.MinDistance,
-        //                MaxDistance = dpr.MaxDistance,
-        //                BaseFee = dpr.BaseFee,
-        //                ExtraPerKm = dpr.ExtraPerKm
-        //            }).ToList();
-        //        approvalRequestsDTO.Add(item);
-        //    }
+            return new RegistrationRequestDetailDTO()
+            {
+                AddressLine1 = housekeeperAddress.AddressLine1,
+                Avatar = housekeeperDetail.Avatar,
+                City = housekeeperAddress.City,
+                District = housekeeperAddress.District,
+                Email = housekeeperDetail.Email ?? string.Empty,
+                FullName = housekeeperDetail.FullName ?? string.Empty,
+                HousekeeperId = housekeeperDetail.Id,
+                IdCardBack = housekeeperDetail.IdCardBack ?? string.Empty,
+                IdCardFront = housekeeperDetail.IdCardFront ?? string.Empty,
+                Pdf = housekeeperDetail.PDF ?? string.Empty,
+                PhoneNumber = housekeeperDetail.PhoneNumber ?? string.Empty,
+                PlaceId = housekeeperAddress.PlaceId,
+                Title = housekeeperAddress.Title ?? string.Empty,
+                HousekeeperCategories = housekeeperCategories,
+                Status = housekeeperDetail.HousekeeperStatus
+            };
+        }
 
-        //    return approvalRequestsDTO[0];
-        //}
+        public async Task<(bool Success, string Message)> UpdateHouskeeperVerificationStatusAsync(RegistrationRequestStatusUpdateDto dto, ClaimsPrincipal userClaims)
+        {
+            var staffId = userClaims.FindFirst("id")?.Value;
+            var housekeeper = await _userManager.FindByIdAsync(dto.HousekeeperId) ?? throw new KeyNotFoundException(CommonConst.HousekeeperNotFound);
+            var housekeeperEmail = await _userManager.GetEmailAsync(housekeeper);
+            var housekeeperName = await _userManager.GetUserNameAsync(housekeeper);
+
+            if (housekeeper.HousekeeperStatus != HousekeeperRequestStatus.Pending.ToString())
+            {
+                return (false, RequestConst.UpdateRequestStatusError);
+            }
+
+            housekeeper.HousekeeperVerifiedBy = staffId;
+            housekeeper.HousekeeperStatus = dto.IsApprove ? HousekeeperRequestStatus.Approved.ToString() : HousekeeperRequestStatus.Rejected.ToString();
+
+            if (!dto.IsApprove)
+            {
+                var rejectedHousekeeperEmailBody = EmailBodyTemplate.GetRejectionEmailForHousekeeper(housekeeperName, dto.Reason);
+                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject, rejectedHousekeeperEmailBody);
+            }
+
+            await _userManager.UpdateAsync(housekeeper);
+            return (true, RequestConst.UpdateRequestSuccess);
+        }
 
     }
 }

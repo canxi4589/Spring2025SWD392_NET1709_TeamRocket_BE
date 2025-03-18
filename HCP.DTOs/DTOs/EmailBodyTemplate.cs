@@ -170,6 +170,7 @@ namespace HCP.DTOs.DTOs
     </body>
     </html>";
         }
+
         public static string GetRejectionEmail(string userName, string reason, Guid serviceId, string serviceName)
         {
             return $@"
@@ -218,6 +219,54 @@ namespace HCP.DTOs.DTOs
         </div>
     </body>
     </html>";
+        }
+
+        public static string GetRejectionEmailForHousekeeper(string userName, string reason)
+        {
+            return $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Housekeeper Registration Rejected</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .reason {{
+            color: #d9534f;
+            font-weight: bold;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='content'>
+            <h2>Housekeeper Registration Rejected</h2>
+            <p>Dear {userName},</p>
+            <p>We regret to inform you that your application to become a housekeeper has been rejected.</p>
+            <p><strong>Reason for Rejection:</strong> <span class='reason'>{reason}</span></p>
+            <p>If you have any questions or need further clarification, please contact our support team.</p>
+            <p>Best regards,<br> The Team</p>
+        </div>
+    </div>
+</body>
+</html>";
         }
 
     }

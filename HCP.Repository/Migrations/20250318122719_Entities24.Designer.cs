@@ -4,6 +4,7 @@ using HCP.Repository.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HCP.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250318122719_Entities24")]
+    partial class Entities24
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,18 +140,17 @@ namespace HCP.Repository.Migrations
                     b.Property<bool>("Gender")
                         .HasColumnType("bit");
 
-                    b.Property<string>("HousekeeperStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HousekeeperVerifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid?>("HousekeeperVerifiedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("IdCardBack")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IdCardFront")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsHousekeeperVerified")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
