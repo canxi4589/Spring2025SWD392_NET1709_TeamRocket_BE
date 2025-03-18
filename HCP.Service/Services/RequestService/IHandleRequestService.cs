@@ -13,5 +13,6 @@ namespace HCP.Service.Services.RequestService
         Task<RegistrationRequestListDTO> GetPendingHousekeeperRegistrationRequestsAsync(int? pageIndex, int? pageSize);
         Task<RegistrationRequestDetailDTO> GetPendingHousekeeperRegistrationRequestDetailAsync(ClaimsPrincipal staff, string housekeeperId);
         Task<(bool Success, string Message)> UpdateHouskeeperVerificationStatusAsync(RegistrationRequestStatusUpdateDto dto, ClaimsPrincipal userClaims);
+        Task<RegistrationRequestListDTO> GetStaffRegistrationApproval(ClaimsPrincipal currentStaff, int? pageIndex, int? pageSize, string? status);
     }
 }

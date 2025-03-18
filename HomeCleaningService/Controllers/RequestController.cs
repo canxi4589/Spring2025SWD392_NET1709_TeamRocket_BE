@@ -5,6 +5,7 @@ using HCP.Service.Services.RequestService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -119,5 +120,21 @@ namespace HomeCleaningService.Controllers
             return Ok(response.SetSuccessResponse(result.Message));
         }
 
+        [HttpGet("staff-approval-registration")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> GetApprovalRegistrationByStaff(int? pageIndex, int? pageSize, string? status)
+        {
+            var response = new AppResponse<string>();
+            try
+            {
+                var result = await _handleRequestService.GetStaffRegistrationApproval(User, pageIndex, pageSize, status);
+
+                return Ok(new AppResponse<RegistrationRequestListDTO>().SetSuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.ToString()));
+            }
+        }
     }
 }
