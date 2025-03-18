@@ -379,5 +379,63 @@ namespace HCP.Service.Services.RequestService
             await _userManager.UpdateAsync(housekeeper);
             return (true, RequestConst.UpdateRequestSuccess);
         }
+
+        public async Task<RegistrationRequestListDTO> GetStaffRegistrationApproval(ClaimsPrincipal currentStaff, int? pageIndex, int? pageSize, string? status)
+        {
+            var staffId = currentStaff.FindFirst("id")?.Value;
+            var approvalHousekeeper = (await _userManager.GetUsersInRoleAsync(KeyConst.Housekeeper))
+                                            .Where(c => c.HousekeeperVerifiedBy == staffId).ToList().AsEnumerable();
+
+            var approvalHousekeeperList = new List<RegistrationRequestDTO>();
+
+            foreach (var item in approvalHousekeeper)
+            {
+                var categories = (await _unitOfWork.Repository<HousekeeperSkill>()
+                    .FindAllAsync(c => c.HousekeeperId == item.Id))
+                    .Select(c => c.Id)
+                    .ToList();
+
+                RegistrationRequestDTO registrationRequestDTO = new()
+                {
+                    Avatar = item.Avatar,
+                    Email = item.Email,
+                    FullName = item.FullName,
+                    HousekeeperCatgories = categories,
+                    HousekeeperId = item.Id,
+                    Status = item.HousekeeperStatus
+                };
+                approvalHousekeeperList.Add(registrationRequestDTO);
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (!status.Contains(CommonConst.All, StringComparison.OrdinalIgnoreCase))
+                {
+                    approvalHousekeeperList = approvalHousekeeperList.Where(c => c.Status == status).ToList();
+                }
+            }
+
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<RegistrationRequestDTO>.CreateAsyncWithList(approvalHousekeeperList, 1, approvalHousekeeperList.Count());
+                return new RegistrationRequestListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = PaginatedList<RegistrationRequestDTO>.CreateAsync(approvalHousekeeperList, (int)pageIndex, (int)pageSize);
+            return new RegistrationRequestListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = approvalHousekeeperList.Count,
+                TotalPages = temp2.TotalPages,
+            };
+        }
     }
 }
