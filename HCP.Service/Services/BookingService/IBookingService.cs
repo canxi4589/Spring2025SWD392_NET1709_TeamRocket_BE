@@ -33,6 +33,11 @@ namespace HCP.Service.Services.BookingService
             DateTime? referenceDate = null,
             string navigationMode = "today",
             string viewMode = "month"
+
         );
+        Task<CalendarBookingDTO> GetHousekeeperBookings1(
+    ClaimsPrincipal userClaims,
+    DateTime? referenceDate = null,
+    string viewMode = "month");
     }
 }

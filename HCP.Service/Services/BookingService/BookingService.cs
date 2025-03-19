@@ -705,7 +705,101 @@ namespace HCP.Service.Services.BookingService
                 }
             };
         }
+        public async Task<CalendarBookingDTO> GetHousekeeperBookings1(
+    ClaimsPrincipal userClaims,
+    DateTime? referenceDate = null,
+    string viewMode = "month")
+        {
+            var housekeeperId = userClaims.FindFirst("id")?.Value;
 
+            // Validate inputs
+            if (string.IsNullOrEmpty(housekeeperId))
+            {
+                throw new ArgumentException("Housekeeper ID is required.", nameof(housekeeperId));
+            }
+
+            if (!Enum.TryParse<ViewMode>(viewMode, true, out var parsedViewMode))
+            {
+                throw new ArgumentException("Invalid view mode. Use 'month', 'week', or 'day'.", nameof(viewMode));
+            }
+
+            var (startDate, endDate) = CalculateDateRange1(referenceDate ?? DateTime.Today, parsedViewMode);
+
+            var bookings = await _unitOfWork.Repository<Booking>().ListAsync(
+                filter: b => b.CleaningService.UserId == housekeeperId &&
+                             b.PreferDateStart.Date >= startDate.Date &&
+                             b.PreferDateStart.Date <= endDate.Date,
+                orderBy: q => q.OrderBy(b => b.PreferDateStart),
+                includeProperties: q => q
+                    .Include(b => b.Customer)
+                    .Include(b => b.CleaningService)
+            );
+
+            var groupedBookings = bookings
+                .GroupBy(b => b.PreferDateStart.Date)
+                .Select(g => new CalendarDayDTO
+                {
+                    Date = g.Key,
+                    Bookings = g.Select(b => new BookingItemDTO
+                    {
+                        Id = b.Id,
+                        ServiceName = b.CleaningService.ServiceName,
+                        PreferDateStart = b.PreferDateStart,
+                        TimeStart = b.TimeStart,
+                        TimeEnd = b.TimeEnd,
+                        TotalPrice = b.TotalPrice,
+                        CustomerName = b.Customer?.FullName ?? "Unknown",
+                        Address = b.AddressLine
+                    })
+                    .OrderBy(b => b.TimeStart)
+                    .ToList(),
+                    BookingCount = g.Count()
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            return new CalendarBookingDTO
+            {
+                Days = groupedBookings,
+                ViewMode = viewMode.ToLower(),
+                DisplayRange = parsedViewMode switch
+                {
+                    ViewMode.Month => startDate.ToString("MMMM yyyy"),
+                    ViewMode.Week => $"{startDate:MMM d} - {endDate:MMM d, yyyy}",
+                    ViewMode.Day => startDate.ToString("MMMM d, yyyy"),
+                    _ => string.Empty
+                }
+            };
+        }
+        private (DateTime StartDate, DateTime EndDate) CalculateDateRange1(DateTime baseDate, ViewMode viewMode)
+        {
+            DateTime startDate;
+            DateTime endDate;
+
+            switch (viewMode)
+            {
+                case ViewMode.Month:
+                    startDate = new DateTime(baseDate.Year, baseDate.Month, 1);
+                    endDate = startDate.AddMonths(1).AddDays(-1);
+                    break;
+
+                case ViewMode.Week:
+                    var daysFromSunday = baseDate.DayOfWeek == DayOfWeek.Sunday ? 0 : (int)baseDate.DayOfWeek;
+                    startDate = baseDate.AddDays(-daysFromSunday);
+                    endDate = startDate.AddDays(6);
+                    break;
+
+                case ViewMode.Day:
+                    startDate = baseDate;
+                    endDate = baseDate;
+                    break;
+
+                default:
+                    throw new ArgumentException("Invalid view mode.");
+            }
+
+            return (startDate, endDate);
+        }
         private (DateTime StartDate, DateTime EndDate) CalculateDateRange(DateTime baseDate, NavigationMode navigationMode, ViewMode viewMode)
         {
             DateTime startDate;
