@@ -5,19 +5,23 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.CustomerDTO
 {
     public class AddressDTO
     {
-        public Guid Id { get;  set; }
+        public Guid Id { get; set; }
         [Required]
+        [JsonPropertyName("address_line")]
         public string Address { get; set; }
         [Required]
         public string City { get; set; }
         [Required]
         public string District { get; set; }
+        [Required]
+        [JsonPropertyName("place_id")]
         public string PlaceId { get; set; }
         public string Title { get; set; }
         public bool IsDefault { get; set; } = false;
@@ -36,6 +40,7 @@ namespace HCP.DTOs.DTOs.CustomerDTO
     {
         [Required]
         [MaxLength(255)]
+        [JsonPropertyName("address_line")]
         public string Address { get; set; }
 
         [Required]
@@ -46,6 +51,7 @@ namespace HCP.DTOs.DTOs.CustomerDTO
         [MaxLength(100)]
         public string District { get; set; }
 
+        [JsonPropertyName("place_id")]
         public string PlaceId { get; set; }
 
         public bool IsDefault { get; set; } = false;
@@ -59,6 +65,7 @@ namespace HCP.DTOs.DTOs.CustomerDTO
         public Guid Id { get; set; }
         [Required]
         [MaxLength(255)]
+        [JsonPropertyName("address_line")]
         public string Address { get; set; }
 
         [Required]
@@ -69,6 +76,7 @@ namespace HCP.DTOs.DTOs.CustomerDTO
         [MaxLength(100)]
         public string District { get; set; }
 
+        [JsonPropertyName("place_id")]
         public string PlaceId { get; set; }
 
         public bool IsDefault { get; set; } = false;
