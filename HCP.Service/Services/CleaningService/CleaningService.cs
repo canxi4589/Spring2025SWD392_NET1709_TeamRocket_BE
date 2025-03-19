@@ -554,7 +554,7 @@ namespace HCP.Service.Services.CleaningService1
                     Amount = a.Amount,
                     IsActive = true,
                     Description = a.Description,
-                    Url = a.Description,
+                    Url = a.Url,
                     Duration = a.Duration,
                 });
 
@@ -786,7 +786,6 @@ namespace HCP.Service.Services.CleaningService1
                 }).ToList()
             };
         }
-
 
         public async Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime)
         {
