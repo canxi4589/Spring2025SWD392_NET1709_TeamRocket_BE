@@ -40,6 +40,7 @@ namespace HCP.Repository.Data
         // Ratings & Notifications
         public DbSet<ServiceRating> ServiceRatings { get; set; }
         public DbSet<BookingFinishProof> BookingFinishProofs { get; set; }
+        public DbSet<PlatformNotification> PlatformNotifications { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder builder)
