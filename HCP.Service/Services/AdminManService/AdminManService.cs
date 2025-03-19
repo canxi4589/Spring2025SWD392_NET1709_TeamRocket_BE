@@ -432,6 +432,14 @@ namespace HCP.Service.Services.AdminManService
             };
         }
 
+        public async Task ChangeTemporalPassword (ChangPasswordStaffDTO request, ClaimsPrincipal staff)
+        {
+            var staffId = staff.FindFirst("id")?.Value;
+            var currentStaff = await _userManager.FindByIdAsync(staffId) ?? throw new KeyNotFoundException(CommonConst.NotFoundError);
+
+            await _userManager.ChangePasswordAsync(currentStaff, request.DefaultPassword, request.NewPassword);
+        }
+
         public async Task<CreateStaffResponseDTO> CreateStaff(CreateStaffRequestDTO request)
         {
             if (await _userManager.FindByEmailAsync(request.Email) != null)

@@ -1,5 +1,7 @@
-﻿using HCP.DTOs.DTOs.RequestDTO;
+﻿using HCP.DTOs.DTOs.AdminManagementDTO;
+using HCP.DTOs.DTOs.RequestDTO;
 using HCP.Repository.Constance;
+using HCP.Service.Services.AdminManService;
 using HCP.Service.Services.RequestService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -13,10 +15,12 @@ namespace HomeCleaningService.Controllers
     public class StaffController : ControllerBase
     {
         private readonly IHandleRequestService _handleRequestService;
+        private readonly IAdminManService _adminService;
 
-        public StaffController(IHandleRequestService handleRequestService)
+        public StaffController(IHandleRequestService handleRequestService, IAdminManService adminService)
         {
             _handleRequestService = handleRequestService;
+            _adminService = adminService;
         }
 
         [HttpGet("staff-requests-approved")]
@@ -35,7 +39,6 @@ namespace HomeCleaningService.Controllers
             return Ok(new AppResponse<List<ApprovalServiceDTO>>().SetSuccessResponse(result));
         }
 
-
         [HttpGet("staff-approval-registration")]
         [Authorize(Roles = KeyConst.Staff)]
         public async Task<IActionResult> GetApprovalRegistrationByStaff(int? pageIndex, int? pageSize, string? status)
@@ -50,6 +53,30 @@ namespace HomeCleaningService.Controllers
             catch (Exception ex)
             {
                 return BadRequest(response.SetErrorResponse(KeyConst.Error, ex.ToString()));
+            }
+        }
+
+        [HttpPut("staff-change-password")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> CreateStaff(ChangPasswordStaffDTO request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.ModelState, errors));
+            }
+            try
+            {
+                await _adminService.ChangeTemporalPassword(request, User);
+                return Ok(new AppResponse<object>().SetSuccessResponse(AuthenticationConst.ChangPasswordSuccess));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Validate, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, ex.Message));
             }
         }
 

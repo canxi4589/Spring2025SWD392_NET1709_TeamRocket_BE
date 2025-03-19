@@ -1,6 +1,7 @@
 ﻿using HCP.DTOs.DTOs.AdminManagementDTO;
 using HCP.DTOs.DTOs.BookingDTO;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using static HCP.DTOs.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceAdminDTO;
 using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
@@ -9,6 +10,7 @@ namespace HCP.Service.Services.AdminManService
 {
     public interface IAdminManService
     {
+        Task ChangeTemporalPassword(ChangPasswordStaffDTO request, ClaimsPrincipal staff);
         Task<CreateStaffResponseDTO> CreateStaff(CreateStaffRequestDTO request);
         Task<UserAdminListDTO> GetUsersByAdminCustom(string? search, bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize);
         Task<ServiceCategoryAdminShowListDTO> GetAllServiceCategoriesAsync(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year);

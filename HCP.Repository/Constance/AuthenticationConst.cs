@@ -14,6 +14,7 @@ namespace HCP.Repository.Constance
 
         //success
         public const string EmailNotTaken = "This Email is okay to use!!";
+        public const string ChangPasswordSuccess = "Change Dafault Password Successfully!!";
 
         //create
         public const string StaffNotice = "About the Creation of your Staff Account";

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -8,6 +9,21 @@ using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.AdminManagementDTO
 {
+    public class ChangPasswordStaffDTO
+    {
+        [Required]
+        [JsonPropertyName("dafault_password")]
+        public required string DefaultPassword { get; set; }
+
+        [Required]
+        [JsonPropertyName("new_password")]
+        public required string NewPassword { get; set; }
+
+        [Required]
+        [JsonPropertyName("confirm_new_password")]
+        public required string ConfirmNewPassword { get; set; }
+    }
+
     public class CreateStaffRequestDTO
     {
         [Required]
