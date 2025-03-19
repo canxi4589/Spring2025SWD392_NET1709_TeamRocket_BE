@@ -15,6 +15,8 @@ namespace HCP.Repository.Constance
         //email subject
         public const string RejectEmailSubject = "Information about your Service Creation...";
         public const string ApproveEmailSubject = "Information about your Service Creation...";
+        public const string RefundEmailCustomerSubject = "Information about your Refund Request...";
+        public const string RefundEmailHousekeeperSubject = "Information about the Refund Request made by your Customer...";
 
         //status
         public const string Pending = "Pending";

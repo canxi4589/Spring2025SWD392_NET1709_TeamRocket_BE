@@ -1,4 +1,5 @@
-﻿using HCP.DTOs.DTOs.BookingDTO;
+﻿using HCP.DTOs.DTOs;
+using HCP.DTOs.DTOs.BookingDTO;
 using HCP.DTOs.DTOs.WalletDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
@@ -6,8 +7,10 @@ using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.Integrations.Currency;
 using HCP.Service.Services.CustomerService;
+using HCP.Service.Services.EmailService;
 using HCP.Service.Services.ListService;
 using HCP.Service.Services.TemporaryService;
+using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,13 +25,15 @@ namespace HCP.Service.Services.WalletService
         private readonly UserManager<AppUser> _userManager;
         private readonly ICustomerService _customerService;
         private readonly ITemporaryStorage _temporaryStorage;
+        public readonly IEmailSenderService _emailSenderService;
 
-        public WalletService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, ICustomerService customerService, ITemporaryStorage temporaryStorage)
+        public WalletService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, ICustomerService customerService, ITemporaryStorage temporaryStorage, IEmailSenderService emailSenderService)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _customerService = customerService;
             _temporaryStorage = temporaryStorage;
+            _emailSenderService = emailSenderService;
         }
         public async Task<RefundRequestDTO> CreateRefundRequest(Guid bookingId, string ProofOfPayment, string Reason, AppUser user)
         {
@@ -170,6 +175,10 @@ namespace HCP.Service.Services.WalletService
             if (booking == null) throw new Exception(BookingConst.BookingNotFound);
             var user = await _userManager.FindByIdAsync(booking.CustomerId);
             if (user == null) throw new Exception(CustomerConst.NotFoundError);
+            var cleaningService = _unitOfWork.Repository<CleaningService>().GetById(booking.CleaningServiceId);
+            var housekeeper = await _userManager.FindByIdAsync(cleaningService.UserId) ?? throw new Exception(CommonConst.NotFoundError);
+
+
             if (refund.Status != RefundRequestStatus.Pending.ToString())
             {
                 throw new Exception(TransactionConst.RefundProcessSuccessfully);
@@ -188,6 +197,13 @@ namespace HCP.Service.Services.WalletService
                 _unitOfWork.Repository<Booking>().Update(booking);
                 await _userManager.UpdateAsync(user);
                 await _unitOfWork.SaveChangesAsync();
+
+                var approveRefundCustomerEmailBody = EmailBodyTemplate.ApproveRefundRequestForCustomer(housekeeper.FullName, user.FullName, refund.BookingId, cleaningService.ServiceName, booking.TotalPrice);
+                _emailSenderService.SendEmail(user.Email, RequestConst.RefundEmailCustomerSubject, approveRefundCustomerEmailBody);
+                
+                var approveRefundHousekeeperEmailBody = EmailBodyTemplate.RejectRefundRequestForHousekeeper(housekeeper.FullName, user.FullName, refund.BookingId, cleaningService.ServiceName, booking.TotalPrice, refund.Reason);
+                _emailSenderService.SendEmail(housekeeper.Email, RequestConst.RefundEmailHousekeeperSubject, approveRefundHousekeeperEmailBody);
+
                 return new RefundRequestDTO
                 {
                     Id = refund.Id,
@@ -213,6 +229,10 @@ namespace HCP.Service.Services.WalletService
                 _unitOfWork.Repository<RefundRequest>().Update(refund);
                 _unitOfWork.Repository<Booking>().Update(booking);
                 await _unitOfWork.Repository<RefundRequest>().SaveChangesAsync();
+
+                var rejectRefundCustomerEmailBody = EmailBodyTemplate.RejectRefundRequestForCustomer(housekeeper.FullName, user.FullName, refund.BookingId, cleaningService.ServiceName, booking.TotalPrice, refund.Reason);
+                _emailSenderService.SendEmail(user.Email, RequestConst.RefundEmailCustomerSubject, rejectRefundCustomerEmailBody);
+
                 return new RefundRequestDTO
                 {
                     Id = refund.Id,

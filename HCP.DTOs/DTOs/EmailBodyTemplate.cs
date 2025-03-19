@@ -374,5 +374,161 @@ namespace HCP.DTOs.DTOs
 </html>";
         }
 
+        public static string ApproveRefundRequestForCustomer(string housekeeperName, string customerName, Guid bookingId, string serviceName, decimal refundPrice)
+        {
+            return $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Refund Request Approved</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .highlight {{
+            color: #28a745;
+            font-weight: bold;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='content'>
+            <h2>Refund Request Approved</h2>
+            <p>Dear {customerName},</p>
+            <p>We are pleased to inform you that your refund request has been approved.</p>
+            <p><strong>Booking ID:</strong> <span class='highlight'>{bookingId}</span></p>
+            <p><strong>Service:</strong> {serviceName}</p>
+            <p><strong>Housekeeper:</strong> {housekeeperName}</p>
+            <p><strong>Refund Amount:</strong> <span class='highlight'>{refundPrice}</span></p>
+            <p>The refunded amount will be credited back to your wallet shortly.</p>
+            <p>If you have any questions, please feel free to contact our support team.</p>
+            <p>Best regards,<br> The Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+        public static string RejectRefundRequestForCustomer(string housekeeperName, string customerName, Guid bookingId, string serviceName, decimal refundPrice, string reason)
+        {
+            return $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Refund Request Rejected</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .highlight {{
+            color: #d9534f;
+            font-weight: bold;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='content'>
+            <h2>Refund Request Rejected</h2>
+            <p>Dear {customerName},</p>
+            <p>We regret to inform you that your refund request has been rejected.</p>
+            <p><strong>Booking ID:</strong> <span class='highlight'>{bookingId}</span></p>
+            <p><strong>Service:</strong> {serviceName}</p>
+            <p><strong>Housekeeper:</strong> {housekeeperName}</p>
+            <p><strong>Requested Refund Amount:</strong> <span class='highlight'>{refundPrice}</span></p>
+            <p><strong>Reason for Rejection:</strong> <span class='highlight'>{reason}</span></p>
+            <p>If you have any questions or need further clarification, please contact our support team.</p>
+            <p>Best regards,<br> The Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+        public static string RejectRefundRequestForHousekeeper(string housekeeperName, string customerName, Guid bookingId, string serviceName, decimal refundPrice, string reason)
+        {
+            return $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Refund Request Confirmed</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .highlight {{
+            color: #d9534f;
+            font-weight: bold;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='content'>
+            <h2>Refund Request Confirmed</h2>
+            <p>Dear {housekeeperName},</p>
+            <p>The refund request for a recent booking has been confirmed, and you are responsible for the refund payment.</p>
+            <p><strong>Booking ID:</strong> <span class='highlight'>{bookingId}</span></p>
+            <p><strong>Service:</strong> {serviceName}</p>
+            <p><strong>Customer:</strong> {customerName}</p>
+            <p><strong>Refund Amount:</strong> <span class='highlight'>{refundPrice}</span></p>
+            <p><strong>Reason for Refund:</strong> <span class='highlight'>{reason}</span></p>
+            <p>Please ensure that the necessary payment is processed promptly. If you have any concerns or questions, contact our support team.</p>
+            <p>Best regards,<br> The Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+
     }
 }
