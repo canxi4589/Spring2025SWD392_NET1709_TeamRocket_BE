@@ -1,5 +1,6 @@
 ﻿using HCP.DTOs.DTOs.BookingDTO;
 using HCP.DTOs.DTOs.CheckoutDTO;
+using HCP.DTOs.DTOs.RequestDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
@@ -491,7 +492,7 @@ namespace HCP.Service.Services.BookingService
 
         }
 
-        public async Task<PaginatedList<BookingListItemDto>> GetHousekeeperBookingsAsync(
+        public async Task<BookingListResponseDto> GetHousekeeperBookingsAsync(
           ClaimsPrincipal userClaims,
           int page,
           int pageSize,
@@ -529,7 +530,7 @@ namespace HCP.Service.Services.BookingService
                     AdditionalPrice = b.AddtionalPrice,
                     ServiceName = b.CleaningService.ServiceName,
                     ServiceDescription = b.CleaningService.Description,
-                    ServiceImageUrl = b.CleaningService.ServiceImages.FirstOrDefault().LinkUrl,
+                    ServiceImageUrl = b.CleaningService.ServiceImages.Count == 0 ? string.Empty : b.CleaningService.ServiceImages.FirstOrDefault().LinkUrl,
                     Customer = new CustomerDto
                     {
                         FullName = b.Customer.FullName,
@@ -542,8 +543,29 @@ namespace HCP.Service.Services.BookingService
                     District = b.District
                 });
 
-            return PaginatedList<BookingListItemDto>.CreateAsync(bookingsQueryable.ToList(), page, pageSize);
+            if (page == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<BookingListItemDto>.CreateAsyncWithIEnumerable(bookingsQueryable, 1, bookingsQueryable.Count());
+                return new BookingListResponseDto
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = PaginatedList<BookingListItemDto>.CreateAsyncWithIEnumerable(bookingsQueryable, (int)page, (int)pageSize);
+            return new BookingListResponseDto
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = bookingsQueryable.Count(),
+                TotalPages = temp2.TotalPages,
+            };
         }
+
         public async Task<BookingCancelDTO> cancelBooking(Guid bookingId, AppUser user)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();

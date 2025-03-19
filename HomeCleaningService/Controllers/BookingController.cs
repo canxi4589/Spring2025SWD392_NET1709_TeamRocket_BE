@@ -70,7 +70,7 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> GetHousekeeperBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
         {
             var userClaims = User;
-            var response = new AppResponse<PaginatedList<BookingListItemDto>>();
+            var response = new AppResponse<BookingListResponseDto>();
             try
             {
                 var result = await _bookingService.GetHousekeeperBookingsAsync(userClaims, page, pageSize, status);
