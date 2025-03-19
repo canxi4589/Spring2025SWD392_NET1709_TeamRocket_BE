@@ -146,7 +146,6 @@ namespace HomeCleaningService.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetHousekeeperBookings(
             [FromQuery] DateTime? referenceDate = null,
-            [FromQuery] string navigationMode = "today",
             [FromQuery] string viewMode = "month"
             )
         {
@@ -156,10 +155,9 @@ namespace HomeCleaningService.Controllers
             {
 
 
-                var result = await _bookingService.GetHousekeeperBookings(
+                var result = await _bookingService.GetHousekeeperBookings1(
                     User,
                     referenceDate,
-                    navigationMode,
                     viewMode
                 );
 
