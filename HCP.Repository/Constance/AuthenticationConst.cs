@@ -14,5 +14,8 @@ namespace HCP.Repository.Constance
 
         //success
         public const string EmailNotTaken = "This Email is okay to use!!";
+
+        //create
+        public const string StaffNotice = "About the Creation of your Staff Account";
     }
 }

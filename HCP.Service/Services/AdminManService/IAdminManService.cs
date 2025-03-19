@@ -9,6 +9,7 @@ namespace HCP.Service.Services.AdminManService
 {
     public interface IAdminManService
     {
+        Task<CreateStaffResponseDTO> CreateStaff(CreateStaffRequestDTO request);
         Task<UserAdminListDTO> GetUsersByAdminCustom(string? search, bool includeStaff, bool includeCustomers, bool includeHousekeepers, int? pageIndex, int? pageSize);
         Task<ServiceCategoryAdminShowListDTO> GetAllServiceCategoriesAsync(string? search, int? pageIndex, int? pageSize, int? day, int? month, int? year);
         Task<ChartCategoryDataAdminShowListDTO> GetCategoryChart(bool dayChart, bool yearChart, bool yearsChart, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd);

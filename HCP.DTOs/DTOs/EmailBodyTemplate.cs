@@ -8,6 +8,54 @@ namespace HCP.DTOs.DTOs
 {
     public class EmailBodyTemplate
     {
+        public static string CreateAccountEmail(string staffName, string staffMail, string staffPassword)
+        {
+            return $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Welcome to the Team</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }}
+        .container {{
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .warning {{
+            color: #d9534f;
+            font-weight: bold;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='content'>
+            <h2>Welcome to the Team, {staffName}!</h2>
+            <p>We are pleased to inform you that your staff account has been successfully created.</p>
+            <p><strong>Email:</strong> {staffMail}</p>
+            <p><strong>Temporary Password:</strong> {staffPassword}</p>
+            <p>Please use these credentials to log in to your account and change your password immediately.</p>
+            <p class='warning'>⚠ Important: Do NOT share your account details with anyone. Unauthorized access or leakage of credentials may result in serious consequences.</p>
+            <p>Best regards,<br> The Admin Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
         public static string GetThankYouEmail(string userName)
         {
             return $@"

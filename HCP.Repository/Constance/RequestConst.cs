@@ -13,7 +13,8 @@ namespace HCP.Repository.Constance
         public const string UpdateRequestStatusError = "Service status can only be updated if it is Pending";
 
         //email subject
-        public const string RejectEmailSubject = "Information about rejecting Service Creation...";
+        public const string RejectEmailSubject = "Information about your Service Creation...";
+        public const string ApproveEmailSubject = "Information about your Service Creation...";
 
         //status
         public const string Pending = "Pending";
