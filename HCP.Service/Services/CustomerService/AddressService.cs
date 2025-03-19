@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HCP.DTOs.DTOs.CustomerDTO;
+﻿using HCP.DTOs.DTOs.CustomerDTO;
 using HCP.Repository.Entities;
 using HCP.Repository.Interfaces;
 using HCP.Service.Services.ListService;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 
 namespace HCP.Service.Services.CustomerService
 {

@@ -1,12 +1,6 @@
-﻿using HCP.Service.DTOs.CustomerDTO;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.CustomerDTO
 {
@@ -27,7 +21,7 @@ namespace HCP.DTOs.DTOs.CustomerDTO
         [JsonPropertyName("phone")]
         public string? PhoneNumber { get; set; }
     }
-    
+
     public class CustomerProfileDTO
     {
         [JsonPropertyName("full_name")]
