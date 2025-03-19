@@ -14,6 +14,9 @@ using HCP.Repository.Enums;
 using System.Security.Claims;
 using HCP.DTOs.DTOs.AdminManagementDTO;
 using HCP.DTOs.DTOs.BookingDTO;
+using HCP.Repository.Constance;
+using HCP.DTOs.DTOs;
+using HCP.Service.Services.EmailService;
 
 namespace HCP.Service.Services.AdminManService
 {
@@ -21,11 +24,13 @@ namespace HCP.Service.Services.AdminManService
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailSenderService _emailSenderService;
 
-        public AdminManService(UserManager<AppUser> userManager, IUnitOfWork unitOfWork)
+        public AdminManService(UserManager<AppUser> userManager, IUnitOfWork unitOfWork, IEmailSenderService emailSenderService)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
+            _emailSenderService = emailSenderService;
         }
 
         private async Task<List<UserAdminDTO>> GetUsersByRoleAsync(string role)
@@ -424,6 +429,54 @@ namespace HCP.Service.Services.AdminManService
                 hasPrevious = temp2.HasPreviousPage,
                 totalCount = bookingList.Count(),
                 totalPages = temp2.TotalPages,
+            };
+        }
+
+        public async Task<CreateStaffResponseDTO> CreateStaff(CreateStaffRequestDTO request)
+        {
+            if (await _userManager.FindByEmailAsync(request.Email) != null)
+            {
+                throw new InvalidOperationException(AuthenticationConst.EmailTaken);
+            }
+
+            if (await _userManager.Users.AnyAsync(u => u.PhoneNumber == request.PhoneNumber))
+            {
+                throw new InvalidOperationException(AuthenticationConst.PhoneTaken);
+            }
+
+            var staff = new AppUser
+            {
+                UserName = request.Email,
+                Email = request.Email,
+                PhoneNumber = request.PhoneNumber,
+                FullName = request.FullName,
+                Avatar = request.Avatar,
+                EmailConfirmed = true,
+                PhoneNumberConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(staff, request.Password);
+
+            if (!result.Succeeded)
+            {
+                var identityErrors = result.Errors.Select(e => e.Description).ToList();
+                throw new Exception(string.Join(", ", identityErrors));
+            }
+
+            await _userManager.AddToRoleAsync(staff, KeyConst.Staff);
+
+            var emailBody = EmailBodyTemplate.CreateAccountEmail(staff.FullName, staff.Email, request.Password);
+            _emailSenderService.SendEmail(staff.Email, AuthenticationConst.StaffNotice, emailBody);
+
+            return new CreateStaffResponseDTO
+            {
+                StaffId = staff.Id,
+                Avatar = staff.Avatar,
+                Email = staff.Email,
+                FullName = staff.FullName,
+                HashPassword = staff.PasswordHash,
+                Password = request.Password,
+                PhoneNumber = staff.PhoneNumber,
             };
         }
     }

@@ -373,7 +373,7 @@ namespace HCP.Service.Services.RequestService
             } else
             {
                 var approvedHousekeeperEmailBody = EmailBodyTemplate.GetApprovalEmailForHousekeeper(housekeeperName);
-                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject, approvedHousekeeperEmailBody);
+                _emailSenderService.SendEmail(housekeeperEmail, RequestConst.ApproveEmailSubject, approvedHousekeeperEmailBody);
             }
 
             await _userManager.UpdateAsync(housekeeper);

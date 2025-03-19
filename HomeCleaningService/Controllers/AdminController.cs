@@ -1,5 +1,6 @@
 ﻿using HCP.DTOs.DTOs.AdminManagementDTO;
 using HCP.DTOs.DTOs.BookingDTO;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Service.Services.AdminManService;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using static HCP.DTOs.DTOs.AdminManagementDTO.ChartDataAdminDTO;
 using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceAdminDTO;
 using static HCP.DTOs.DTOs.AdminManagementDTO.ServiceCategoryAdminDTO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HomeCleaningService.Controllers
 {
@@ -68,6 +70,34 @@ namespace HomeCleaningService.Controllers
         {
             var list = await _adminManService.GetAllBookingByCateAndServiceAdmin(isService, isCategory, Id, pageIndex, pageSize, status, day, month, year);
             return Ok(new AppResponse<BookingHistoryResponseListDTO>().SetSuccessResponse(list));
+        }
+
+        [HttpPost("create-staff")]
+        [Authorize(Roles = KeyConst.Admin)]
+        public async Task<IActionResult> CreateStaff(CreateStaffRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.ModelState, errors));
+            }
+            try
+            {
+                var staffResponse = await _adminManService.CreateStaff(request);
+                if (staffResponse == null)
+                {
+                    return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, CommonConst.SomethingWrongMessage));
+                }
+                return Ok(new AppResponse<CreateStaffResponseDTO>().SetSuccessResponse(staffResponse));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Validate, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse(KeyConst.Error, ex.Message));
+            }
         }
     }
 }

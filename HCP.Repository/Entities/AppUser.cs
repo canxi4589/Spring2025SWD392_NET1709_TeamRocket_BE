@@ -24,7 +24,7 @@ namespace HCP.Repository.Entities
         public string? PDF { get; set; }
         public string? IdCardFront { get; set; }
         public string? IdCardBack { get; set; }
-        public string HousekeeperStatus { get; set; } = HousekeeperRequestStatus.Pending.ToString();
+        public string? HousekeeperStatus { get; set; } 
         public string? HousekeeperVerifiedBy { get; set; }
         public bool Gender { get; set; }
         public double BalanceWallet { get; set; } = 0;
