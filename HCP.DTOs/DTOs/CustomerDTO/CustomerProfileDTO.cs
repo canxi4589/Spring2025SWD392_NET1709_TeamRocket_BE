@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using HCP.Service.DTOs.CustomerDTO;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
