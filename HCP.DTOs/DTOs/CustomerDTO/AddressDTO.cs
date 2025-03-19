@@ -12,7 +12,7 @@ namespace HCP.Service.DTOs.CustomerDTO
 {
     public class AddressDTO
     {
-        public Guid Id { get; internal set; }
+        public Guid Id { get; set; }
         [Required]
         [JsonPropertyName("address_line")]
         public string Address { get; set; }
