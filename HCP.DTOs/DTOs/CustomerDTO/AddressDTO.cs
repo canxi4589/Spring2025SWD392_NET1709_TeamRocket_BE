@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace HCP.DTOs.DTOs.CustomerDTO
+namespace HCP.Service.DTOs.CustomerDTO
 {
     public class AddressDTO
     {
