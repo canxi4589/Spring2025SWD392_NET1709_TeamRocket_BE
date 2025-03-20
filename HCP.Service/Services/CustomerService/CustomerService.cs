@@ -44,6 +44,7 @@ namespace HCP.Service.Services.CustomerService
                 PhoneNumber = user.PhoneNumber,
                 Birthday = user.Birthday,
                 Gender = user.Gender,
+                Avatar = user.Avatar
             };
         }
 
@@ -92,7 +93,8 @@ namespace HCP.Service.Services.CustomerService
                 PhoneNumber = user.PhoneNumber,
                 Birthday = user.Birthday,
                 Email = userEmail,
-                Gender = user.Gender
+                Gender = user.Gender,
+                Avatar = user.Avatar
             };
         }
         public async Task<string> UpdateCustomerAvatarProfile(string avatar, ClaimsPrincipal userClaims)

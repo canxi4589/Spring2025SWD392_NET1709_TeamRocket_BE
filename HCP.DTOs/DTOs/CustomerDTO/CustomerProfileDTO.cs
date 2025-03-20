@@ -38,6 +38,9 @@ namespace HCP.DTOs.DTOs.CustomerDTO
 
         [JsonPropertyName("phone")]
         public string? PhoneNumber { get; set; }
+
+        [JsonPropertyName("avatar")]
+        public string? Avatar { get; set; }
     }
 
     public class UpdateCusProfileDto
