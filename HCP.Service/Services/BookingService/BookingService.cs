@@ -257,7 +257,7 @@ namespace HCP.Service.Services.BookingService
                 CompletedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Completed.ToString()) || b.Status.Equals(BookingStatus.RefundRejected.ToString())).Count(),
                 CanceledBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Canceled.ToString())).Count(),
                 RefundedBookings = bookingRepository.Where(b => b.Status.Equals(BookingStatus.Refunded.ToString())).Count(),
-                AveragePrice = bookingRepository.Count() == 0 ? 0 : (double)bookingRepository.Where(b => b.Status == BookingStatus.Completed.ToString() || b.Status == BookingStatus.RefundRejected.ToString()).Average(b => b.TotalPrice)
+                AveragePrice = bookingRepository.Count() == 0 ? 0 : (double)Math.Ceiling(bookingRepository.Where(b => b.Status == BookingStatus.Completed.ToString() || b.Status == BookingStatus.RefundRejected.ToString()).Average(b => b.TotalPrice))
             };
         }
         public Booking UpdateStatusBooking(Guid id, string status)
