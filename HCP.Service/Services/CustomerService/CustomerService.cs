@@ -95,6 +95,26 @@ namespace HCP.Service.Services.CustomerService
                 Gender = user.Gender
             };
         }
+        public async Task<string> UpdateCustomerAvatarProfile(string avatar, ClaimsPrincipal userClaims)
+        {
+            var userId = userClaims.FindFirst("id")?.Value;
+            var userEmail = userClaims.FindFirst("email")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User not authenticated");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId) ?? throw new KeyNotFoundException("User not found");
+            user.Avatar = avatar;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            return user.Avatar;
+        }
 
         public async Task<CustomerCheckoutProfile?> GetCustomerCheckoutProfile(ClaimsPrincipal userClaims)
         {

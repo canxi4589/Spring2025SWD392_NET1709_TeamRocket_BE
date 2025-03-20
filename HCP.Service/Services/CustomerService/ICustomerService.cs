@@ -9,6 +9,7 @@ namespace HCP.Service.Services.CustomerService
         Task<AppUser?> GetCustomerAsync(ClaimsPrincipal userClaims);
         Task<CustomerProfileDTO?> GetCustomerProfile(ClaimsPrincipal userClaims);
         Task<CustomerProfileDTO> UpdateCustomerProfile(UpdateCusProfileDto customer, ClaimsPrincipal userClaims);
+        Task<string> UpdateCustomerAvatarProfile(string avatar, ClaimsPrincipal userClaims);
         Task<CustomerCheckoutProfile?> GetCustomerCheckoutProfile(ClaimsPrincipal userClaims);
     }
 }

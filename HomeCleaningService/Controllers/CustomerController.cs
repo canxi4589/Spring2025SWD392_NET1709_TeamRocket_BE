@@ -79,6 +79,30 @@ namespace HomeCleaningService.Controllers
                 return BadRequest(response.SetErrorResponse(KeyConst.Customer, ex.Message));
             }
         }
+        [HttpPut("profileAvatar")]
+        [Authorize] 
+        public async Task<IActionResult> UpdateCustomerAvatarProfile(string avatar)
+        {
+            var response = new AppResponse<object>();
+
+            try
+            {
+                var updateUserAvatar = await _customerService.UpdateCustomerAvatarProfile(avatar, User);
+                return Ok(response.SetSuccessResponse(updateUserAvatar, KeyConst.Customer, CustomerConst.UpdateSuccess));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(response.SetErrorResponse(KeyConst.Unathorized, CommonConst.UnauthorizeError));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(response.SetErrorResponse(KeyConst.Customer, CustomerConst.NotFoundError));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(response.SetErrorResponse(KeyConst.Customer, ex.Message));
+            }
+        }
 
 
 
