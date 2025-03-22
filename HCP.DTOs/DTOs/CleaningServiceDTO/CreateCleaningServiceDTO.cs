@@ -77,6 +77,9 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
         [JsonPropertyName("step_order")]
         public int StepOrder { get; set; }
 
+        [JsonPropertyName("step_duration")]
+        public double Duration { get; set; }
+
         [JsonPropertyName("step_description")]
         public string StepDescription { get; set; } = "This is Step Description";
     }
@@ -178,6 +181,9 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
     {
         [JsonPropertyName("step_order")]
         public int StepOrder { get; set; }
+        
+        [JsonPropertyName("step_duration")]
+        public string StepDuration { get; set; }
 
         [JsonPropertyName("step_description")]
         public string StepDescription { get; set; } = "This is Step Description";

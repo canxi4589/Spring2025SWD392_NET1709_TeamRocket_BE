@@ -6,6 +6,7 @@ using HCP.Repository.Enums;
 using HCP.Repository.Interfaces;
 using HCP.Service.Services.ListService;
 using HCP.Service.Services.RatingService;
+using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -472,7 +473,8 @@ namespace HCP.Service.Services.CleaningService1
                     NumOfBooking = cs.Bookings.Count(),
                     NumOfRatings = cs.RatingCount,
                     Rating = cs.Rating,
-                    Status = cs.Status
+                    Status = cs.Status,
+                    Duration = cs.Duration.ToString()
                 });
 
             if (!string.IsNullOrEmpty(status))
@@ -519,7 +521,7 @@ namespace HCP.Service.Services.CleaningService1
             {
                 throw new UnauthorizedAccessException("User not authenticated");
             }
-            var user = await _userManager.FindByIdAsync(userId) ?? throw new KeyNotFoundException("User not found");
+            var user = await _userManager.FindByIdAsync(userId) ?? throw new KeyNotFoundException(CommonConst.HousekeeperNotFound);
 
             var newService = new CleaningService
             {
@@ -536,11 +538,34 @@ namespace HCP.Service.Services.CleaningService1
                 AddressLine = dto.AddressLine,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Duration = dto.Duration,
+                Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
                 UserId = userId,
                 User = await _userManager.FindByIdAsync(userId),
                 Category = await _unitOfWork.Repository<ServiceCategory>().FindAsync(c => c.Id == dto.CategoryId)
             };
+
+            //var housekeeperAddress = _unitOfWork.Repository<Address>().Find(c => c.UserId == user.Id && c.IsDefault == true);
+
+            //var newService = new CleaningService
+            //{
+            //    ServiceName = dto.ServiceName,
+            //    CategoryId = dto.CategoryId,
+            //    Description = dto.Description,
+            //    Status = ServiceStatus.Pending.ToString(),
+            //    Rating = 0,
+            //    RatingCount = 0,
+            //    Price = dto.Price,
+            //    City = housekeeperAddress!.City,
+            //    District = housekeeperAddress.District,
+            //    PlaceId = housekeeperAddress.PlaceId,
+            //    AddressLine = housekeeperAddress.AddressLine1,
+            //    CreatedAt = DateTime.UtcNow,
+            //    UpdatedAt = DateTime.UtcNow,
+            //    Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
+            //    UserId = userId,
+            //    User = await _userManager.FindByIdAsync(userId),
+            //    Category = await _unitOfWork.Repository<ServiceCategory>().FindAsync(c => c.Id == dto.CategoryId)
+            //};
 
             await _unitOfWork.Repository<CleaningService>().AddAsync(newService);
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
@@ -578,7 +603,8 @@ namespace HCP.Service.Services.CleaningService1
                 {
                     ServiceId = newService.Id,
                     StepOrder = step.StepOrder,
-                    StepDescription = step.StepDescription
+                    StepDescription = step.StepDescription,
+                    Duration = step.Duration
                 });
 
                 await _unitOfWork.Repository<ServiceSteps>().AddRangeAsync(steps);
@@ -617,6 +643,8 @@ namespace HCP.Service.Services.CleaningService1
                 await _unitOfWork.Repository<DistancePricingRule>().AddRangeAsync(distanceRules);
             }
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
+
+            dto.Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2);
             return dto;
         }
 
@@ -642,7 +670,7 @@ namespace HCP.Service.Services.CleaningService1
             service.District = dto.District;
             service.PlaceId = dto.PlaceId;
             service.AddressLine = dto.AddressLine;
-            service.Duration = dto.Duration;
+            service.Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2);                               //tính bằng tổng duration của step
             service.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Repository<CleaningService>().Update(service);
@@ -684,7 +712,8 @@ namespace HCP.Service.Services.CleaningService1
                 {
                     ServiceId = serviceId,
                     StepOrder = step.StepOrder,
-                    StepDescription = step.StepDescription
+                    StepDescription = step.StepDescription,
+                    Duration = step.Duration
                 });
                 await _unitOfWork.Repository<ServiceSteps>().AddRangeAsync(newSteps);
             }
@@ -721,6 +750,7 @@ namespace HCP.Service.Services.CleaningService1
             }
 
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
+            dto.Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2);
             return dto;
         }
 
@@ -770,7 +800,8 @@ namespace HCP.Service.Services.CleaningService1
                 ServiceSteps = serviceSteps.Select(s => new HousekeeperServiceDetailStepsDTO
                 {
                     StepOrder = s.StepOrder,
-                    StepDescription = s.StepDescription
+                    StepDescription = s.StepDescription,
+                    StepDuration = s.Duration.ToString(),
                 }).ToList(),
                 ServiceTimeSlots = serviceTimeSlots.Select(t => new HousekeeperServiceDetailTimeSlotDTO
                 {

@@ -12,6 +12,8 @@ namespace HCP.Repository.Entities
     {
         public int StepOrder { get; set; }
         public string StepDescription { get; set; }
+
+        public double? Duration { get; set; }
         [ForeignKey("Service")]
 
         public Guid ServiceId { get; set; }
