@@ -52,6 +52,18 @@ namespace HCP.Service.Services.CheckoutService
                     throw new Exception(CommonConst.NotFoundError);
                 }
 
+                // Lấy danh sách AdditionalServiceId hợp lệ cho ServiceId này
+                var validAdditionalServiceIds = await _unitOfWork.Repository<AdditionalService>()
+                    .GetAll()
+                    .Where(cas => cas.CleaningServiceId == checkoutService.Id)
+                    .Select(cas => cas.Id)
+                    .ToListAsync();
+
+                // Lọc ra những AdditionalServiceId hợp lệ từ request
+                var validRequestAdditionalServices = requestDTO.AdditionalServices
+                    .Where(a => validAdditionalServiceIds.Contains(a.AdditionalServiceId))
+                    .ToList();
+
                 Checkout? checkExistedCheckout = null;
 
                 var checkouts = _unitOfWork.Repository<Checkout>()
@@ -70,11 +82,11 @@ namespace HCP.Service.Services.CheckoutService
                 if (filteredCheckouts.Count != 0)
                 {
                     checkExistedCheckout = filteredCheckouts.FirstOrDefault(c =>
-                        (c.CheckoutAdditionalServices.Count == 0 && requestDTO.AdditionalServices.Count == 0) ||
+                        (c.CheckoutAdditionalServices.Count == 0 && validRequestAdditionalServices.Count == 0) ||
                         c.CheckoutAdditionalServices
                             .Select(s => s.AdditionalServiceId)
                             .OrderBy(id => id)
-                            .SequenceEqual(requestDTO.AdditionalServices
+                            .SequenceEqual(validRequestAdditionalServices
                                 .Select(s => s.AdditionalServiceId)
                                 .OrderBy(id => id))
                     );
@@ -144,7 +156,7 @@ namespace HCP.Service.Services.CheckoutService
                 {
                     AddressId = requestDTO.AddressId,
                     AddressLine = checkoutAddress.AddressLine1,
-                    AdditionalPrice = 0,                                    
+                    AdditionalPrice = 0,
                     City = checkoutAddress.City,
                     CleaningServiceId = requestDTO.ServiceId,
                     ServiceName = checkoutService.ServiceName,
@@ -167,12 +179,26 @@ namespace HCP.Service.Services.CheckoutService
                 await _unitOfWork.Repository<Checkout>().AddAsync(checkout);
                 await _unitOfWork.SaveChangesAsync();
 
+                // Này là lấy tất cả AdditionalService của CleaningService ra
+                var validAdditionalServices = await _unitOfWork.Repository<AdditionalService>()
+                    .GetAll()
+                    .Where(cas => cas.CleaningServiceId == checkoutService.Id)
+                    .Select(cas => cas.Id)
+                    .ToListAsync();
+
                 var additionalServices = new List<CheckoutAdditionalService>();
 
                 if (requestDTO.AdditionalServices != null)
                 {
                     foreach (var additional in requestDTO.AdditionalServices)
                     {
+                        // Sau đó hủy diệt nó với additionalServiceId có sẵn trong Service đó
+                        if (!validAdditionalServices.Contains(additional.AdditionalServiceId))
+                        {
+                            // Nếu không hợp lệ thì skip vòng foreach, vẫn tạo bình thường chứ ko lỗi, này để phòng tránh front end gửi lỗi 1 AdditionalServiceId
+                            continue;
+                        }
+
                         var additionalServiceEntity = await _unitOfWork.Repository<AdditionalService>()
                             .GetEntityByIdAsync(additional.AdditionalServiceId);
 
@@ -187,7 +213,7 @@ namespace HCP.Service.Services.CheckoutService
                                 Url = additionalServiceEntity.Url,
                                 Duration = additionalServiceEntity.Duration,
                                 Description = additionalServiceEntity.Description,
-                                CheckoutId = checkout.Id
+                                CheckoutId = checkout.Id,
                             };
 
                             additionalServices.Add(checkoutAdditionalService);
@@ -196,7 +222,7 @@ namespace HCP.Service.Services.CheckoutService
                     }
                 }
 
-                if (additionalServices.Any())
+                if (additionalServices.Count != 0)
                 {
                     await _unitOfWork.Repository<CheckoutAdditionalService>().AddRangeAsync(additionalServices);
                 }
@@ -251,7 +277,7 @@ namespace HCP.Service.Services.CheckoutService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in CreateCheckout: {ex.Message}");
+                Console.WriteLine(ex.Message);
                 throw;
             }
         }
