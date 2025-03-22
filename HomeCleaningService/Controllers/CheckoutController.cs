@@ -20,7 +20,7 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = KeyConst.Customer)]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDTO1 requestDTO)
         {
             try
