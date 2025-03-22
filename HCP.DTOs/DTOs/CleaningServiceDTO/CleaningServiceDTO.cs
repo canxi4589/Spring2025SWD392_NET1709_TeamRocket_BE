@@ -140,6 +140,9 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
 
         [JsonPropertyName("images")]
         public List<ImgDTO> Images { get; set; }
+
+        [JsonPropertyName("duration")]
+        public string? Duration { get; set; }
     }
 
     public class ServiceOverviewListDTO
