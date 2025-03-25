@@ -8,4 +8,5 @@ public interface IGoongDistanceService
     Task<List<CleaningService>> GetServicesWithinDistanceAsync(string userPlaceId, double maxDistanceKm, List<CleaningService> services);
     Task<List<CleaningService>> GetBookableServicesWithinDistanceAsync(
     string userPlaceId, List<CleaningService> services);
+    Task<string?> GetLatLngFromPlaceId(string placeId);
 }

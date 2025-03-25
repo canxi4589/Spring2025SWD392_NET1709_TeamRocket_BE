@@ -192,9 +192,11 @@ namespace HCP.Service.Services.WalletService
                 refund.Staff = staff;
                 booking.Status = BookingStatus.Refunded.ToString();
                 user.BalanceWallet += (double)booking.TotalPrice;
+                housekeeper.BalanceWallet -= (double)booking.TotalPrice;
                 //Place for system wallet deduce
                 _unitOfWork.Repository<RefundRequest>().Update(refund);
                 _unitOfWork.Repository<Booking>().Update(booking);
+                await _userManager.UpdateAsync(housekeeper);
                 await _userManager.UpdateAsync(user);
                 await _unitOfWork.SaveChangesAsync();
 
