@@ -23,11 +23,11 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
 
         [Required]
         [JsonPropertyName("city")]
-        public string City { get; set; } = "Raumania";
+        public string City { get; set; }
 
         [Required]
         [JsonPropertyName("place_id")]
-        public string PlaceId { get; set; } = "Raumania";
+        public string PlaceId { get; set; }
 
         [Required]
         [JsonPropertyName("district")]

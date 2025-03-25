@@ -81,6 +81,10 @@ namespace HCP.Service.Services.RequestService
                     .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
                     .ToList();
 
+                item.ServiceSteps = pendingRequest.ServiceSteps
+                    .Select(ss => new DTOs.DTOs.RequestDTO.ServiceStepsDTO { StepDescription = ss.StepDescription, StepDuration = ss.Duration, StepOrder = ss.StepOrder })
+                    .ToList();
+
                 item.ServiceDistanceRule = pendingRequest.DistancePricingRules
                     .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
                     {
@@ -93,6 +97,90 @@ namespace HCP.Service.Services.RequestService
             }
             return pendingRequestsDTO;
         }
+        
+        public async Task<PendingRequestListDTO> GetPendingCreateServiceRequestsAsync(int? pageIndex, int? pageSize)
+        {
+            var pendingRequests = await _requestRepository.GetCleaningServices(ServiceStatus.Pending.ToString());
+
+            var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
+            var categories = await _unitOfWork.Repository<ServiceCategory>()
+                .GetAll()
+                .Where(sc => categoryIds.Contains(sc.Id))
+                .ToDictionaryAsync(sc => sc.Id);
+
+            var pendingRequestsDTO = new List<PendingRequestDTO>();
+
+            foreach (var pendingRequest in pendingRequests)
+            {
+                var item = new PendingRequestDTO
+                {
+                    ServiceId = pendingRequest.Id,
+                    ServiceName = pendingRequest.ServiceName,
+                    CategoryId = pendingRequest.CategoryId,
+                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : "Unknown Category",
+                    PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
+                    Description = pendingRequest.Description,
+                    Status = pendingRequest.Status,
+                    Price = pendingRequest.Price,
+                    City = pendingRequest.City,
+                    District = pendingRequest.District,
+                    PlaceId = pendingRequest.PlaceId,
+                    AddressLine = pendingRequest.AddressLine,
+                    Duration = pendingRequest.Duration,
+                    CreatedAt = pendingRequest.CreatedAt,
+                    UpdatedAt = pendingRequest.UpdatedAt,
+                    UserId = pendingRequest.UserId,
+                    UserName = await GetUserNameByIdAsync(pendingRequest.UserId)
+                };
+
+                item.AdditionalServices = pendingRequest.AdditionalServices
+                    .Select(a => new DTOs.DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
+                    .ToList();
+
+                item.ServiceImages = pendingRequest.ServiceImages
+                    .Select(si => new DTOs.DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .ToList();
+
+                item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
+                    .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .ToList();
+
+                item.ServiceSteps = pendingRequest.ServiceSteps
+                    .Select(ss => new DTOs.DTOs.RequestDTO.ServiceStepsDTO { StepDescription = ss.StepDescription, StepDuration = ss.Duration, StepOrder = ss.StepOrder })
+                    .ToList();
+
+                item.ServiceDistanceRule = pendingRequest.DistancePricingRules
+                    .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
+                    {
+                        MinDistance = dpr.MinDistance,
+                        MaxDistance = dpr.MaxDistance,
+                        BaseFee = dpr.BaseFee,
+                        ExtraPerKm = dpr.ExtraPerKm
+                    }).ToList();
+                pendingRequestsDTO.Add(item);
+            }
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<PendingRequestDTO>.CreateAsyncWithList(pendingRequestsDTO, 1, pendingRequestsDTO.Count());
+                return new PendingRequestListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = PaginatedList<PendingRequestDTO>.CreateAsyncWithList(pendingRequestsDTO, (int)pageIndex, (int)pageSize);
+            return new PendingRequestListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = pendingRequestsDTO.Count,
+                TotalPages = temp2.TotalPages,
+            };
+        }
 
         public async Task<PendingRequestDTO> GetPendingCreateServiceDetailAsync(Guid id)
         {
@@ -102,6 +190,7 @@ namespace HCP.Service.Services.RequestService
                 .Include(cs => cs.AdditionalServices)
                 .Include(cs => cs.ServiceImages)
                 .Include(cs => cs.ServiceTimeSlots)
+                .Include(cs => cs.ServiceSteps)
                 .Include(cs => cs.DistancePricingRules)
                 .ToListAsync();
 
@@ -146,6 +235,10 @@ namespace HCP.Service.Services.RequestService
 
                 item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
                     .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .ToList();
+
+                item.ServiceSteps = pendingRequest.ServiceSteps
+                    .Select(ss => new DTOs.DTOs.RequestDTO.ServiceStepsDTO { StepDescription = ss.StepDescription, StepDuration = ss.Duration, StepOrder = ss.StepOrder })
                     .ToList();
 
                 item.ServiceDistanceRule = pendingRequest.DistancePricingRules
@@ -209,6 +302,7 @@ namespace HCP.Service.Services.RequestService
                 .Include(cs => cs.AdditionalServices)
                 .Include(cs => cs.ServiceImages)
                 .Include(cs => cs.ServiceTimeSlots)
+                .Include(cs => cs.ServiceSteps)
                 .Include(cs => cs.DistancePricingRules)
                 .ToListAsync();
 
@@ -255,6 +349,10 @@ namespace HCP.Service.Services.RequestService
                     .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
                     .ToList();
 
+                item.ServiceSteps = pendingRequest.ServiceSteps
+                    .Select(ss => new DTOs.DTOs.RequestDTO.ServiceStepsDTO { StepDescription = ss.StepDescription, StepDuration = ss.Duration, StepOrder = ss.StepOrder })
+                    .ToList();
+
                 item.ServiceDistanceRule = pendingRequest.DistancePricingRules
                     .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
                     {
@@ -266,6 +364,115 @@ namespace HCP.Service.Services.RequestService
                 approvalRequestsDTO.Add(item);
             }
             return approvalRequestsDTO;
+        }
+        
+        public async Task<ApprovalServiceListDTO> GetAllApprovedServiceByStaffAsync(ClaimsPrincipal user, int? pageIndex, int? pageSize, string? status, string? searchByName)
+        {
+            var userId = user.FindFirst("id")?.Value;
+            var pendingRequests = await _unitOfWork.Repository<CleaningService>()
+                .GetAll()
+                .Where(cs => cs.StaffId == userId)
+                .Include(cs => cs.AdditionalServices)
+                .Include(cs => cs.ServiceImages)
+                .Include(cs => cs.ServiceTimeSlots)
+                .Include(cs => cs.ServiceSteps)
+                .Include(cs => cs.DistancePricingRules)
+                .ToListAsync();
+
+            var categoryIds = pendingRequests.Select(cs => cs.CategoryId).Distinct().ToList();
+            var categories = await _unitOfWork.Repository<ServiceCategory>()
+                .GetAll()
+                .Where(sc => categoryIds.Contains(sc.Id))
+                .ToDictionaryAsync(sc => sc.Id);
+
+            var approvalRequestsDTO = new List<ApprovalServiceDTO>();
+
+            foreach (var pendingRequest in pendingRequests)
+            {
+                var item = new ApprovalServiceDTO
+                {
+                    ServiceId = pendingRequest.Id,
+                    ServiceName = pendingRequest.ServiceName,
+                    CategoryId = pendingRequest.CategoryId,
+                    CategoryName = categories.TryGetValue(pendingRequest.CategoryId, out var category) && category != null ? category.CategoryName : string.Empty,
+                    PictureUrl = categories.TryGetValue(pendingRequest.CategoryId, out category) && category != null ? category.PictureUrl : string.Empty,
+                    Description = pendingRequest.Description,
+                    Status = pendingRequest.Status,
+                    Price = pendingRequest.Price,
+                    City = pendingRequest.City,
+                    District = pendingRequest.District,
+                    PlaceId = pendingRequest.PlaceId,
+                    AddressLine = pendingRequest.AddressLine,
+                    Duration = pendingRequest.Duration,
+                    CreatedAt = pendingRequest.CreatedAt,
+                    UpdatedAt = pendingRequest.UpdatedAt,
+                    UserId = pendingRequest.UserId,
+                    UserName = await GetUserNameByIdAsync(pendingRequest.UserId)
+                };
+
+                item.AdditionalServices = pendingRequest.AdditionalServices
+                    .Select(a => new DTOs.DTOs.RequestDTO.AdditionalServiceDTO { Name = a.Name, Amount = a.Amount, Description = a.Description, Duration = a.Duration, Url = a.Url })
+                    .ToList();
+
+                item.ServiceImages = pendingRequest.ServiceImages
+                    .Select(si => new DTOs.DTOs.RequestDTO.ServiceImgDTO { LinkUrl = si.LinkUrl })
+                    .ToList();
+
+                item.ServiceTimeSlots = pendingRequest.ServiceTimeSlots
+                    .Select(sts => new DTOs.DTOs.RequestDTO.ServiceTimeSlotDTO { DayOfWeek = sts.DayOfWeek, StartTime = sts.StartTime, EndTime = sts.EndTime })
+                    .ToList();
+
+                item.ServiceSteps = pendingRequest.ServiceSteps
+                    .Select(ss => new DTOs.DTOs.RequestDTO.ServiceStepsDTO { StepDescription = ss.StepDescription, StepDuration = ss.Duration, StepOrder = ss.StepOrder })
+                    .ToList();
+
+                item.ServiceDistanceRule = pendingRequest.DistancePricingRules
+                    .Select(dpr => new DTOs.DTOs.RequestDTO.DistanceRuleDTO
+                    {
+                        MinDistance = dpr.MinDistance,
+                        MaxDistance = dpr.MaxDistance,
+                        BaseFee = dpr.BaseFee,
+                        ExtraPerKm = dpr.ExtraPerKm
+                    }).ToList();
+                approvalRequestsDTO.Add(item);
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (!status.Contains(CommonConst.All, StringComparison.OrdinalIgnoreCase))
+                {
+                    approvalRequestsDTO = approvalRequestsDTO.Where(c => c.Status == status).ToList();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(searchByName))
+            {
+                approvalRequestsDTO = approvalRequestsDTO.Where(c => c.ServiceName.Contains(searchByName, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            approvalRequestsDTO = approvalRequestsDTO.OrderByDescending(c => c.CreatedAt).ToList();
+
+            if (pageIndex == null || pageSize == null)
+            {
+                var temp1 = PaginatedList<ApprovalServiceDTO>.CreateAsyncWithList(approvalRequestsDTO, 1, approvalRequestsDTO.Count());
+                return new ApprovalServiceListDTO
+                {
+                    Items = temp1,
+                    HasNext = temp1.HasNextPage,
+                    HasPrevious = temp1.HasPreviousPage,
+                    TotalCount = temp1.TotalCount,
+                    TotalPages = temp1.TotalPages
+                };
+            }
+            var temp2 = PaginatedList<ApprovalServiceDTO>.CreateAsyncWithList(approvalRequestsDTO, (int)pageIndex, (int)pageSize);
+            return new ApprovalServiceListDTO
+            {
+                Items = temp2,
+                HasNext = temp2.HasNextPage,
+                HasPrevious = temp2.HasPreviousPage,
+                TotalCount = approvalRequestsDTO.Count,
+                TotalPages = temp2.TotalPages,
+            };
         }
 
         public async Task<RegistrationRequestListDTO> GetPendingHousekeeperRegistrationRequestsAsync(int? pageIndex, int? pageSize)
@@ -305,7 +512,7 @@ namespace HCP.Service.Services.RequestService
                     TotalPages = temp1.TotalPages
                 };
             }
-            var temp2 = PaginatedList<RegistrationRequestDTO>.CreateAsync(pendingHousekeeperList, (int)pageIndex, (int)pageSize);
+            var temp2 = PaginatedList<RegistrationRequestDTO>.CreateAsyncWithList(pendingHousekeeperList, (int)pageIndex, (int)pageSize);
             return new RegistrationRequestListDTO
             {
                 Items = temp2,
@@ -370,7 +577,8 @@ namespace HCP.Service.Services.RequestService
             {
                 var rejectedHousekeeperEmailBody = EmailBodyTemplate.GetRejectionEmailForHousekeeper(housekeeperName, dto.Reason);
                 _emailSenderService.SendEmail(housekeeperEmail, RequestConst.RejectEmailSubject, rejectedHousekeeperEmailBody);
-            } else
+            }
+            else
             {
                 var approvedHousekeeperEmailBody = EmailBodyTemplate.GetApprovalEmailForHousekeeper(housekeeperName);
                 _emailSenderService.SendEmail(housekeeperEmail, RequestConst.ApproveEmailSubject, approvedHousekeeperEmailBody);
@@ -427,7 +635,7 @@ namespace HCP.Service.Services.RequestService
                     TotalPages = temp1.TotalPages
                 };
             }
-            var temp2 = PaginatedList<RegistrationRequestDTO>.CreateAsync(approvalHousekeeperList, (int)pageIndex, (int)pageSize);
+            var temp2 = PaginatedList<RegistrationRequestDTO>.CreateAsyncWithList(approvalHousekeeperList, (int)pageIndex, (int)pageSize);
             return new RegistrationRequestListDTO
             {
                 Items = temp2,
