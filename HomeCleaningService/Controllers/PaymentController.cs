@@ -117,17 +117,17 @@ namespace HomeCleaningService.Controllers
                     var userId = userClaims.FindFirst("id")?.Value;
                     if (string.IsNullOrEmpty(userId))
                         throw new UnauthorizedAccessException("User ID not found in claims");
+                    var body = await _checkoutService.GetCheckoutById(dto.Id);
+                    var user = await _userManager.FindByIdAsync(body.CustomerId);
 
-                    var walletBalance = await _walletService.getUserBalance(User);
+                    var walletBalance = user.BalanceWallet;
                     if (walletBalance < (double)dto.Amount)
                         return BadRequest(new AppResponse<string>()
                             .SetErrorResponse("INSUFFICIENT_FUNDS", "Not enough funds in wallet"));
 
                     await _walletService.DeduceFromWallet(User, dto.Amount);
-                    var body = await _checkoutService.GetCheckoutById(dto.Id);
                     var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
-                    var user = await _userManager.FindByIdAsync(body.CustomerId);
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
 
                     //de transaction cho Thinh lam (xong roy nhe)

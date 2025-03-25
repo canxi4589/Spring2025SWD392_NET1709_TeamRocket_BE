@@ -586,7 +586,7 @@ namespace HCP.Service.Services.WalletService
                 await _unitOfWork.Repository<SystemWallet>().AddAsync(wallet);
             }
 
-            var wTransaction = new WalletTransaction
+            WalletTransaction wTransaction = new WalletTransaction
             {
                 Id = Guid.NewGuid(),
                 AfterAmount = 0,
