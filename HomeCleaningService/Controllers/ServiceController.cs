@@ -1,5 +1,6 @@
 ﻿using HCP.DTOs.DTOs.CleaningServiceDTO;
 using HCP.DTOs.DTOs.FilterDTO;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Service.Integrations.BlobStorage;
@@ -32,7 +33,7 @@ namespace HomeCleaningService.Controllers
         [HttpGet("Categories")]
         public async Task<IActionResult> getAllCategories()
         {
-            var list =await _cleaningService.GetAllCategories(1,8);
+            var list = await _cleaningService.GetAllCategories(1, 8);
             return Ok(new AppResponse<List<CategoryDTO>>()
             .SetSuccessResponse(list));
         }
@@ -58,10 +59,10 @@ namespace HomeCleaningService.Controllers
         [HttpGet("gettopservices")]
         [Authorize(Roles = KeyConst.Housekeeper)]
         public async Task<IActionResult> GetTopServices(bool dayTop, bool monthTop, bool yearTop,
-            int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, 
+            int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart,
             int? dayEnd, int? monthEnd, int? yearEnd, string? search, int? tops = 3)
         {
-            var services = await _cleaningService.GetTopServiceItems(User, dayTop, monthTop, yearTop, 
+            var services = await _cleaningService.GetTopServiceItems(User, dayTop, monthTop, yearTop,
                 pageIndex, pageSize, dayStart, monthStart, yearStart, dayEnd, monthEnd, yearEnd,
                 search, tops);
 
@@ -87,18 +88,18 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<ServiceDetailDTO>().SetSuccessResponse(service));
         }
-        
+
         [HttpGet("user")]
         public async Task<IActionResult> GetServiceByUser()
         {
             var service = await _cleaningService.GetServiceByUser(User);
 
             if (service == null)
-                return NotFound(new AppResponse<ServiceDetailWithStatusDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
+                return NotFound(new AppResponse<ServiceDetailWithStatusDTO>().SetErrorResponse(KeyConst.CleaningService, CleaningServiceConst.ServiceNotFound));
 
             return Ok(new AppResponse<List<ServiceDetailWithStatusDTO>>().SetSuccessResponse(service));
         }
-        
+
         [HttpGet("user/filter")]
         [Authorize]
         public async Task<IActionResult> GetServiceByUser(string? status, int? pageIndex, int? pageSize)
@@ -113,7 +114,7 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<ServiceOverviewListDTO>().SetSuccessResponse(service));
         }
-        
+
         [HttpGet("detail/{id}")]
         [Authorize]
         public async Task<IActionResult> GetServiceDetail(Guid id)
@@ -121,9 +122,28 @@ namespace HomeCleaningService.Controllers
             var service = await _cleaningService.GethousekeeperCleaningServiceDetailAsync(id, User);
 
             if (service == null)
-                return NotFound(new AppResponse<HousekeeperServiceDetailDTO>().SetErrorResponse(KeyConst.CleaningService,CleaningServiceConst.ServiceNotFound));
+                return NotFound(new AppResponse<HousekeeperServiceDetailDTO>().SetErrorResponse(KeyConst.CleaningService, CleaningServiceConst.ServiceNotFound));
 
             return Ok(new AppResponse<HousekeeperServiceDetailDTO>().SetSuccessResponse(service));
+        }
+
+        [HttpGet("housekeeper/skill")]
+        [Authorize(Roles = KeyConst.Housekeeper)]
+        public async Task<IActionResult> GetHousekeeperSkill()
+        {
+            try
+            {
+                var housekeeperSkills = await _cleaningService.GetHousekeeperCategories(User);
+                return Ok(new AppResponse<List<HousekeeperSkillDTO>>().SetSuccessResponse(housekeeperSkills));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost()]
@@ -197,7 +217,7 @@ namespace HomeCleaningService.Controllers
         public async Task<IActionResult> GetServiceTimeSlotByDay([FromBody] TimeSLotRequest dto)
 
         {
-            var list = await _cleaningService.GetAllServiceTimeSlot(dto.serviceId,dto.targetDate,dto.dayOfWeek);
+            var list = await _cleaningService.GetAllServiceTimeSlot(dto.serviceId, dto.targetDate, dto.dayOfWeek);
             var successResponse = new AppResponse<object>()
             .SetSuccessResponse(list);
             return Ok(successResponse);
@@ -205,7 +225,7 @@ namespace HomeCleaningService.Controllers
 
         [HttpGet("GetAllAdditionals")]
         [Authorize]
-        public async Task<IActionResult> GetAllAdditionalServices( Guid serviceId)
+        public async Task<IActionResult> GetAllAdditionalServices(Guid serviceId)
         {
             var list = await _cleaningService.GetAllAdditonalServicesById(serviceId);
             var successResponse = new AppResponse<object>()

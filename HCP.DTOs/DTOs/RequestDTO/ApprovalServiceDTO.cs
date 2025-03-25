@@ -7,6 +7,23 @@ using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.RequestDTO
 {
+    public class ApprovalServiceListDTO
+    {
+        [JsonPropertyName("approval_services")]
+        public List<ApprovalServiceDTO> Items { get; set; }
+
+        [JsonPropertyName("total_count")]
+        public int TotalCount { get; set; }
+
+        [JsonPropertyName("total_page")]
+        public int TotalPages { get; set; }
+
+        [JsonPropertyName("has_next")]
+        public bool HasNext { get; set; }
+
+        [JsonPropertyName("has_previous")]
+        public bool HasPrevious { get; set; }
+    }
     public class ApprovalServiceDTO
     {
         [JsonPropertyName("service_id")]

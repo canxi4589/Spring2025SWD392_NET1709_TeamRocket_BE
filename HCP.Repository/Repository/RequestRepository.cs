@@ -28,6 +28,7 @@ namespace HCP.Repository.Repository
                 .Include(cs => cs.ServiceImages)
                 .Include(cs => cs.ServiceTimeSlots)
                 .Include(cs => cs.DistancePricingRules)
+                .Include(cs => cs.ServiceSteps)
                 );
         }
     }

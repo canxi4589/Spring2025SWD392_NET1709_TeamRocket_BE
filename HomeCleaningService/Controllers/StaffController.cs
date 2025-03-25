@@ -7,6 +7,7 @@ using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HomeCleaningService.Controllers
 {
@@ -24,8 +25,8 @@ namespace HomeCleaningService.Controllers
         }
 
         [HttpGet("staff-requests-approved")]
-        [Authorize]
-        public async Task<IActionResult> GetAllPendingCreateRequest()
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> GetAllApprovalCreateRequest()
         {
             var response = new AppResponse<string>();
 
@@ -37,6 +38,22 @@ namespace HomeCleaningService.Controllers
             }
 
             return Ok(new AppResponse<List<ApprovalServiceDTO>>().SetSuccessResponse(result));
+        }
+        
+        [HttpGet("staff-requests-approved-paging")]
+        [Authorize(Roles = KeyConst.Staff)]
+        public async Task<IActionResult> GetAllApprovalCreateRequestFilter(int? pageIndex, int? pageSize, string? status, string? searchByName)
+        {
+            var response = new AppResponse<string>();
+
+            var result = await _handleRequestService.GetAllApprovedServiceByStaffAsync(User, pageIndex, pageSize, status, searchByName);
+
+            if (result == null)
+            {
+                return BadRequest(response.SetErrorResponse(KeyConst.Staff, CommonConst.SomethingWrongMessage));
+            }
+
+            return Ok(new AppResponse<ApprovalServiceListDTO>().SetSuccessResponse(result));
         }
 
         [HttpGet("staff-approval-registration")]
