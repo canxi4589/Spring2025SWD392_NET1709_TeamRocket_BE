@@ -328,7 +328,7 @@ namespace HCP.Service.Services.CleaningService1
             var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == user.Id && c.IsDefault) ?? new Address();
             var service1 = await _unitOfWork.Repository<CleaningService>().ListAsync(filter: c => c.UserId == user.Id,
                 orderBy: query => query.OrderByDescending(u => u.Id)
-);
+            );
             return new ServiceDetailDTO
             {
                 id = service.Id,
@@ -668,10 +668,6 @@ namespace HCP.Service.Services.CleaningService1
             service.CategoryId = dto.CategoryId;
             service.Description = dto.Description;
             service.Price = dto.Price;
-            service.City = dto.City;
-            service.District = dto.District;
-            service.PlaceId = dto.PlaceId;
-            service.AddressLine = dto.AddressLine;
             service.Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2);                               //tính bằng tổng duration của step
             service.UpdatedAt = DateTime.UtcNow;
 

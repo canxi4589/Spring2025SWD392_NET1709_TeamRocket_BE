@@ -22,22 +22,6 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
         public decimal Price { get; set; }
 
         [Required]
-        [JsonPropertyName("city")]
-        public string City { get; set; }
-
-        [Required]
-        [JsonPropertyName("place_id")]
-        public string PlaceId { get; set; }
-
-        [Required]
-        [JsonPropertyName("district")]
-        public string District { get; set; } = "Binh Thanh";
-
-        [Required]
-        [JsonPropertyName("address_line")]
-        public string AddressLine { get; set; } = "This is Address Line";
-
-        [Required]
         [JsonPropertyName("duration")]
         public double Duration { get; set; }
 
