@@ -72,7 +72,7 @@ public class GoongDistanceService : IGoongDistanceService
         }
     }
 
-    private async Task<string?> GetLatLngFromPlaceId(string placeId)
+    public async Task<string?> GetLatLngFromPlaceId(string placeId)
     {
         try
         {

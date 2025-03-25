@@ -398,19 +398,90 @@ namespace HCP.Service.Services.BookingService
             await _unitOfWork.Complete();
             return booking;
         }
+        //public async Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid)
+        //{
+        //    var bookingRepository = _unitOfWork.Repository<Booking>();
+        //    var serviceRepository = _unitOfWork.Repository<CleaningService>();
+        //    var checkout = await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
+
+        //    var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
+
+
+        //    var user = await userManager.FindByIdAsync(uid);
+        //    if (user == null)
+        //    {
+        //        throw new KeyNotFoundException("User not found");
+        //    }
+
+        //    var service = await serviceRepository.GetEntityByIdAsync(dto.CleaningServiceId);
+        //    if (service == null)
+        //        throw new Exception("Service not found");
+
+        //    var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
+        //        ba => dto.AdditionalServices.Select(a => a.AdditionalServiceId).Contains(ba.Id),
+        //        orderBy: ba => ba.OrderBy(c => c.Id)
+        //    );
+
+        //    var bookingAdditionals = bookingAdditionals1.Select(c => new BookingAdditional
+        //    {
+        //        BookingId = dto.Id,
+        //        Amount = (double)dto.AdditionalServices.FirstOrDefault(a => a.AdditionalServiceId == c.Id).Amount,
+        //        AdditionalServiceId = c.Id,
+        //    }).ToList();
+
+        //    var totalAdditionalDuration = bookingAdditionals1.Sum(a => a.Duration);
+        //    var booking = new Booking
+        //    {
+        //        Id = dto.Id,
+        //        CustomerId = user.Id,
+        //        CleaningServiceId = dto.CleaningServiceId,
+        //        PreferDateStart = dto.BookingDate,
+        //        TimeStart = dto.StartTime,
+        //        TimeEnd = dto.EndTime,
+        //        CreatedDate = DateTime.UtcNow,
+        //        Status = BookingStatus.OnGoing.ToString(),
+        //        TotalPrice = dto.TotalPrice,
+        //        ServicePrice = dto.ServicePrice,
+        //        DistancePrice = dto.DistancePrice,
+        //        AddtionalPrice = dto.AdditionalPrice,
+        //        City = dto.City,
+        //        PlaceId = dto.PlaceId,
+        //        District = dto.District,
+        //        AddressLine = dto.AddressLine,
+        //        Note = /*dto.Note ??*/ "",
+        //        BookingAdditionals = bookingAdditionals,
+
+        //    };
+        //    await bookingRepository.AddAsync(booking);
+        //    checkout.Status = CheckoutStatus.Completed.ToString();
+
+        //    await _unitOfWork.Complete();
+
+        //    return booking;
+        //}
         public async Task<Booking> CreateBookingAsync1(CheckoutResponseDTO1 dto, string uid)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();
             var serviceRepository = _unitOfWork.Repository<CleaningService>();
             var checkout = await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
-
             var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
-
 
             var user = await userManager.FindByIdAsync(uid);
             if (user == null)
             {
                 throw new KeyNotFoundException("User not found");
+            }
+
+            var existingBooking = await bookingRepository.FindAsync(b =>
+                b.CleaningServiceId == dto.CleaningServiceId &&
+                b.CustomerId == user.Id &&
+                b.TimeStart == dto.StartTime &&
+                b.TimeEnd == dto.EndTime &&
+                b.PreferDateStart.Date == dto.BookingDate.Date);
+
+            if (existingBooking != null)
+            {
+                return existingBooking;
             }
 
             var service = await serviceRepository.GetEntityByIdAsync(dto.CleaningServiceId);
@@ -450,8 +521,8 @@ namespace HCP.Service.Services.BookingService
                 AddressLine = dto.AddressLine,
                 Note = /*dto.Note ??*/ "",
                 BookingAdditionals = bookingAdditionals,
-
             };
+
             await bookingRepository.AddAsync(booking);
             checkout.Status = CheckoutStatus.Completed.ToString();
 
@@ -523,7 +594,7 @@ namespace HCP.Service.Services.BookingService
                     TimeStart = b.TimeStart,
                     TimeEnd = b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0)),
                     Status = b.Status,
-                    IsFinishable = DateTime.Now > (b.PreferDateStart.Date + (b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0)))),
+                    IsFinishable =(b.Status == BookingStatus.OnGoing.ToString()) && (DateTime.Now > (b.PreferDateStart.Date + (b.TimeEnd + TimeSpan.FromMinutes(b.BookingAdditionals.Sum(a => a.AdditionalService.Duration ?? 0))))),
                     TotalPrice = b.TotalPrice,
                     ServicePrice = b.ServicePrice,
                     DistancePrice = b.DistancePrice,
@@ -712,7 +783,6 @@ namespace HCP.Service.Services.BookingService
         {
             var housekeeperId = userClaims.FindFirst("id")?.Value;
 
-            // Validate inputs
             if (string.IsNullOrEmpty(housekeeperId))
             {
                 throw new ArgumentException("Housekeeper ID is required.", nameof(housekeeperId));
@@ -749,8 +819,9 @@ namespace HCP.Service.Services.BookingService
                         TimeEnd = b.TimeEnd,
                         TotalPrice = b.TotalPrice,
                         CustomerName = b.Customer?.FullName ?? "Unknown",
-                        Address = b.AddressLine
-                    })
+                        Address = b.AddressLine,
+                        Status = b.Status
+                                            })
                     .OrderBy(b => b.TimeStart)
                     .ToList(),
                     BookingCount = g.Count()

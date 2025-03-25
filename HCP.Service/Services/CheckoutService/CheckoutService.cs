@@ -144,12 +144,33 @@ namespace HCP.Service.Services.CheckoutService
                             rule.MaxDistance >= distance &&
                             rule.IsActive
                 );
+                decimal distancePrice;
                 if (pricingRule == null)
                 {
-                    throw new Exception(CleaningServiceConst.ServiceNotAvailableDistance);
-                }
+                    var smallestPricingRule = await _unitOfWork.Repository<DistancePricingRule>()
+                        .GetAll() 
+                        .Where(rule => rule.CleaningServiceId == checkoutService.Id && rule.IsActive)
+                        .OrderBy(rule => rule.MinDistance)
+                        .FirstOrDefaultAsync();
 
-                var distancePrice = pricingRule.BaseFee;
+                    if (smallestPricingRule == null)
+                    {
+                        throw new Exception(CleaningServiceConst.ServiceNotAvailableDistance);
+                    }
+
+                    if (distance < smallestPricingRule.MinDistance)
+                    {
+                        distancePrice = 0; 
+                    }
+                    else
+                    {
+                        throw new Exception(CleaningServiceConst.ServiceNotAvailableDistance);
+                    }
+                }
+                else
+                {
+                    distancePrice = pricingRule.BaseFee;
+                }
                 decimal additionalPrice = 0;
 
                 var checkout = new Checkout()

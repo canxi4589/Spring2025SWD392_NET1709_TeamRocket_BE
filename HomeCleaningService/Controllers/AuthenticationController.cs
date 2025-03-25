@@ -1,4 +1,5 @@
-﻿using HCP.DTOs.DTOs;
+﻿using FirebaseAdmin.Auth;
+using HCP.DTOs.DTOs;
 using HCP.DTOs.DTOs.HousekeeperDTOs;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
@@ -70,7 +71,57 @@ namespace HomeCleaningService.Controllers
             );
             return BadRequest(new AppResponse<object>().SetErrorResponse(identityErrors));
         }
+        [HttpPost("signin-google")]
+        public async Task<IActionResult> SigninGoogle([FromBody] GoogleLoginDto model)
+        {
+            // Verify Firebase Google ID token
+            FirebaseToken decodedToken;
+            try
+            {
+                decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(model.IdToken);
+            }
+            catch (FirebaseAuthException ex)
+            {
+                return Unauthorized(new AppResponse<object>().SetErrorResponse("FirebaseError", new[] { "Invalid or expired Google token: " + ex.Message }));
+            }
 
+            string email = decodedToken.Claims.GetValueOrDefault("email")?.ToString();
+            string name = decodedToken.Claims.GetValueOrDefault("name")?.ToString();
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse("TokenError", new[] { "Email not found in Google token." }));
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new AppUser
+                {
+                    UserName = email,
+                    Email = email,
+                    FullName = name ?? email.Split('@')[0], 
+                    EmailConfirmed = true 
+                };
+
+                var result = await _userManager.CreateAsync(user);
+                if (!result.Succeeded)
+                {
+                    var identityErrors = result.Errors
+                        .GroupBy(e => e.Code)
+                        .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray());
+                    return BadRequest(new AppResponse<object>().SetErrorResponse(identityErrors));
+                }
+
+                await _userManager.AddToRoleAsync(user, "Customer");
+            }
+
+            // Generate tokens for the user
+            var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+            var accessToken = _tokenHelper.GenerateJwtToken(user, role);
+            var refreshToken = await _tokenHelper.GenerateRefreshToken(user);
+
+            return Ok(new AppResponse<object>().SetSuccessResponse(new { AccessToken = accessToken, RefreshToken = refreshToken }, "Message", "Google sign-in successful."));
+        }
         [HttpPost("registerTest")]
         public async Task<IActionResult> Register1([FromBody] RegisterDto model)
         {

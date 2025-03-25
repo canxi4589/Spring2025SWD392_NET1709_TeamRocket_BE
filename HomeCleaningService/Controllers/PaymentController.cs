@@ -31,8 +31,11 @@ namespace HomeCleaningService.Controllers
         private readonly ICustomerService _customerService;
         private readonly ITemporaryStorage _tempStorage;
         private readonly ICheckoutService _checkoutService;
+        public string frontendurl;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<PaymentController> _logger;
 
-        public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage, ICheckoutService checkoutService)
+        public PaymentController(IBookingService bookingService, UserManager<AppUser> userManager, Ivnpay ivnpay, IEmailSenderService emailSenderService, IWalletService walletService, IUnitOfWork unitOfWork, ICustomerService customerService, ITemporaryStorage tempStorage, ICheckoutService checkoutService, IConfiguration configuration, ILogger<PaymentController> logger)
         {
             _bookingService = bookingService;
             _userManager = userManager;
@@ -43,6 +46,9 @@ namespace HomeCleaningService.Controllers
             _customerService = customerService;
             _tempStorage = tempStorage;
             _checkoutService = checkoutService;
+            this.frontendurl = configuration["Url:Frontend"] ?? "";
+            _configuration = configuration;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -130,9 +136,10 @@ namespace HomeCleaningService.Controllers
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
 
-                    //de transaction cho Thinh lam (xong roy nhe)
 
-                    return Ok(new { url = $"http://localhost:5173/service/Checkout/success" });
+                    var url = $"{frontendurl}/service/Checkout/success";
+
+                    return Redirect(url);
                 }
                 else
                 {
@@ -156,8 +163,10 @@ namespace HomeCleaningService.Controllers
 
         [HttpGet("PaymentReturn-VNPAY")]
         public async Task<IActionResult> PaymentReturn()
-        {
+        { 
             string queryString = Request.QueryString.Value;
+            _logger.LogInformation("PaymentReturn-VNPAY called with Query: {Query}", queryString);
+
             var paymentStatus = Request.Query["vnp_ResponseCode"];
             if (Guid.TryParse(Request.Query["vnp_OrderInfo"], out Guid Id))
             {
@@ -168,11 +177,13 @@ namespace HomeCleaningService.Controllers
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     var user = await _userManager.FindByIdAsync(body.CustomerId);
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
-                    //return Redirect("https://www.google.com/");                                 
-                    return Redirect("http://localhost:5173/service/Checkout/success");
+                    //return Redirect("https://www.google.com/");
+                    var url = $"{frontendurl}/service/Checkout/success";
+
+                    return Redirect(url);
                 }
             }
-            return Redirect("http://localhost:5173/service/Checkout/fail");
+            return Redirect("https://www.purrfectclean.website/service/Checkout/fail");
         }
         [HttpGet("PaymentDepositReturn-VNPAY")]
         public async Task<IActionResult> PaymentDepositReturn()
@@ -186,13 +197,16 @@ namespace HomeCleaningService.Controllers
                     if (paymentStatus == PaymentConst.SuccessCode)
                     {
                         await _walletService.processDepositTransaction(transactId, true);
-                        //return Redirect("https://www.google.com/");                               
-                        return Redirect("http://localhost:5173/wallet/deposit/success");
+                        //return Redirect("https://www.google.com/");
+                        var url = $"{frontendurl}/wallet/deposit/success";
+
+                        return Ok(url);
                     }
                     else
                     {
                         await _walletService.processDepositTransaction(transactId, false);
-                        return Redirect("http://localhost:5173/wallet/deposit/fail");
+                        var url = $"{frontendurl}/wallet/deposit/fail";
+                        return Ok(url);
                     }
                 }
             }

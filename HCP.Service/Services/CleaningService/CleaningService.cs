@@ -373,7 +373,7 @@ namespace HCP.Service.Services.CleaningService1
             );
 
             var bookedSlots = await _unitOfWork.Repository<Booking>().ListAsync(
-                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart.Date == targetDate.Date,
+                filter: b => b.CleaningServiceId == serviceId && b.PreferDateStart.Date == targetDate.Date && b.Status == BookingStatus.OnGoing.ToString(),
                 orderBy: b => b.OrderBy(c => c.TimeStart)
             );
 
@@ -404,7 +404,7 @@ namespace HCP.Service.Services.CleaningService1
         {
             var userId = userClaims.FindFirst("id")?.Value;
             var services = await _unitOfWork.Repository<CleaningService>().ListAsync(
-                filter: c => c.UserId == userId,
+                filter: c => c.UserId == userId && c.Status != "IsDeleted",
                 includeProperties: query => query
                     .Include(c => c.Category)
                     .Include(c => c.ServiceRatings)
@@ -463,7 +463,7 @@ namespace HCP.Service.Services.CleaningService1
 
             var services = _unitOfWork.Repository<CleaningService>()
                 .GetAll()
-                .Where(cs => cs.UserId == userId)
+                .Where(cs => cs.UserId == userId && cs.Status != "IsDeleted")
                 .Include(cs => cs.ServiceImages)
                 .Select(cs => new ServiceOverviewDTO
                 {
@@ -663,14 +663,12 @@ namespace HCP.Service.Services.CleaningService1
             {
                 throw new KeyNotFoundException(CleaningServiceConst.ServiceNotFound);
             }
-
             service.ServiceName = dto.ServiceName;
             service.CategoryId = dto.CategoryId;
             service.Description = dto.Description;
             service.Price = dto.Price;
             service.Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2);                               //tính bằng tổng duration của step
             service.UpdatedAt = DateTime.UtcNow;
-
             _unitOfWork.Repository<CleaningService>().Update(service);
 
             var existingAdditionalServices = await _unitOfWork.Repository<AdditionalService>().FindAllAsync(a => a.CleaningServiceId == serviceId);

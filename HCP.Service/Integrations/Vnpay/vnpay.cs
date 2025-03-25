@@ -31,7 +31,7 @@ namespace HCP.Service.Integrations.Vnpay
         private readonly string vnp_TmnCode;
         public string CreatePaymentUrl(Booking order)
         {
-            string returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
+            string returnUrl = "https://hcs-api-dev.azurewebsites.net/api/Payment/PaymentReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(order.TotalPrice, CultureInfo.InvariantCulture);
@@ -58,7 +58,7 @@ namespace HCP.Service.Integrations.Vnpay
         }
         public string CreatePaymentUrl(PaymentBodyDTO body)
         {
-            string returnUrl = "https://localhost:7143/api/Payment/PaymentReturn-VNPAY";
+            string returnUrl = "https://hcs-api-dev.azurewebsites.net/api/Payment/PaymentReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var order = checkoutService.GetCheckoutById(body.Id).Result;
@@ -86,7 +86,7 @@ namespace HCP.Service.Integrations.Vnpay
         }
         public string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl)
         {
-            returnUrl = "https://localhost:7143/api/Payment/PaymentDepositReturn-VNPAY";
+            returnUrl = "https://www.purrfectclean.website/api/Payment/PaymentDepositReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(walletTrans.Amount, CultureInfo.InvariantCulture);
