@@ -1,5 +1,6 @@
 ﻿using HCP.DTOs.DTOs.CleaningServiceDTO;
 using HCP.DTOs.DTOs.FilterDTO;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
 using HCP.Repository.Entities;
 using HCP.Service.Services.ListService;
 using System.Security.Claims;
@@ -35,5 +36,6 @@ namespace HCP.Service.Services.CleaningService1
         Task<CleaningServiceTopListDTO> GetTopServiceItems(ClaimsPrincipal claims, bool dayTop, bool monthTop, bool yearTop,
     int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd,
     string? search, int? tops = 3);
+        Task<List<HousekeeperSkillDTO>> GetHousekeeperCategories(ClaimsPrincipal housekeeper);
     }
 }

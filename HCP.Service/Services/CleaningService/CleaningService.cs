@@ -1,5 +1,7 @@
 ﻿using HCP.DTOs.DTOs.CleaningServiceDTO;
 using HCP.DTOs.DTOs.FilterDTO;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
+using HCP.DTOs.DTOs.RequestDTO;
 using HCP.Repository.Constance;
 using HCP.Repository.Entities;
 using HCP.Repository.Enums;
@@ -519,32 +521,9 @@ namespace HCP.Service.Services.CleaningService1
             var userId = userClaims.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User not authenticated");
+                throw new UnauthorizedAccessException(CommonConst.UnauthorizeError);
             }
             var user = await _userManager.FindByIdAsync(userId) ?? throw new KeyNotFoundException(CommonConst.HousekeeperNotFound);
-
-            var newService = new CleaningService
-            {
-                ServiceName = dto.ServiceName,
-                CategoryId = dto.CategoryId,
-                Description = dto.Description,
-                Status = ServiceStatus.Pending.ToString(),
-                Rating = 0,
-                RatingCount = 0,
-                Price = dto.Price,
-                City = dto.City,
-                District = dto.District,
-                PlaceId = dto.PlaceId,
-                AddressLine = dto.AddressLine,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
-                UserId = userId,
-                User = await _userManager.FindByIdAsync(userId),
-                Category = await _unitOfWork.Repository<ServiceCategory>().FindAsync(c => c.Id == dto.CategoryId)
-            };
-
-            //var housekeeperAddress = _unitOfWork.Repository<Address>().Find(c => c.UserId == user.Id && c.IsDefault == true);
 
             //var newService = new CleaningService
             //{
@@ -555,10 +534,10 @@ namespace HCP.Service.Services.CleaningService1
             //    Rating = 0,
             //    RatingCount = 0,
             //    Price = dto.Price,
-            //    City = housekeeperAddress!.City,
-            //    District = housekeeperAddress.District,
-            //    PlaceId = housekeeperAddress.PlaceId,
-            //    AddressLine = housekeeperAddress.AddressLine1,
+            //    City = dto.City,
+            //    District = dto.District,
+            //    PlaceId = dto.PlaceId,
+            //    AddressLine = dto.AddressLine,
             //    CreatedAt = DateTime.UtcNow,
             //    UpdatedAt = DateTime.UtcNow,
             //    Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
@@ -566,6 +545,29 @@ namespace HCP.Service.Services.CleaningService1
             //    User = await _userManager.FindByIdAsync(userId),
             //    Category = await _unitOfWork.Repository<ServiceCategory>().FindAsync(c => c.Id == dto.CategoryId)
             //};
+
+            var housekeeperAddress = _unitOfWork.Repository<Address>().Find(c => c.UserId == user.Id && c.IsDefault == true);
+
+            var newService = new CleaningService
+            {
+                ServiceName = dto.ServiceName,
+                CategoryId = dto.CategoryId,
+                Description = dto.Description,
+                Status = ServiceStatus.Pending.ToString(),
+                Rating = 0,
+                RatingCount = 0,
+                Price = dto.Price,
+                City = housekeeperAddress!.City,
+                District = housekeeperAddress.District,
+                PlaceId = housekeeperAddress.PlaceId,
+                AddressLine = housekeeperAddress.AddressLine1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
+                UserId = userId,
+                User = await _userManager.FindByIdAsync(userId),
+                Category = await _unitOfWork.Repository<ServiceCategory>().FindAsync(c => c.Id == dto.CategoryId)
+            };
 
             await _unitOfWork.Repository<CleaningService>().AddAsync(newService);
             await _unitOfWork.Repository<CleaningService>().SaveChangesAsync();
@@ -816,6 +818,29 @@ namespace HCP.Service.Services.CleaningService1
                     ExtraPerKm = d.ExtraPerKm.ToString()
                 }).ToList()
             };
+        }
+
+        public async Task<List<HousekeeperSkillDTO>> GetHousekeeperCategories(ClaimsPrincipal housekeeper)
+        {
+            var housekeeperId = housekeeper.FindFirst("id")?.Value;
+            if (housekeeperId == null)
+            {
+                throw new KeyNotFoundException(CommonConst.HousekeeperNotFound);
+            }
+            var currentHousekeeper = await _userManager.FindByIdAsync(housekeeperId);
+
+            if (currentHousekeeper == null)
+            {
+                throw new Exception(CommonConst.DatabaseError);
+            }
+
+            var housekeeperSkills = await _unitOfWork.Repository<HousekeeperSkill>().GetAll().Where(s => s.HousekeeperId == housekeeperId).ToListAsync();
+
+            return housekeeperSkills.Select(c => new HousekeeperSkillDTO
+            {
+                CategoryId = c.CategoryId,
+                CategoryName = _unitOfWork.Repository<ServiceCategory>().GetById(c.CategoryId).CategoryName
+            }).ToList();
         }
 
         public async Task<bool> IsTimeSlotAvailable(Guid serviceId, DateTime targetDate, TimeSpan startTime, TimeSpan endTime)

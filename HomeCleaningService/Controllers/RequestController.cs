@@ -52,6 +52,21 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<List<PendingRequestDTO>>().SetSuccessResponse(result));
         }
+        
+        [HttpGet("service-pending-request-paging")]
+        public async Task<IActionResult> GetAllPendingCreateRequestPaging(int? pageIndex, int? pageSize)
+        {
+            var response = new AppResponse<string>();
+
+            var result = await _handleRequestService.GetPendingCreateServiceRequestsAsync(pageIndex, pageSize);
+
+            if (result == null)
+            {
+                return BadRequest(response.SetErrorResponse(KeyConst.PendingRequest, RequestConst.GetRequestNullError));
+            }
+
+            return Ok(new AppResponse<PendingRequestListDTO>().SetSuccessResponse(result));
+        }
 
         [HttpGet("service-pending-request/{id}")]
         public async Task<IActionResult> GetPendingCreateRequestDetail(Guid id)
