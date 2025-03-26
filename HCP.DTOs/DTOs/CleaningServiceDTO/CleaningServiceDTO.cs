@@ -88,9 +88,11 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
         public int numOfPics { get; set; }
         public string overview { get; set; }
         public List<ImgDTO> images { get; set; }
-        public List<string> steps { get; set; }
+        public List<ServiceStepDTO> steps { get; set; }
         public List<AdditionalServicedDTO> additionalServices { get; set; }
         public housekeeperDetailDTO housekeeper { get; set; }
+        public List<ServicePricingRuleDTO> Rules { get; set; }
+
 
     }
 
@@ -110,7 +112,34 @@ namespace HCP.DTOs.DTOs.CleaningServiceDTO
         public List<AdditionalServicedDTO> additionalServices { get; set; }
         public housekeeperDetailDTO housekeeper { get; set; }
     }
-
+    public class ServiceDetailWithStatusDTO1
+    {
+        public Guid id { get; set; }
+        public string name { get; set; }
+        public string status { get; set; }
+        public int numOfBooks { get; set; }
+        public string location { get; set; }
+        public decimal reviews { get; set; }
+        public int numOfReviews { get; set; }
+        public int numOfPics { get; set; }
+        public string overview { get; set; }
+        public List<ImgDTO> images { get; set; }
+        public List<ServiceStepDTO> steps { get; set; }
+        public List<AdditionalServicedDTO> additionalServices { get; set; }
+        public housekeeperDetailDTO housekeeper { get; set; }
+        public List<ServicePricingRuleDTO> Rules { get; set; }
+    }
+    public class ServiceStepDTO
+    {
+        public string Name { get; set; }
+        public string Duration {  get; set; }
+    }
+    public class ServicePricingRuleDTO
+    {
+        public string Min { get; set; }
+        public string Max {  get; set; }
+        public string Fee {  get; set; }
+    }
     public class ServiceOverviewDTO
     {
         [JsonPropertyName("service_id")]

@@ -37,5 +37,6 @@ namespace HCP.Service.Services.CleaningService1
     int? pageIndex, int? pageSize, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd,
     string? search, int? tops = 3);
         Task<List<HousekeeperSkillDTO>> GetHousekeeperCategories(ClaimsPrincipal housekeeper);
+        Task<List<ServiceDetailWithStatusDTO1>> GetServiceByUser1(ClaimsPrincipal userClaims);
     }
 }
