@@ -318,6 +318,7 @@ namespace HCP.Service.Services.CleaningService1
                     .Include(c => c.ServiceSteps)
                     .Include(c => c.AdditionalServices)
                     .Include(c => c.User)
+                    .Include(c => c.DistancePricingRules)
             );
 
             var service = services.FirstOrDefault();
@@ -341,7 +342,11 @@ namespace HCP.Service.Services.CleaningService1
                 numOfPics = service.ServiceImages.Count,
                 overview = service.Description,
                 images = service.ServiceImages.Select(i => new ImgDTO { url = i.LinkUrl }).ToList(),
-                steps = service.ServiceSteps.Select(s => s.StepDescription).ToList(),
+                steps = service.ServiceSteps.Select(s => new ServiceStepDTO
+                {
+                    Name = s.StepDescription,
+                    Duration = s.Duration?.ToString() ?? "N/A"
+                }).ToList(),
                 additionalServices = service.AdditionalServices.Select(a => new AdditionalServicedDTO
                 {
                     id = a.Id,
@@ -362,7 +367,14 @@ namespace HCP.Service.Services.CleaningService1
                          email = service.User.Email,
                          mobile = service.User.PhoneNumber,
                          numOfServices = service1.Count()
-                     }
+                     },
+                Rules = service.DistancePricingRules?.Select(r => new ServicePricingRuleDTO
+                {
+                    Min = r.MinDistance.ToString() ?? "0",
+                    Max = r.MaxDistance.ToString() ?? "N/A",
+                    Fee = r.BaseFee.ToString("0.0")
+                }).ToList() ?? new List<ServicePricingRuleDTO>()
+
             };
         }
         public async Task<List<ServiceTimeSlotDTO1>> GetAllServiceTimeSlot(Guid serviceId, DateTime targetDate, string dayOfWeek)
@@ -399,7 +411,6 @@ namespace HCP.Service.Services.CleaningService1
 
             return availableSlots;
         }
-
         public async Task<List<ServiceDetailWithStatusDTO>> GetServiceByUser(ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst("id")?.Value;
@@ -454,6 +465,77 @@ namespace HCP.Service.Services.CleaningService1
                         numOfServices = service.User.Services?.Count ?? 0
                     }
                     : null
+            }).ToList();
+        }
+        public async Task<List<ServiceDetailWithStatusDTO1>> GetServiceByUser1(ClaimsPrincipal userClaims)
+        {
+            var userId = userClaims.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return null;
+
+            var services = await _unitOfWork.Repository<CleaningService>().ListAsync(
+                filter: c => c.UserId == userId && c.Status != "IsDeleted",
+                includeProperties: query => query
+                    .Include(c => c.Category)
+                    .Include(c => c.ServiceRatings)
+                    .Include(c => c.ServiceImages)
+                    .Include(c => c.ServiceSteps)
+                    .Include(c => c.AdditionalServices)
+                    .Include(c => c.User)
+                    .Include(c => c.DistancePricingRules) 
+            );
+
+            if (services == null || !services.Any())
+                return new List<ServiceDetailWithStatusDTO1>(); 
+            var address = await _unitOfWork.Repository<Address>().FindAsync(c => c.UserId == userId && c.IsDefault) ?? new Address();
+
+            return services.Select(service => new ServiceDetailWithStatusDTO1
+            {
+                id = service.Id,
+                name = service.ServiceName,
+                status = service.Status,
+                numOfBooks = service.Bookings?.Count ?? 0,
+                location = $"{service.City}, {service.District}",
+                reviews = service.ServiceRatings.Any() ? service.ServiceRatings.Average(r => r.Rating) : 0,
+                numOfReviews = service.ServiceRatings.Count,
+                numOfPics = service.ServiceImages.Count,
+                overview = service.Description,
+                images = service.ServiceImages.Select(i => new ImgDTO { url = i.LinkUrl }).ToList(),
+                steps = service.ServiceSteps.Select(s => new ServiceStepDTO
+                {
+                    Name = s.StepDescription, 
+                    Duration = s.Duration?.ToString() ?? "N/A" 
+                }).ToList(),
+                additionalServices = service.AdditionalServices.Select(a => new AdditionalServicedDTO
+                {
+                    id = a.Id,
+                    name = a.Name,
+                    price = a.Amount.ToString("0.0"),
+                    Description = a.Description,
+                    Duration = a.Duration,
+                    url = a.Url
+                }).ToList(),
+                housekeeper = service.User != null
+                    ? new housekeeperDetailDTO
+                    {
+                        id = service.User.Id,
+                        name = service.User.FullName,
+                        review = "No Reviews", 
+                        avatar = service.User.Avatar,
+                        address = address.City != null && address.District != null
+                            ? $"{address.City}, {address.District}, {address.AddressLine1}"
+                            : string.Empty,
+                        email = service.User.Email,
+                        mobile = service.User.PhoneNumber,
+                        numOfServices = service.User.Services?.Count ?? 0
+                    }
+                    : null,
+                Rules = service.DistancePricingRules?.Select(r => new ServicePricingRuleDTO
+                {
+                    Min = r.MinDistance.ToString() ?? "0", 
+                    Max = r.MaxDistance.ToString() ?? "N/A",
+                    Fee = r.BaseFee.ToString("0.0")
+                }).ToList() ?? new List<ServicePricingRuleDTO>()
             }).ToList();
         }
 

@@ -99,7 +99,16 @@ namespace HomeCleaningService.Controllers
 
             return Ok(new AppResponse<List<ServiceDetailWithStatusDTO>>().SetSuccessResponse(service));
         }
+        [HttpGet("user1")]
+        public async Task<IActionResult> GetServiceByUser1()
+        {
+            var service = await _cleaningService.GetServiceByUser1(User);
 
+            if (service == null)
+                return NotFound(new AppResponse<ServiceDetailWithStatusDTO1>().SetErrorResponse(KeyConst.CleaningService, CleaningServiceConst.ServiceNotFound));
+
+            return Ok(new AppResponse<List<ServiceDetailWithStatusDTO1>>().SetSuccessResponse(service));
+        }
         [HttpGet("user/filter")]
         [Authorize]
         public async Task<IActionResult> GetServiceByUser(string? status, int? pageIndex, int? pageSize)

@@ -135,8 +135,6 @@ namespace HomeCleaningService.Controllers
                     var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
-
-
                     var url = $"{frontendurl}/service/Checkout/success";
 
                     return Redirect(url);
@@ -198,20 +196,20 @@ namespace HomeCleaningService.Controllers
                     {
                         await _walletService.processDepositTransaction(transactId, true);
                         //return Redirect("https://www.google.com/");
-                        var url = $"{frontendurl}/wallet/deposit/success";
-
-                        return Ok(url);
+                        var url = $"https://www.purrfectclean.website/wallet/deposit/success";
+                        Redirect(url);
                     }
                     else
                     {
                         await _walletService.processDepositTransaction(transactId, false);
-                        var url = $"{frontendurl}/wallet/deposit/fail";
-                        return Ok(url);
+                        var url = $"https://www.purrfectclean.website/wallet/deposit/fail";
+                        Redirect(url);
                     }
                 }
             }
             return BadRequest(PaymentConst.InvalidError);
         }
+
 
         //[HttpPost("CreateBooking")]
         //public Task<IActionResult> CreateBooking([FromBody] BookingDTO bookingDto, string paymentType)
