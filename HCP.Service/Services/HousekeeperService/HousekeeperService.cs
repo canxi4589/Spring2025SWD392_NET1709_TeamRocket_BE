@@ -64,11 +64,11 @@ namespace HCP.Service.Services.HousekeeperService
             var housekeeper = await _userManager.FindByIdAsync(housekeeperId) ?? throw new KeyNotFoundException(CommonConst.HousekeeperNotFound);
             var bookingRepository = _unitOfWork.Repository<Booking>().GetAll()
                 .Include(c => c.CleaningService).Where(s => (s.CleaningService.UserId == housekeeper.Id) && (s.Status.Equals(BookingStatus.Completed.ToString()) || s.Status.Equals(BookingStatus.Refunded.ToString())))
-                .OrderByDescending(b => b.CompletedAt).ToList();
+                .OrderByDescending(b => b.CompletedAt);
             if (day.HasValue && month.HasValue && year.HasValue)
             {
                 //var targetDay = new DateTime(day.Value, year.Value, month.
-                bookingRepository = (List<Booking>)bookingRepository
+                bookingRepository = (IOrderedQueryable<Booking>)bookingRepository
                     .Where(c => c.CompletedAt.Value.Day == day && c.CompletedAt.Value.Month == month && c.CompletedAt.Value.Year == year);
             }
             var earningList = bookingRepository.Select(b => new HousekeeperEarningDTO
@@ -81,7 +81,7 @@ namespace HCP.Service.Services.HousekeeperService
             });
             if (pageIndex == null || pageSize == null)
             {
-                var temp = await PaginatedList<HousekeeperEarningDTO>.CreateAsync(earningList.AsQueryable(), 1, earningList.Count());
+                var temp = await PaginatedList<HousekeeperEarningDTO>.CreateAsync(earningList, 1, earningList.Count());
                 return new HousekeeperEarningListDTO
                 {
                     Items = temp,
@@ -91,7 +91,7 @@ namespace HCP.Service.Services.HousekeeperService
                     totalPages = temp.TotalPages,
                 };
             }
-            var temp2 = await PaginatedList<HousekeeperEarningDTO>.CreateAsync(earningList.AsQueryable(), (int)pageIndex, (int)pageSize);
+            var temp2 = await PaginatedList<HousekeeperEarningDTO>.CreateAsync(earningList, (int)pageIndex, (int)pageSize);
             return new HousekeeperEarningListDTO
             {
                 Items = temp2,

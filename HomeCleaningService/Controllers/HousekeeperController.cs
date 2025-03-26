@@ -39,7 +39,7 @@ namespace HomeCleaningService.Controllers
                 return BadRequest(response.SetErrorResponse(KeyConst.Housekeeper, ex.ToString()));
             }
         }
-        [HttpGet]
+        [HttpGet("earnings")]
         [Authorize]
         public async Task<IActionResult> GetHousekeeperEarning(int? pageIndex, int? pageSize, int? day, int? month, int? year)
         {
