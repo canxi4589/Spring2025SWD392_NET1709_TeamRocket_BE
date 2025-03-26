@@ -77,6 +77,7 @@ namespace HCP.Service.Services.HousekeeperService
                 Fee = (decimal)b.Fee,
                 YourEarn = b.TotalPrice * 0.9m,
                 Date = b.CompletedAt ?? b.CreatedDate,
+                BookingId = b.Id,
                 Status = b.Status
             });
             if (pageIndex == null || pageSize == null)

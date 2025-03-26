@@ -13,6 +13,7 @@ namespace HCP.DTOs.DTOs.HousekeeperDTOs
         public decimal Fee { get; set; }
         public decimal YourEarn { get; set; }
         public DateTime Date { get; set; }
+        public Guid BookingId { get; set; }
         public string Status { get; set; }
     }
     public class HousekeeperEarningListDTO
