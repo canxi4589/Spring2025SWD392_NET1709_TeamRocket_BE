@@ -302,7 +302,8 @@ namespace HCP.Service.Services.WalletService
                 || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString())
                 || searchField.Equals(TransactionType.Deposit.ToString())
                 || searchField.Equals(TransactionType.WalletPurchase.ToString())
-                || searchField.Equals(TransactionType.VNPayPurchase.ToString()))
+                || searchField.Equals(TransactionType.VNPayPurchase.ToString())
+                || searchField.Equals(TransactionType.BookingCanceledPayback.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
                     .Where(c => c.User.Id == user.Id);
@@ -357,6 +358,12 @@ namespace HCP.Service.Services.WalletService
                     .Where(c => c.Type.Equals(TransactionType.VNPayPurchase.ToString()));
             }
 
+            if (searchField.Equals(TransactionType.BookingCanceledPayback.ToString()))
+            {
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.BookingCanceledPayback.ToString()));
+            }
+
             if (searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()))
             {
                 if (_userManager.GetRolesAsync(user).Result.Equals(KeyConst.Customer)){
@@ -364,7 +371,8 @@ namespace HCP.Service.Services.WalletService
                     .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString())
                     || c.Type.Equals(TransactionType.Deposit.ToString())
                     || c.Type.Equals(TransactionType.WalletPurchase.ToString())
-                    || c.Type.Equals(TransactionType.VNPayPurchase.ToString())));
+                    || c.Type.Equals(TransactionType.VNPayPurchase.ToString())
+                    || c.Type.Equals(TransactionType.BookingCanceledPayback.ToString())));
                 }
                 else if (_userManager.GetRolesAsync(user).Result.Equals(KeyConst.Housekeeper))
                 {
