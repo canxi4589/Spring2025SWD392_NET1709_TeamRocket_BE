@@ -35,6 +35,7 @@ namespace HCP.Repository.Entities
         public string District { get; set; }
         public string PlaceId { get; set; }
         public string AddressLine { get; set; }
+        public decimal? Fee {  get; set; }
         // Navigation properties
         public AppUser? Customer { get; set; }
         public CleaningService? CleaningService { get; set; }

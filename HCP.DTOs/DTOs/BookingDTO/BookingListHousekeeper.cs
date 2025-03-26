@@ -38,7 +38,7 @@ namespace HCP.DTOs.DTOs.BookingDTO
         public decimal ServicePrice { get; set; }
         public decimal DistancePrice { get; set; }
         public decimal AdditionalPrice { get; set; }
-
+        public decimal? Fee {  get; set; }
         // Service Info
         public string ServiceName { get; set; }
         public string ServiceDescription { get; set; }

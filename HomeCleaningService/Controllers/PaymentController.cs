@@ -137,7 +137,7 @@ namespace HomeCleaningService.Controllers
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
                     var url = $"{frontendurl}/service/Checkout/success";
 
-                    return Redirect(url);
+                    return Ok(new { url = url });
                 }
                 else
                 {

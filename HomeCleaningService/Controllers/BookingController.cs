@@ -107,8 +107,8 @@ namespace HomeCleaningService.Controllers
             try
             {
                 var proof = await _bookingService.SubmitBookingProofAsync(dto);
-                var successResponse = new AppResponse<BookingFinishProof>()
-                    .SetSuccessResponse(proof, KeyConst.BookingProof, BookingConst.ProofSubmittedSuccessfully);
+                var successResponse = new AppResponse<string>()
+                    .SetSuccessResponse(proof.ImgUrl, KeyConst.BookingProof, BookingConst.ProofSubmittedSuccessfully);
                 return Ok(successResponse);
             }
             catch (KeyNotFoundException)
@@ -116,12 +116,6 @@ namespace HomeCleaningService.Controllers
                 var errorResponse = new AppResponse<BookingFinishProof>()
                     .SetErrorResponse(KeyConst.Booking, BookingConst.BookingNotFound);
                 return NotFound(errorResponse);
-            }
-            catch (InvalidOperationException)
-            {
-                var errorResponse = new AppResponse<BookingFinishProof>()
-                    .SetErrorResponse(KeyConst.Status, BookingConst.InvalidBookingStatusForProof);
-                return BadRequest(errorResponse);
             }
             catch (Exception ex)
             {
