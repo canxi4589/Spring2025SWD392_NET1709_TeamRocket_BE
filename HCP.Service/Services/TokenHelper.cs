@@ -38,7 +38,7 @@ public class TokenHelper : ITokenHelper
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["AccessTokenExpirationMinutes"])),
+            expires: DateTime.Now.AddMinutes(Convert.ToDouble(jwtSettings["AccessTokenExpirationMinutes"])),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

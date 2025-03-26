@@ -275,7 +275,7 @@ namespace HCP.Service.Services.WalletService
                 Amount = amount,
                 Type = TransactionType.Withdraw.ToString(),
                 Status = TransactionStatus.Pending.ToString(),
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
             };
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.Repository<WalletTransaction>().SaveChangesAsync();
@@ -301,7 +301,8 @@ namespace HCP.Service.Services.WalletService
                 || searchField.Equals(TransactionType.ShowAllHistoryUser.ToString())
                 || searchField.Equals(TransactionType.ShowWithdrawHistoryUser.ToString())
                 || searchField.Equals(TransactionType.Deposit.ToString())
-                || searchField.Equals(TransactionType.BookingPurchase.ToString()))
+                || searchField.Equals(TransactionType.WalletPurchase.ToString())
+                || searchField.Equals(TransactionType.VNPayPurchase.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
                     .Where(c => c.User.Id == user.Id);
@@ -344,16 +345,34 @@ namespace HCP.Service.Services.WalletService
                     .Where(c => c.Type.Equals(TransactionType.Withdraw.ToString()));
             }
 
-            if (searchField.Equals(TransactionType.BookingPurchase.ToString()))
+            if (searchField.Equals(TransactionType.WalletPurchase.ToString()))
             {
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => c.Type.Equals(TransactionType.BookingPurchase.ToString()));
+                    .Where(c => c.Type.Equals(TransactionType.WalletPurchase.ToString()));
+            }
+
+            if (searchField.Equals(TransactionType.VNPayPurchase.ToString()))
+            {
+                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => c.Type.Equals(TransactionType.VNPayPurchase.ToString()));
             }
 
             if (searchField.Equals(TransactionType.ShowAllHistoryUser.ToString()))
             {
-                wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
-                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString()) || c.Type.Equals(TransactionType.Deposit.ToString()) || c.Type.Equals(TransactionType.BookingPurchase.ToString())));
+                if (_userManager.GetRolesAsync(user).Result.Equals(KeyConst.Customer)){
+                    wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString())
+                    || c.Type.Equals(TransactionType.Deposit.ToString())
+                    || c.Type.Equals(TransactionType.WalletPurchase.ToString())
+                    || c.Type.Equals(TransactionType.VNPayPurchase.ToString())));
+                }
+                else if (_userManager.GetRolesAsync(user).Result.Equals(KeyConst.Housekeeper))
+                {
+                    wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
+                    .Where(c => (c.Type.Equals(TransactionType.Withdraw.ToString())
+                    || c.Type.Equals(TransactionType.Deposit.ToString())));
+                }
+
             }
 
             if (searchField.Equals(TransactionType.ShowHistoryStaff.ToString()))
@@ -379,18 +398,21 @@ namespace HCP.Service.Services.WalletService
                 wTransactionList = (IOrderedQueryable<WalletTransaction>)wTransactionList
                     .Where(c => c.User.Email.Equals(mail));
             }
-
+            //WalletWithdrawStaffShowDTO => transaction show dto
             var listTrans = wTransactionList.Select(c => new WalletWithdrawStaffShowDTO
             {
                 Id = c.Id,
                 Amount = c.Amount,
+                CurrentAmount = c.Current,
+                AfterAmount = c.AfterAmount,
                 Type = c.Type,
                 FullName = c.User.FullName,
                 Mail = c.User.Email,
                 PhoneNumber = c.User.PhoneNumber,
                 UserId = c.UserId,
                 CreatedDate = c.CreatedDate,
-                Status = c.Status
+                Status = c.Status,
+                ReferenceId = c.ReferenceId
             });
             if (pageIndex == null || pageSize == null)
             {
@@ -596,7 +618,7 @@ namespace HCP.Service.Services.WalletService
                 User = user1,
                 UserId = user1.Id,
                 Amount = amount,
-                Type = TransactionType.BookingPurchase.ToString(),
+                Type = TransactionType.WalletPurchase.ToString(),
                 Status = TransactionStatus.Done.ToString(),
                 CreatedDate = DateTime.Now
             };
@@ -625,7 +647,8 @@ namespace HCP.Service.Services.WalletService
         public async Task<RevenueHousekeeperDatasListShowDTO> GetRevenueHousekeeperDatas(AppUser user, bool dayRevenue, bool weekRevenue, bool yearRevenue, bool yearsRevenue, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd)
         {
             var chartDataList = new List<RevenueHousekeeperDatasShowDTO>();
-
+            double comisRate = (double)_unitOfWork.Repository<Commissions>().GetAll().FirstOrDefaultAsync().Result.CommisionRate;
+            if (comisRate == null) throw new KeyNotFoundException(KeyConst.CommissionRateNotFound);
             // Query payments with status "Completed" and include booking
             var payments = await _unitOfWork.Repository<Payment>()
                 .GetAll()

@@ -29,7 +29,7 @@
 //                Content = content,
 //                ReturnUrl = returnUrl,
 //                IsRead = false,
-//                CreatedDate = DateTime.UtcNow
+//                CreatedDate = DateTime.Now
 //            };
 //            _context.Notifications.Add(notification);
 //            await _context.SaveChangesAsync();

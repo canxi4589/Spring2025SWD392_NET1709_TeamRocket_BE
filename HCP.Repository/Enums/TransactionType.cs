@@ -17,7 +17,13 @@ namespace HCP.Repository.Enums
         RefundHousekeeper,
 
         [Description("Money taken from wallet for booking action transaction")]
-        BookingPurchase,
+        WalletPurchase,
+
+        [Description("Transaction for VNPay booking action transaction")]
+        VNPayPurchase,
+
+        [Description("Money payback to wallet for cancel booking action transaction")]
+        BookingCanceledPayback,
 
         [Description("Deposit (nap tien) transaction")]
         Deposit,

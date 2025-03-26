@@ -40,7 +40,7 @@ namespace HCP.Service.Integrations.BlobStorage
                 BlobContainerName = _containerName,
                 BlobName = blobName,
                 Resource = "b",
-                ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(5) // Expires in 5 min lul
+                ExpiresOn = DateTimeOffset.Now.AddMinutes(5) // Expires in 5 min lul
             };
             sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
@@ -67,7 +67,7 @@ namespace HCP.Service.Integrations.BlobStorage
                     BlobContainerName = _containerName,
                     BlobName = blobName,
                     Resource = "b",
-                    ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(5) 
+                    ExpiresOn = DateTimeOffset.Now.AddMinutes(5) 
                 };
                 sasBuilder.SetPermissions(BlobSasPermissions.Read);
 

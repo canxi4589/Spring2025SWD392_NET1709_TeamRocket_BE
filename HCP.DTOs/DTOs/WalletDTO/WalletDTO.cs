@@ -47,6 +47,8 @@
         public Guid Id { get; set; }
         public string Type { get; set; }
         public decimal Amount { get; set; }
+        public decimal CurrentAmount { get; set; }
+        public decimal AfterAmount { get; set; }
         public string UserId { get; set; }
         public Guid? ReferenceId { get; set; }
         public string FullName { get; set; }

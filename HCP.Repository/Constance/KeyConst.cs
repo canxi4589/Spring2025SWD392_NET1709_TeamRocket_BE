@@ -30,6 +30,8 @@ namespace HCP.Repository.Constance
         public const string Booking = "Booking";
         public const string BookingProof = "Booking Proof";
         public const string Status = "status";
+        public const string CommissionRateNotFound = "Commission Rate Not Found";
+
 
         //others
         public const string VnPay = "Vnpay";

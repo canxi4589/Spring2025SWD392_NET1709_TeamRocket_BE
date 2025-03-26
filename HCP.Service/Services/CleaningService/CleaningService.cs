@@ -620,8 +620,8 @@ namespace HCP.Service.Services.CleaningService1
             //    District = dto.District,
             //    PlaceId = dto.PlaceId,
             //    AddressLine = dto.AddressLine,
-            //    CreatedAt = DateTime.UtcNow,
-            //    UpdatedAt = DateTime.UtcNow,
+            //    CreatedAt = DateTime.Now,
+            //    UpdatedAt = DateTime.Now,
             //    Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
             //    UserId = userId,
             //    User = await _userManager.FindByIdAsync(userId),
@@ -643,8 +643,8 @@ namespace HCP.Service.Services.CleaningService1
                 District = housekeeperAddress.District,
                 PlaceId = housekeeperAddress.PlaceId,
                 AddressLine = housekeeperAddress.AddressLine1,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
                 Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2),                                  //Duration sẽ là tổng các step
                 UserId = userId,
                 User = await _userManager.FindByIdAsync(userId),
@@ -750,7 +750,7 @@ namespace HCP.Service.Services.CleaningService1
             service.Description = dto.Description;
             service.Price = dto.Price;
             service.Duration = Math.Round(dto.ServiceSteps.Sum(s => s.Duration) / 60.0, 2);                               //tính bằng tổng duration của step
-            service.UpdatedAt = DateTime.UtcNow;
+            service.UpdatedAt = DateTime.Now;
             _unitOfWork.Repository<CleaningService>().Update(service);
 
             var existingAdditionalServices = await _unitOfWork.Repository<AdditionalService>().FindAllAsync(a => a.CleaningServiceId == serviceId);

@@ -55,7 +55,7 @@ namespace HCP.Service.Services
 
             _logger.LogInformation("Starting check for pending deposit transactions...");
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var expirationThreshold = now.Subtract(_expirationDuration); // Calculate the threshold once
 
             var pendingDeposits = unitOfWork.Repository<WalletTransaction>()

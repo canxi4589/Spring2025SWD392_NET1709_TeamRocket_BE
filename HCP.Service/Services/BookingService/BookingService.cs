@@ -9,6 +9,7 @@ using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Claims;
 
 namespace HCP.Service.Services.BookingService
@@ -370,7 +371,7 @@ namespace HCP.Service.Services.BookingService
                 PreferDateStart = dto.BookingDate,
                 TimeStart = timeSlot.StartTime,
                 TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
                 ServicePrice = service.Price,
@@ -438,7 +439,7 @@ namespace HCP.Service.Services.BookingService
         //        PreferDateStart = dto.BookingDate,
         //        TimeStart = dto.StartTime,
         //        TimeEnd = dto.EndTime,
-        //        CreatedDate = DateTime.UtcNow,
+        //        CreatedDate = DateTime.Now,
         //        Status = BookingStatus.OnGoing.ToString(),
         //        TotalPrice = dto.TotalPrice,
         //        ServicePrice = dto.ServicePrice,
@@ -509,7 +510,7 @@ namespace HCP.Service.Services.BookingService
                 PreferDateStart = dto.BookingDate,
                 TimeStart = dto.StartTime,
                 TimeEnd = dto.EndTime,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = dto.TotalPrice,
                 ServicePrice = dto.ServicePrice,
@@ -522,7 +523,20 @@ namespace HCP.Service.Services.BookingService
                 Note = /*dto.Note ??*/ "",
                 BookingAdditionals = bookingAdditionals,
             };
-
+            WalletTransaction wTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AfterAmount = 0,
+                Current = (Decimal)user.BalanceWallet,
+                User = user,
+                UserId = user.Id,
+                Amount = booking.TotalPrice,
+                Type = TransactionType.VNPayPurchase.ToString(),
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.Now,
+                ReferenceId = dto.Id
+            };
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await bookingRepository.AddAsync(booking);
             checkout.Status = CheckoutStatus.Completed.ToString();
 
@@ -537,7 +551,7 @@ namespace HCP.Service.Services.BookingService
             var payment = new Payment
             {
                 BookingId = bookingId,
-                PaymentDate = DateTime.UtcNow,
+                PaymentDate = DateTime.Now,
                 PaymentMethod = paymentMethod,
                 Status = "succeed",
                 Amount = amount
@@ -650,16 +664,22 @@ namespace HCP.Service.Services.BookingService
                 throw new InvalidOperationException(BookingConst.BookingCancellationFailed);
             }
             booking.Status = BookingStatus.Canceled.ToString();
+            WalletTransaction wTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AfterAmount = 0,
+                Current = (Decimal)user.BalanceWallet,
+                User = user,
+                UserId = user.Id,
+                Amount = booking.TotalPrice,
+                Type = TransactionType.BookingCanceledPayback.ToString(),
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.Now
+            };
             user.BalanceWallet += (double)booking.TotalPrice;
-            //var refundRequest = new RefundRequest
-            //{
-            //    Amount = booking.TotalPrice,
-            //    UserId = user.Id,
-            //    BookingId = booking.Id,
-            //    Status = WalletWithdrawStatus.Pending.ToString()
-            //};
-            //await _unitOfWork.Repository<WalletWithdrawRequest>().AddAsync(refundRequest);
+            wTransaction.AfterAmount = (decimal)user.BalanceWallet;
             _unitOfWork.Repository<Booking>().Update(booking);
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await userManager.UpdateAsync(user);
             await _unitOfWork.SaveChangesAsync();
             return new BookingCancelDTO
@@ -695,7 +715,7 @@ namespace HCP.Service.Services.BookingService
             };
 
             booking.Status = BookingStatus.Completed.ToString();
-            booking.CompletedAt = DateTime.UtcNow;
+            booking.CompletedAt = DateTime.Now;
 
             await _unitOfWork.Repository<BookingFinishProof>().AddAsync(proof);
             bookingRepository.Update(booking);

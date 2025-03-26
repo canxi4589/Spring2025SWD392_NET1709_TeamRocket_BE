@@ -1,4 +1,5 @@
 ﻿using Azure;
+using HCP.DTOs.DTOs.HousekeeperDTOs;
 using HCP.Repository.Constance;
 using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.HousekeeperService;
@@ -30,6 +31,24 @@ namespace HomeCleaningService.Controllers
                 var housekeeper = await _housekeeperService.GetHousekeeperProfile(User);
                 var successResponse = new AppResponse<object>()
                 .SetSuccessResponse(housekeeper);
+
+                return Ok(successResponse);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(response.SetErrorResponse(KeyConst.Housekeeper, ex.ToString()));
+            }
+        }
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetHousekeeperEarning(int? pageIndex, int? pageSize, int? day, int? month, int? year)
+        {
+            var response = new AppResponse<string>();
+            try
+            {
+                var earningList = await _housekeeperService.GetHousekeeperEarnings(User, pageIndex, pageSize, day, month, year);
+                var successResponse = new AppResponse<HousekeeperEarningListDTO>()
+                .SetSuccessResponse(earningList);
 
                 return Ok(successResponse);
             }

@@ -196,13 +196,13 @@ namespace HomeCleaningService.Controllers
                     {
                         await _walletService.processDepositTransaction(transactId, true);
                         //return Redirect("https://www.google.com/");
-                        var url = $"{frontendurl}/wallet/deposit/success";
+                        var url = "https://www.purrfectclean.website/wallet/deposit/success";
                         Redirect(url);
                     }
                     else
                     {
                         await _walletService.processDepositTransaction(transactId, false);
-                        var url = $"{frontendurl}/wallet/deposit/fail";
+                        var url = "https://www.purrfectclean.website/wallet/deposit/fail";
                         Redirect(url);
                     }
                 }
@@ -242,7 +242,7 @@ namespace HomeCleaningService.Controllers
 
         //            // Mark booking as paid
         //            booking.Status = "Paid";
-        //            booking.CompletedAt = DateTime.UtcNow;
+        //            booking.CompletedAt = DateTime.Now;
         //            await _unitOfWork.Repository<Booking>().UpdateAsync(booking);
         //            await _unitOfWork.SaveChangesAsync();
 
