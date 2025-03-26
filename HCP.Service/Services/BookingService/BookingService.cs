@@ -641,28 +641,44 @@ namespace HCP.Service.Services.BookingService
         public async Task<BookingCancelDTO> cancelBooking(Guid bookingId, AppUser user)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();
-            var booking = bookingRepository.GetById(bookingId);
+            var booking =  bookingRepository.GetById(bookingId); 
             if (booking == null)
             {
                 throw new KeyNotFoundException(BookingConst.BookingNotFound);
             }
+
             if (booking.Status != BookingStatus.OnGoing.ToString())
             {
                 throw new InvalidOperationException(BookingConst.BookingCancellationFailed);
             }
+
             booking.Status = BookingStatus.Canceled.ToString();
             user.BalanceWallet += (double)booking.TotalPrice;
-            //var refundRequest = new RefundRequest
-            //{
-            //    Amount = booking.TotalPrice,
-            //    UserId = user.Id,
-            //    BookingId = booking.Id,
-            //    Status = WalletWithdrawStatus.Pending.ToString()
-            //};
-            //await _unitOfWork.Repository<WalletWithdrawRequest>().AddAsync(refundRequest);
-            _unitOfWork.Repository<Booking>().Update(booking);
+
+            var checkoutRepository = _unitOfWork.Repository<Checkout>();
+            var checkout = await checkoutRepository.FindAsync(c =>
+                c.CustomerId == user.Id &&
+                c.CleaningServiceId == booking.CleaningServiceId &&
+                c.BookingDate.Date == booking.PreferDateStart.Date &&
+                c.StartTime == booking.TimeStart &&
+                c.EndTime == booking.TimeEnd
+            );
+
+            if (checkout != null)
+            {
+                checkout.Status = CheckoutStatus.Pending.ToString();
+                checkoutRepository.Update(checkout);
+            }
+            else
+            {
+                Console.WriteLine($"No matching Checkout found for Booking ID: {bookingId}");
+            }
+
+            bookingRepository.Update(booking);
             await userManager.UpdateAsync(user);
+
             await _unitOfWork.SaveChangesAsync();
+
             return new BookingCancelDTO
             {
                 BookingId = booking.Id,
@@ -715,6 +731,7 @@ namespace HCP.Service.Services.BookingService
 
             return proof;
         }
+
         public async Task<CalendarBookingDTO> GetHousekeeperBookings(
             ClaimsPrincipal userClaims,
             DateTime? referenceDate = null,
@@ -854,6 +871,19 @@ namespace HCP.Service.Services.BookingService
                 }
             };
         }
+        public async Task<List<Checkout>> GetCheckoutsByCriteria(string customerId, Guid cleaningServiceId, DateTime bookingDate)
+        {
+            var checkouts = await _unitOfWork.Repository<Checkout>().ListAsync(
+                filter: c => c.CustomerId == customerId &&
+                             c.CleaningServiceId == cleaningServiceId &&
+                             c.BookingDate.Date == bookingDate.Date,
+                includeProperties: query => query
+                    .Include(c => c.Customer)
+                    .Include(c => c.CheckoutAdditionalServices)
+            );
+
+            return checkouts?.ToList() ?? new List<Checkout>();
+        }
         private (DateTime StartDate, DateTime EndDate) CalculateDateRange1(DateTime baseDate, ViewMode viewMode)
         {
             DateTime startDate;
@@ -930,7 +960,61 @@ namespace HCP.Service.Services.BookingService
 
             return (startDate, endDate);
         }
+        public async Task<BookingCancelDTO1> CancelBooking1(Guid bookingId, AppUser user)
+        {
+            var bookingRepository = _unitOfWork.Repository<Booking>();
+            var booking = bookingRepository.GetById(bookingId);
+            if (booking == null)
+            {
+                throw new KeyNotFoundException(BookingConst.BookingNotFound);
+            }
 
+            if (booking.Status != BookingStatus.OnGoing.ToString())
+            {
+                throw new InvalidOperationException(BookingConst.BookingCancellationFailed);
+            }
+
+            // Update booking status
+            booking.Status = BookingStatus.Canceled.ToString();
+            user.BalanceWallet += (double)booking.TotalPrice;
+
+            // Find and update the associated Checkout
+            var checkoutRepository = _unitOfWork.Repository<Checkout>();
+            var checkout = await checkoutRepository.FindAsync(c =>
+                c.CustomerId == user.Id &&
+                c.CleaningServiceId == booking.CleaningServiceId &&
+                c.BookingDate.Date == booking.PreferDateStart.Date &&
+                c.StartTime == booking.TimeStart &&
+                c.EndTime == booking.TimeEnd
+            );
+
+            Guid? checkoutId = null;
+            if (checkout != null)
+            {
+                checkout.Status = "Pending"; // Update Checkout status to Pending
+                checkoutRepository.Update(checkout);
+                checkoutId = checkout.Id; // Assuming Checkout inherits Id from BaseEntity
+            }
+            else
+            {
+                Console.WriteLine($"No matching Checkout found for Booking ID: {bookingId}");
+            }
+
+            // Update booking and user
+            bookingRepository.Update(booking);
+            await userManager.UpdateAsync(user);
+
+            // Save all changes
+            await _unitOfWork.SaveChangesAsync();
+
+            return new BookingCancelDTO1
+            {
+                BookingId = booking.Id,
+                BookingStatus = booking.Status,
+                Title = BookingConst.BookingCancelledSuccessfully,
+                CheckoutId = checkoutId
+            };
+        }
     }
 }
 
