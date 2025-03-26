@@ -84,22 +84,22 @@ namespace HCP.Service.Integrations.Vnpay
             string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
             return paymentUrl;
         }
-        public string CreateDepositPaymentUrl(WalletTransaction walletTrans, string returnUrl)
+        public string CreateDepositPaymentUrl(WalletTransaction walletTrans)
         {
-            returnUrl = "https://hcs-api-dev.azurewebsites.net/api/Payment/PaymentDepositReturn-VNPAY";
+            string returnUrl = "https://hcs-api-dev.azurewebsites.net/api/Payment/PaymentDepositReturn-VNPAY";
+            //string returnUrl = "https://localhost:7143/api/Payment/PaymentDepositReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(walletTrans.Amount, CultureInfo.InvariantCulture);
             double amountInVnd = Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
-
             var vnPay = new VnPayLibrary();
-            vnPay.AddRequestData("vnp_Amount", ((amountInVnd * 100).ToString()));
+            vnPay.AddRequestData("vnp_Amount", (amountInVnd * 100).ToString());
             vnPay.AddRequestData("vnp_Command", "pay");
             vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             vnPay.AddRequestData("vnp_CurrCode", "VND");
             vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
             vnPay.AddRequestData("vnp_Locale", "vn");
-            vnPay.AddRequestData("vnp_OrderInfo", $"Xu ly nap tien: {walletTrans.Id}");
+            vnPay.AddRequestData("vnp_OrderInfo", "Xu ly nap tien");
             vnPay.AddRequestData("vnp_OrderType", "deposit");
             vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
             vnPay.AddRequestData("vnp_TmnCode", vnp_TmnCode);

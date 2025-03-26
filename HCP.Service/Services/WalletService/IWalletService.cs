@@ -17,7 +17,7 @@ namespace HCP.Service.Services.WalletService
         Task<RefundRequestShowDetailDTO> GetRefundRequestByIdAsync(Guid refundRequestId);
         Task<RefundRequestDTO> StaffProccessRefund(Guid refundId, bool action, AppUser user);
         Task<WalletWithdrawRequestDTO> CreateWithdrawRequest(decimal amount, AppUser user);
-        Task<WalletTransactionDepositResponseDTO> createDepositTransaction(decimal amount, AppUser user);
+        Task<WalletTransaction> createDepositTransaction(decimal amount, ClaimsPrincipal user);
         Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot);
         Task<WalletTransactionWithdrawResponseDTO> StaffProccessWithdraw(Guid transId, bool action);
         Task DeduceFromWallet(ClaimsPrincipal user, decimal amount);

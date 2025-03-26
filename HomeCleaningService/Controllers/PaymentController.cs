@@ -77,19 +77,13 @@ namespace HomeCleaningService.Controllers
         [Authorize]
         public async Task<IActionResult> CreateDepositPaymentAsync(int amount, string paymentMethod = KeyConst.VnPay)
         {
-            var user = await _customerService.GetCustomerAsync(User);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
+            //var userId = User.FindFirst("id")?.Value;
             try
             {
                 // Generate the VNPay payment URL
-                var returnUrl = "https://your-return-url.com";
-                var depoTransac = await _walletService.createDepositTransaction(amount, user);
-                var walletTrans = _unitOfWork.Repository<WalletTransaction>().GetById(depoTransac.Id);
+                var walletTrans = await _walletService.createDepositTransaction(amount, User);
                 if (walletTrans == null) throw new Exception(TransactionConst.DepositFail);
-                string paymentUrl = ivnpay.CreateDepositPaymentUrl(walletTrans, returnUrl);
+                string paymentUrl = ivnpay.CreateDepositPaymentUrl(walletTrans);
 
                 return Ok(new { url = paymentUrl });
             }
@@ -188,25 +182,20 @@ namespace HomeCleaningService.Controllers
         [HttpGet("PaymentDepositReturn-VNPAY")]
         public async Task<IActionResult> PaymentDepositReturn()
         {
-            string queryString = Request.QueryString.Value;
             if (Guid.TryParse(Request.Query["vnp_TxnRef"], out Guid transactId))
             {
-                if (true)
+                var paymentStatus = Request.Query["vnp_ResponseCode"];
+                if (paymentStatus == PaymentConst.SuccessCode)
                 {
-                    var paymentStatus = Request.Query["vnp_ResponseCode"];
-                    if (paymentStatus == PaymentConst.SuccessCode)
-                    {
-                        await _walletService.processDepositTransaction(transactId, true);
-                        //return Redirect("https://www.google.com/");
-                        var url = "https://www.purrfectclean.website/wallet/deposit/success";
-                        Redirect(url);
-                    }
-                    else
-                    {
-                        await _walletService.processDepositTransaction(transactId, false);
-                        var url = "https://www.purrfectclean.website/wallet/deposit/fail";
-                        Redirect(url);
-                    }
+                    await _walletService.processDepositTransaction(transactId, true);
+                    var url = "https://www.purrfectclean.website/wallet/deposit/success";
+                    return Redirect(url); // Return the redirect
+                }
+                else
+                {
+                    await _walletService.processDepositTransaction(transactId, false);
+                    var url = "https://www.purrfectclean.website/wallet/deposit/fail";
+                    return Redirect(url); // Return the redirect
                 }
             }
             return BadRequest(PaymentConst.InvalidError);
