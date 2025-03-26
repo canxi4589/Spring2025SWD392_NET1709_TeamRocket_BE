@@ -8,6 +8,14 @@ using System.Threading.Tasks;
 
 namespace HCP.DTOs.DTOs.BookingDTO
 {
+    public class BookingCancelDTO1
+    {
+        public Guid BookingId { get; set; }
+        public string BookingStatus { get; set; }
+        public string Title { get; set; }
+        public Guid? CheckoutId { get; set; } // Nullable in case no Checkout is found
+    }
+
     public class BookingDTO
     {
         public decimal ServicePrice { get; set; }
@@ -135,5 +143,6 @@ namespace HCP.DTOs.DTOs.BookingDTO
         public string CustomerName { get; set; }
         public string Address { get; set; }
         public string Status {  get; set; }
+        public decimal? Fee { get; set; }
     }
 }

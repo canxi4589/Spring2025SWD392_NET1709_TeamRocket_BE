@@ -630,6 +630,39 @@ namespace HCP.Service.Services.WalletService
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();
         }
+        public async Task DeduceFromWallet1(AppUser user1, decimal amount)
+        {
+            var wallet = _unitOfWork.Repository<SystemWallet>().GetAll().FirstOrDefault();
+            if (wallet == null)
+            {
+                wallet = new SystemWallet
+                {
+                    Balance = 0.0m,
+                };
+                await _unitOfWork.Repository<SystemWallet>().AddAsync(wallet);
+            }
+
+            WalletTransaction wTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AfterAmount = 0,
+                Current = (Decimal)user1.BalanceWallet,
+                User = user1,
+                UserId = user1.Id,
+                Amount = amount,
+                Type = TransactionType.BookingPurchase.ToString(),
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.Now
+            };
+
+            user1.BalanceWallet -= (double)amount;
+            wTransaction.AfterAmount = (Decimal)user1.BalanceWallet;
+            wallet.Balance += amount;
+            await _userManager.UpdateAsync(user1);
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         public async Task<double> VNDMoneyExchangeFromUSD(decimal amount)
         {
             ExchangRate exchangRate = new ExchangRate();

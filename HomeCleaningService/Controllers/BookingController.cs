@@ -8,6 +8,7 @@ using HCP.Service.Services.ListService;
 using HCP.Service.Services.TemporaryService;
 using HomeCleaningService.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeCleaningService.Controllers
@@ -20,13 +21,15 @@ namespace HomeCleaningService.Controllers
         private readonly IBookingService _bookingService;
         private readonly ICustomerService _customerService;
         private readonly ITemporaryStorage _temporaryStorage;
+        private readonly UserManager<AppUser> _userManager;
 
-        public BookingController(IUnitOfWork unitOfWork, IBookingService bookingService, ICustomerService customerService, ITemporaryStorage temporaryStorage)
+        public BookingController(IUnitOfWork unitOfWork, IBookingService bookingService, ICustomerService customerService, ITemporaryStorage temporaryStorage, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _bookingService = bookingService;
             _customerService = customerService;
             _temporaryStorage = temporaryStorage;
+            _userManager = userManager;
         }
 
 
@@ -104,8 +107,8 @@ namespace HomeCleaningService.Controllers
             try
             {
                 var proof = await _bookingService.SubmitBookingProofAsync(dto);
-                var successResponse = new AppResponse<BookingFinishProof>()
-                    .SetSuccessResponse(proof, KeyConst.BookingProof, BookingConst.ProofSubmittedSuccessfully);
+                var successResponse = new AppResponse<string>()
+                    .SetSuccessResponse(proof.ImgUrl, KeyConst.BookingProof, BookingConst.ProofSubmittedSuccessfully);
                 return Ok(successResponse);
             }
             catch (KeyNotFoundException)
@@ -113,12 +116,6 @@ namespace HomeCleaningService.Controllers
                 var errorResponse = new AppResponse<BookingFinishProof>()
                     .SetErrorResponse(KeyConst.Booking, BookingConst.BookingNotFound);
                 return NotFound(errorResponse);
-            }
-            catch (InvalidOperationException)
-            {
-                var errorResponse = new AppResponse<BookingFinishProof>()
-                    .SetErrorResponse(KeyConst.Status, BookingConst.InvalidBookingStatusForProof);
-                return BadRequest(errorResponse);
             }
             catch (Exception ex)
             {
@@ -177,6 +174,35 @@ namespace HomeCleaningService.Controllers
                 // Log the exception (e.g., using ILogger)
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     response.SetErrorResponse("error", ["An unexpected error occurred."]));
+            }
+        }
+        [HttpPost("cancelTest/{bookingId}")]
+        [Authorize]
+        public async Task<IActionResult> CancelBooking(Guid bookingId)
+        {
+            try
+            {
+                var userId = User.FindFirst("id")?.Value;
+
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return Unauthorized(new AppResponse<object>().SetErrorResponse("Unauthorized", new[] { "User not authenticated." }));
+
+                var result = await _bookingService.CancelBooking1(bookingId, user);
+
+                return Ok(new AppResponse<BookingCancelDTO1>().SetSuccessResponse(result, "Message", $"Booking canceled. Checkout ID {result.CheckoutId} status changed to Pending."));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new AppResponse<object>().SetErrorResponse("NotFound", new[] { ex.Message }));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new AppResponse<object>().SetErrorResponse("InvalidOperation", new[] { ex.Message }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new AppResponse<object>().SetErrorResponse("ServerError", new[] { $"An error occurred: {ex.Message}" }));
             }
         }
     }
