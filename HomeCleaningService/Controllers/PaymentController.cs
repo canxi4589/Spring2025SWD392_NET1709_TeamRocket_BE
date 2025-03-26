@@ -196,13 +196,13 @@ namespace HomeCleaningService.Controllers
                     {
                         await _walletService.processDepositTransaction(transactId, true);
                         //return Redirect("https://www.google.com/");
-                        var url = $"https://www.purrfectclean.website/wallet/deposit/success";
+                        var url = $"{frontendurl}/wallet/deposit/success";
                         Redirect(url);
                     }
                     else
                     {
                         await _walletService.processDepositTransaction(transactId, false);
-                        var url = $"https://www.purrfectclean.website/wallet/deposit/fail";
+                        var url = $"{frontendurl}/wallet/deposit/fail";
                         Redirect(url);
                     }
                 }
