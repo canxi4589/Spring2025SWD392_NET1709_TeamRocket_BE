@@ -197,7 +197,6 @@ namespace HomeCleaningService.Controllers
                         await _walletService.processDepositTransaction(transactId, true);
                         //return Redirect("https://www.google.com/");
                         var url = $"https://www.purrfectclean.website/wallet/deposit/success";
-
                         Redirect(url);
                     }
                     else
@@ -210,6 +209,7 @@ namespace HomeCleaningService.Controllers
             }
             return BadRequest(PaymentConst.InvalidError);
         }
+
 
         //[HttpPost("CreateBooking")]
         //public Task<IActionResult> CreateBooking([FromBody] BookingDTO bookingDto, string paymentType)
