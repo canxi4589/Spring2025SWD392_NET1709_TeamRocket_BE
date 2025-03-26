@@ -131,7 +131,7 @@ namespace HomeCleaningService.Controllers
                         return BadRequest(new AppResponse<string>()
                             .SetErrorResponse("INSUFFICIENT_FUNDS", "Not enough funds in wallet"));
 
-                    await _walletService.DeduceFromWallet(User, dto.Amount);
+                    await _walletService.DeduceFromWallet1(user, dto.Amount);
                     var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));

@@ -363,7 +363,7 @@ namespace HCP.Service.Services.CleaningService1
                          name = service.User.FullName,
                          review = rating.TotalCount > 0 ? rating.RatingAvg + " (" + rating.TotalCount + ")" : "No Review",
                          avatar = service.User.Avatar,
-                         address = address.City != null && address.District != null ? $"{address.City}, {address.District},{address.AddressLine1}" : string.Empty,
+                         address = address.City != null && address.District != null ? $"{address.AddressLine1}" : string.Empty,
                          email = service.User.Email,
                          mobile = service.User.PhoneNumber,
                          numOfServices = service1.Count()
