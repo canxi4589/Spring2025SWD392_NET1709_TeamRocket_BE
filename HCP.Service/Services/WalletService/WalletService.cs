@@ -47,11 +47,11 @@ namespace HCP.Service.Services.WalletService
             var housekeeper = await _userManager.FindByIdAsync(cleaningService.UserId);
             if (housekeeper == null) throw new Exception(CustomerConst.NotFoundError);
 
-            expectedRefund += (double)booking.TotalPrice;
-            if (housekeeper.BalanceWallet < expectedRefund)
-            {
-                throw new Exception("Your refund request is more than the housekeeper's balance!");
-            }
+            //expectedRefund += (double)booking.TotalPrice;
+            //if (housekeeper.BalanceWallet < expectedRefund)
+            //{
+            //    throw new Exception("Your refund request is more than the housekeeper's balance!");
+            //}
 
             var refund = new RefundRequest
             {
