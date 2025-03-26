@@ -39,5 +39,6 @@ namespace HCP.Service.Services.BookingService
     ClaimsPrincipal userClaims,
     DateTime? referenceDate = null,
     string viewMode = "month");
+        Task<BookingCancelDTO1> CancelBooking1(Guid bookingId, AppUser user);
     }
 }

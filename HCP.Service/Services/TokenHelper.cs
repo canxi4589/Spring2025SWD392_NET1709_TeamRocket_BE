@@ -28,7 +28,8 @@ public class TokenHelper : ITokenHelper
             new Claim("id", user.Id),
             new Claim("role", role),
             new Claim("email",user.Email!),
-            new Claim("phone",phoneNumber)
+            new Claim("phone",phoneNumber),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         };
 
         var key = new SymmetricSecurityKey(secretKey);
