@@ -612,7 +612,8 @@ namespace HCP.Service.Services.BookingService
                     },
                     AddressLine1 = b.AddressLine,
                     City = b.City,
-                    District = b.District
+                    District = b.District,
+                    Fee = b.Fee
                 });
 
             if (page == null || pageSize == null)
@@ -705,12 +706,6 @@ namespace HCP.Service.Services.BookingService
             {
                 throw new KeyNotFoundException("Booking not found");
             }
-            //var validStatuses = new[] { BookingStatus.OnGoing.ToString(), "Paid" };
-            //if (!validStatuses.Contains(booking.Status))
-            //{
-            //    throw new InvalidOperationException("Proof can only be submitted for OnGoing or Paid bookings");
-            //}
-
             var proof = new BookingFinishProof
             {
                 BookingId = dto.BookingId,
@@ -720,11 +715,11 @@ namespace HCP.Service.Services.BookingService
             var user = await servicerepo.FindAsync(c => c.Id == booking.CleaningServiceId);
             var user1 =await userManager.FindByIdAsync(user.UserId);
             systemWallet.Balance += (booking.TotalPrice * (decimal)(commission.CommisionRate));
-            user1.BalanceWallet += (double)(booking.TotalPrice - systemWallet.Balance);
+            user1.BalanceWallet += (double)(booking.TotalPrice - booking.TotalPrice * (decimal)(commission.CommisionRate));
             
             booking.Status = BookingStatus.Completed.ToString();
             booking.CompletedAt = DateTime.Now;
-            userManager.UpdateAsync(user1);
+            await userManager.UpdateAsync(user1);
             await _unitOfWork.Repository<BookingFinishProof>().AddAsync(proof);
             bookingRepository.Update(booking);
             await _unitOfWork.Complete();
@@ -783,7 +778,8 @@ namespace HCP.Service.Services.BookingService
                         TimeEnd = b.TimeEnd,
                         TotalPrice = b.TotalPrice,
                         CustomerName = b.Customer?.FullName ?? "Unknown",
-                        Address = b.AddressLine
+                        Address = b.AddressLine,
+                        Fee = b.Fee
                     })
                     .OrderBy(b => b.TimeStart)
                     .ToList(),

@@ -143,5 +143,6 @@ namespace HCP.DTOs.DTOs.BookingDTO
         public string CustomerName { get; set; }
         public string Address { get; set; }
         public string Status {  get; set; }
+        public decimal? Fee { get; set; }
     }
 }
