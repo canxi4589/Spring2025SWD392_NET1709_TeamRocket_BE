@@ -630,7 +630,7 @@ namespace HCP.Service.Services.WalletService
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();
         }
-        public async Task DeduceFromWallet1(AppUser user1, decimal amount)
+        public async Task DeduceFromWallet1(AppUser user1, Guid bookingId, decimal amount)
         {
             var wallet = _unitOfWork.Repository<SystemWallet>().GetAll().FirstOrDefault();
             if (wallet == null)
@@ -650,15 +650,35 @@ namespace HCP.Service.Services.WalletService
                 User = user1,
                 UserId = user1.Id,
                 Amount = amount,
-                Type = TransactionType.BookingPurchase.ToString(),
+                Type = TransactionType.WalletPurchase.ToString(),
                 Status = TransactionStatus.Done.ToString(),
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.Now,
+                ReferenceId = bookingId
             };
 
             user1.BalanceWallet -= (double)amount;
             wTransaction.AfterAmount = (Decimal)user1.BalanceWallet;
             wallet.Balance += amount;
             await _userManager.UpdateAsync(user1);
+            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
+            await _unitOfWork.SaveChangesAsync();
+        }
+        public async Task TransactionVNPay(string id, Guid bookingId, decimal amount)
+        {
+            var user1 = await _userManager.FindByIdAsync(id);
+            WalletTransaction wTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AfterAmount = (Decimal)user1.BalanceWallet,
+                Current = (Decimal)user1.BalanceWallet,
+                User = user1,
+                UserId = user1.Id,
+                Amount = amount,
+                Type = TransactionType.VNPayPurchase.ToString(),
+                Status = TransactionStatus.Done.ToString(),
+                CreatedDate = DateTime.Now,
+                ReferenceId = bookingId
+            };
             await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await _unitOfWork.SaveChangesAsync();
         }
@@ -704,7 +724,7 @@ namespace HCP.Service.Services.WalletService
                     // Define the start and end of the month
                     var monthStartDate = new DateTime(yearStart.Value, month, 1);
                     var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
-                    var monthlyRevenue = (payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.9m)/* - 
+                    var monthlyRevenue = (payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => (p.Amount-p.Booking.Fee)))/* - 
                         (paymentsRefunded.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount))*/; // 90% of the amount
                     chartDataList.Add(new RevenueHousekeeperDatasShowDTO
                     {
@@ -724,7 +744,7 @@ namespace HCP.Service.Services.WalletService
 
                     var yearlyRevenue = (payments
                         .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
-                        .Sum(p => p.Amount) * 0.9m)/* -
+                        .Sum(p => (p.Amount - p.Booking.Fee)))/* -
                         (paymentsRefunded
                         .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
                         .Sum(p => p.Amount))*/; // 90% of the amount
@@ -747,7 +767,7 @@ namespace HCP.Service.Services.WalletService
                 {
                     var dailyRevenue = (payments
                         .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
-                        .Sum(p => p.Amount) * 0.9m)/* -
+                        .Sum(p => (p.Amount - p.Booking.Fee)))/* -
                         (paymentsRefunded
                         .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
                         .Sum(p => p.Amount))*/; // 10% of the amount

@@ -524,20 +524,6 @@ namespace HCP.Service.Services.BookingService
                 Note = /*dto.Note ??*/ "",
                 BookingAdditionals = bookingAdditionals,
             };
-            WalletTransaction wTransaction = new WalletTransaction
-            {
-                Id = Guid.NewGuid(),
-                AfterAmount = 0,
-                Current = (Decimal)user.BalanceWallet,
-                User = user,
-                UserId = user.Id,
-                Amount = booking.TotalPrice,
-                Type = TransactionType.VNPayPurchase.ToString(),
-                Status = TransactionStatus.Done.ToString(),
-                CreatedDate = DateTime.Now,
-                ReferenceId = dto.Id
-            };
-            await _unitOfWork.Repository<WalletTransaction>().AddAsync(wTransaction);
             await bookingRepository.AddAsync(booking);
             checkout.Status = CheckoutStatus.Completed.ToString();
 

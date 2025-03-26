@@ -21,7 +21,8 @@ namespace HCP.Service.Services.WalletService
         Task<WalletTransactionDepositResponseDTO> processDepositTransaction(Guid depoTrans, bool successOrNot);
         Task<WalletTransactionWithdrawResponseDTO> StaffProccessWithdraw(Guid transId, bool action);
         Task DeduceFromWallet(ClaimsPrincipal user, decimal amount);
-        Task DeduceFromWallet1(AppUser user1, decimal amount);
+        Task DeduceFromWallet1(AppUser user1, Guid bookingId, decimal amount);
+        Task TransactionVNPay(string user1, Guid bookingId, decimal amount);
         Task<RevenueHousekeeperDatasListShowDTO> GetRevenueHousekeeperDatas(AppUser user, bool dayRevenue, bool weekRevenue, bool yearRevenue, bool yearsRevenue, int? dayStart, int? monthStart, int? yearStart, int? dayEnd, int? monthEnd, int? yearEnd);
     }
 }

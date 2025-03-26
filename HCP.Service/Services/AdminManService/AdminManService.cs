@@ -298,7 +298,7 @@ namespace HCP.Service.Services.AdminManService
                     // Define the start and end of the month
                     var monthStartDate = new DateTime(yearStart.Value, month, 1);
                     var monthEndDate = monthStartDate.AddMonths(1).AddDays(-1);
-                    var monthlyRevenue = payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                    var monthlyRevenue = payments.Where(p => p.Booking.CompletedAt >= monthStartDate && p.Booking.CompletedAt <= monthEndDate).Sum(p => p.Booking.Fee); // 10% of the amount
                     chartDataList.Add(new ChartDataAdminShowDTO
                     {
                         name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
@@ -317,7 +317,7 @@ namespace HCP.Service.Services.AdminManService
 
                     var yearlyRevenue = payments
                         .Where(p => p.Booking.CompletedAt >= yearStartDate && p.Booking.CompletedAt <= yearEndDate)
-                        .Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                        .Sum(p => p.Booking.Fee); // 10% of the amount
 
                     chartDataList.Add(new ChartDataAdminShowDTO
                     {
@@ -338,7 +338,7 @@ namespace HCP.Service.Services.AdminManService
                 {
                     var dailyRevenue = payments
                         .Where(p => p.Booking.CompletedAt.HasValue && p.Booking.CompletedAt.Value.Date == date.Date)
-                        .Sum(p => p.Amount) * 0.1m; // 10% of the amount
+                        .Sum(p => p.Booking.Fee); // 10% of the amount
 
                     chartDataList.Add(new ChartDataAdminShowDTO
                     {

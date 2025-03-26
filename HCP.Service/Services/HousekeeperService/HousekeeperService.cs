@@ -74,7 +74,7 @@ namespace HCP.Service.Services.HousekeeperService
             var earningList = bookingRepository.Select(b => new HousekeeperEarningDTO
             {
                 Price = b.TotalPrice,
-                Fee = b.TotalPrice * 0.1m,
+                Fee = (decimal)b.Fee,
                 YourEarn = b.TotalPrice * 0.9m,
                 Date = b.CompletedAt ?? b.CreatedDate,
                 Status = b.Status

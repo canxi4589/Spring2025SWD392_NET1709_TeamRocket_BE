@@ -12,6 +12,7 @@ using HCP.Service.Services.EmailService;
 using HCP.Service.Services.TemporaryService;
 using HCP.Service.Services.WalletService;
 using HomeCleaningService.Helpers;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -131,8 +132,8 @@ namespace HomeCleaningService.Controllers
                         return BadRequest(new AppResponse<string>()
                             .SetErrorResponse("INSUFFICIENT_FUNDS", "Not enough funds in wallet"));
 
-                    await _walletService.DeduceFromWallet1(user, dto.Amount);
                     var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
+                    await _walletService.DeduceFromWallet1(user, booking.Id, dto.Amount);
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
                     var url = $"{frontendurl}/service/Checkout/success";
@@ -172,6 +173,7 @@ namespace HomeCleaningService.Controllers
                 {
                     var body = await _checkoutService.GetCheckoutById(Id);
                     var booking = await _bookingService.CreateBookingAsync1(body, body.CustomerId);
+                    await _walletService.TransactionVNPay(booking.CustomerId, booking.Id, booking.TotalPrice);
                     await _bookingService.CreatePayment(booking.Id, booking.TotalPrice, "VnPay");
                     var user = await _userManager.FindByIdAsync(body.CustomerId);
                     _emailSenderService.SendEmail(user.Email, "Thank you for using our services", EmailBodyTemplate.GetThankYouEmail(user.FullName));
