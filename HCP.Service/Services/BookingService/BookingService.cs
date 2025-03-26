@@ -9,6 +9,7 @@ using HCP.Service.Services.CustomerService;
 using HCP.Service.Services.ListService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Security.Claims;
 
 namespace HCP.Service.Services.BookingService
@@ -370,7 +371,7 @@ namespace HCP.Service.Services.BookingService
                 PreferDateStart = dto.BookingDate,
                 TimeStart = timeSlot.StartTime,
                 TimeEnd = timeSlot.EndTime + TimeSpan.FromMinutes((double)totalAdditionalDuration + 30),
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 Status = BookingStatus.OnGoing.ToString(),
                 TotalPrice = service.Price + (decimal)bookingAdditionals.Sum(a => a.Amount),
                 ServicePrice = service.Price,
@@ -673,6 +674,13 @@ namespace HCP.Service.Services.BookingService
         {
 
             var bookingRepository = _unitOfWork.Repository<Booking>();
+            var servicerepo = _unitOfWork.Repository<CleaningService>();
+            var systemWallet = _unitOfWork.Repository<SystemWallet>().GetAll().FirstOrDefault();
+            if (systemWallet == null)
+            {
+                systemWallet = new SystemWallet() {Balance = 0};
+            }
+            var commission = _unitOfWork.Repository<Commissions>().GetAll().FirstOrDefault();
             var booking = await bookingRepository.FindAsync(
                 b => b.Id == dto.BookingId
             );
@@ -681,11 +689,11 @@ namespace HCP.Service.Services.BookingService
             {
                 throw new KeyNotFoundException("Booking not found");
             }
-            var validStatuses = new[] { "OnGoing", "Paid" };
-            if (!validStatuses.Contains(booking.Status))
-            {
-                throw new InvalidOperationException("Proof can only be submitted for OnGoing or Paid bookings");
-            }
+            //var validStatuses = new[] { BookingStatus.OnGoing.ToString(), "Paid" };
+            //if (!validStatuses.Contains(booking.Status))
+            //{
+            //    throw new InvalidOperationException("Proof can only be submitted for OnGoing or Paid bookings");
+            //}
 
             var proof = new BookingFinishProof
             {
@@ -693,10 +701,14 @@ namespace HCP.Service.Services.BookingService
                 Title = dto.Title,
                 ImgUrl = dto.ImgUrl,
             };
-
+            var user = await servicerepo.FindAsync(c => c.Id == booking.CleaningServiceId);
+            var user1 =await userManager.FindByIdAsync(user.UserId);
+            systemWallet.Balance += (booking.TotalPrice * (decimal)(commission.CommisionRate));
+            user1.BalanceWallet += (double)(booking.TotalPrice - systemWallet.Balance);
+            
             booking.Status = BookingStatus.Completed.ToString();
-            booking.CompletedAt = DateTime.UtcNow;
-
+            booking.CompletedAt = DateTime.Now;
+            userManager.UpdateAsync(user1);
             await _unitOfWork.Repository<BookingFinishProof>().AddAsync(proof);
             bookingRepository.Update(booking);
             await _unitOfWork.Complete();
