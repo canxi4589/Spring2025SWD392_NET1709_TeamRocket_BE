@@ -87,7 +87,6 @@ namespace HCP.Service.Integrations.Vnpay
         public string CreateDepositPaymentUrl(WalletTransaction walletTrans)
         {
             string returnUrl = "https://hcs-api-dev.azurewebsites.net/api/Payment/PaymentDepositReturn-VNPAY";
-            //string returnUrl = "https://localhost:7143/api/Payment/PaymentDepositReturn-VNPAY";
             ExchangRate exchangRate = new ExchangRate();
             double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
             var AmountInUsd = Convert.ToDouble(walletTrans.Amount, CultureInfo.InvariantCulture);

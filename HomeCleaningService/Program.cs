@@ -34,7 +34,7 @@ builder.Services.AddControllers();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddBlobService(config);
-builder.Services.AddFirebaseService(config);
+//builder.Services.AddFirebaseService(config);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 builder.Services.AddEndpointsApiExplorer();
@@ -149,7 +149,7 @@ builder.Services.AddScoped<HCP.Service.Services.AuthenticationService.IAuthentic
 builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
-
+builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddSignalR();
 
 builder.Services.AddHostedService<AllBackGroundService>();

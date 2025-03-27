@@ -1,4 +1,6 @@
-﻿namespace HCP.DTOs.DTOs.BookingDTO
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+
+namespace HCP.DTOs.DTOs.BookingDTO
 {
     public class BookingHistoryResponseDTO
     {
@@ -48,7 +50,15 @@
         public string CustomerPhoneNumber { get; set; }
         public bool isRating { get; set; }
         public Guid CleaningServiceId { get; set; }
-
+        public decimal? Fee {  get; set; }
+        public string? Proof {  get; set; }
+        public List<BookingAdditionalDTO> Bookings { get; set; } = new List<BookingAdditionalDTO>();
+    }
+    public class BookingHistoryAdditonal
+    {
+        public string Name { get; set; }
+        public double Duration {  get; set; }
+        public decimal Price {  get; set; }
     }
     public class BookingTransactionShowDTO
     {
