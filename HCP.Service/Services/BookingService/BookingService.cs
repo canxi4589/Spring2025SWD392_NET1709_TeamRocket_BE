@@ -115,8 +115,8 @@ namespace HCP.Service.Services.BookingService
                     .Include(c => c.BookingAdditionals).ThenInclude(c => c.AdditionalService)
                     .Include(c => c.Customer)
                     .Include(c => c.CleaningService.User)
-            );
-
+                                );
+            var bookingProof = await _unitOfWork.Repository<BookingFinishProof>().FindAllAsync(c => c.BookingId == input.Id);
             var booking = bookings.FirstOrDefault();
             if (booking == null)
             {
@@ -127,7 +127,7 @@ namespace HCP.Service.Services.BookingService
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? KeyConst.Unknown).ToList();
             var additionalServiceId = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Id).ToList();
-
+           
             var firstPayment = booking.Payments.FirstOrDefault();
             var customer = await userManager.FindByIdAsync(booking.CustomerId);
             var housekeeper = await userManager.FindByIdAsync(booking.CleaningService.UserId);
@@ -161,6 +161,7 @@ namespace HCP.Service.Services.BookingService
                 isRating = booking.isRating,
                 CleaningServiceId = booking.CleaningService.Id,
                 Fee = booking.Fee,
+                Proof = bookingProof.FirstOrDefault()?.ImgUrl ?? null,
                 Bookings = additionalService.Select(ba => new BookingAdditionalDTO
                 {
                     AdditionalId = ba.Id,
@@ -367,7 +368,6 @@ namespace HCP.Service.Services.BookingService
                         rule.MaxDistance >= distance &&
                         rule.IsActive
             );
-
             if (pricingRule == null)
                 throw new Exception("Service is not available for this distance");
 
@@ -1046,6 +1046,47 @@ namespace HCP.Service.Services.BookingService
                 CheckoutId = checkoutId
             };
         }
+        public async Task<bool> IsLastAvailableTimeSlotWithAdditionalServices(
+        Guid serviceId,
+        DateTime targetDate,
+        Guid timeSlotId,
+        List<Guid> additionalServiceIds)
+        {
+            var serviceAdditionalServices = await _unitOfWork.Repository<AdditionalService>().ListAsync(
+                s => s.CleaningServiceId == serviceId,
+                orderBy: s => s.OrderBy(c => c.CleaningServiceId)
+            );
+
+            bool allAdditionalValid = additionalServiceIds.All(id => serviceAdditionalServices.Any(s => s.Id == id));
+            if (!allAdditionalValid)
+                return false; 
+            var timeSlots = await _unitOfWork.Repository<ServiceTimeSlot>().ListAsync(
+                s => s.ServiceId == serviceId && s.DayOfWeek == targetDate.DayOfWeek.ToString(),
+                orderBy: s => s.OrderBy(ts => ts.StartTime)
+            );
+
+            if (!timeSlots.Any())
+                return false;
+
+            var bookedTimeSlots = await _unitOfWork.Repository<Booking>().ListAsync(
+                b => b.CleaningServiceId == serviceId &&
+                     b.PreferDateStart == targetDate &&
+                     b.Status == BookingStatus.OnGoing.ToString(),
+                orderBy: s => s.OrderBy(c => c.CleaningServiceId)
+            );
+
+            var availableTimeSlots = timeSlots
+                .Where(ts => !bookedTimeSlots.Any(b => b.TimeStart <= ts.EndTime && b.TimeEnd >= ts.StartTime))
+                .ToList();
+
+            if (!availableTimeSlots.Any())
+                return false;
+
+            var lastAvailableSlot = availableTimeSlots.LastOrDefault();
+
+            return false;
+        }
+
     }
 }
 

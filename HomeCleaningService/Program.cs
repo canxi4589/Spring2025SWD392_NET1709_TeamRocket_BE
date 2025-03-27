@@ -149,7 +149,7 @@ builder.Services.AddScoped<HCP.Service.Services.AuthenticationService.IAuthentic
 builder.Services.AddScoped<ITemporaryStorage, TemporaryStorage>();
 //builder.Services.AddScoped<ICleaningService, CleaningService>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
-
+builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddSignalR();
 
 builder.Services.AddHostedService<AllBackGroundService>();

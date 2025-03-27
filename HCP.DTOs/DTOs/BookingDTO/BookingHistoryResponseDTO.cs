@@ -51,6 +51,7 @@ namespace HCP.DTOs.DTOs.BookingDTO
         public bool isRating { get; set; }
         public Guid CleaningServiceId { get; set; }
         public decimal? Fee {  get; set; }
+        public string? Proof {  get; set; }
         public List<BookingAdditionalDTO> Bookings { get; set; } = new List<BookingAdditionalDTO>();
     }
     public class BookingHistoryAdditonal
