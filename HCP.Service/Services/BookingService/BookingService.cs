@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Runtime.Intrinsics.X86;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Security.Claims;
+using Humanizer;
 
 namespace HCP.Service.Services.BookingService
 {
@@ -125,9 +126,15 @@ namespace HCP.Service.Services.BookingService
             var bookingAdditional = _unitOfWork.Repository<BookingAdditional>().GetAll().Where(c => c.BookingId == booking.Id).ToList();
             var additionalService = _unitOfWork.Repository<AdditionalService>().GetAll().ToList();
             var additionalServiceNames = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Name ?? KeyConst.Unknown).ToList();
+            var additionalServiceId = bookingAdditional.Select(b => additionalService.FirstOrDefault(c => c.Id == b.AdditionalServiceId)?.Id).ToList();
+
             var firstPayment = booking.Payments.FirstOrDefault();
             var customer = await userManager.FindByIdAsync(booking.CustomerId);
             var housekeeper = await userManager.FindByIdAsync(booking.CleaningService.UserId);
+            //var bookingAdditionals1 = await _unitOfWork.Repository<AdditionalService>().ListAsync(
+            //    ba => dto.AdditionalServices.Select(a => a.AdditionalServiceId).Contains(ba.Id),
+            //    orderBy: ba => ba.OrderBy(c => c.Id)
+            //    );
 
             return new BookingHistoryDetailResponseDTO
             {
@@ -152,7 +159,17 @@ namespace HCP.Service.Services.BookingService
                 PaymentStatus = firstPayment?.Status ?? CommonConst.NotFoundError,
                 CleaningServiceDuration = booking.CleaningService.Duration,
                 isRating = booking.isRating,
-                CleaningServiceId = booking.CleaningService.Id
+                CleaningServiceId = booking.CleaningService.Id,
+                Fee = booking.Fee,
+                Bookings = additionalService.Select(ba => new BookingAdditionalDTO
+                {
+                    AdditionalId = ba.Id,
+                    Url = ba.Url,
+                    Name = ba.Name,
+                    Price = (decimal)ba.Amount,
+                    Duration = ba.Duration
+                }).Where(c => additionalServiceId.Contains(c.AdditionalId)).ToList(),
+
             };
         }
         public async Task<CheckoutResponseDTO> GetCheckoutInfo(CheckoutRequestDTO request, ClaimsPrincipal userClaims)
@@ -467,6 +484,7 @@ namespace HCP.Service.Services.BookingService
             var serviceRepository = _unitOfWork.Repository<CleaningService>();
             var checkout = await _unitOfWork.Repository<Checkout>().FindAsync(c => c.Id == dto.CheckoutId);
             var distancePricingRepository = _unitOfWork.Repository<DistancePricingRule>();
+            var commission = _unitOfWork.Repository<Commissions>().GetAll().FirstOrDefault();
 
             var user = await userManager.FindByIdAsync(uid);
             if (user == null)
@@ -523,6 +541,7 @@ namespace HCP.Service.Services.BookingService
                 AddressLine = dto.AddressLine,
                 Note = /*dto.Note ??*/ "",
                 BookingAdditionals = bookingAdditionals,
+                Fee = dto.TotalPrice *(decimal)commission.CommisionRate
             };
             await bookingRepository.AddAsync(booking);
             checkout.Status = CheckoutStatus.Completed.ToString();
@@ -971,6 +990,7 @@ namespace HCP.Service.Services.BookingService
 
             return (startDate, endDate);
         }
+
         public async Task<BookingCancelDTO1> CancelBooking1(Guid bookingId, AppUser user)
         {
             var bookingRepository = _unitOfWork.Repository<Booking>();

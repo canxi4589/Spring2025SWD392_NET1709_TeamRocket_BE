@@ -34,7 +34,7 @@ builder.Services.AddControllers();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddBlobService(config);
-builder.Services.AddFirebaseService(config);
+//builder.Services.AddFirebaseService(config);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 builder.Services.AddEndpointsApiExplorer();
