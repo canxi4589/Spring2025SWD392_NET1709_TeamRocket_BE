@@ -90,7 +90,7 @@ namespace HCP.Repository.DatabaseExtension
                         PhoneNumberConfirmed = true
                     };
 
-                    var password = "123456"; // Ensure this meets Identity password policy
+                    var password = "123456"; 
                     var result = await userManager.CreateAsync(user, password);
 
                     if (result.Succeeded)
